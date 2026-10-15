@@ -1,3 +1,13 @@
+CHỦ ĐỀ 5: Hệ thống đặt lịch tư vấn/hẹn gặp giảng viên
+
+Danh sách thành viên
+1. Lê Trần Ngọc Anh - 224001708
+2. Lê Tuấn Anh - 224001709
+3. Đào Quang Dương - 224001714
+4. Đỗ Minh Hằng - 224001716
+5. Đỗ Trung Kiên - 224001727
+
+Danh sách phân công công việc 
 1. Lê Tuấn Anh: Module Hệ thống chung & Xác thực (Auth)
   • Trang chủ website, giới thiệu, điều hướng chung.
   • Chức năng Đăng nhập, Đăng ký tài khoản (Phân biệt vai trò Sinh viên, Giảng viên, Admin).
