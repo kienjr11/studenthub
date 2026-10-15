@@ -7,7 +7,7 @@ Danh sách thành viên
 4. Đỗ Minh Hằng - 224001716
 5. Đỗ Trung Kiên - 224001727
 
-Danh sách phân công công việc 
+Phân công công việc 
 1. Lê Tuấn Anh: Module Hệ thống chung & Xác thực (Auth)
   • Trang chủ website, giới thiệu, điều hướng chung.
   • Chức năng Đăng nhập, Đăng ký tài khoản (Phân biệt vai trò Sinh viên, Giảng viên, Admin).
