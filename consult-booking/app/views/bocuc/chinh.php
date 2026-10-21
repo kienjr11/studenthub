@@ -77,8 +77,15 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
 
 <main class="flex-grow-1"><?= $content ?></main>
 
-<footer class="app-footer py-3 text-center">
-    <div class="container small">Bài tập lớn Lập trình Web – Nhóm 7</div>
+<footer class="bg-dark text-white-50 py-4 mt-5 text-center">
+    <div class="container">
+        <p class="mb-2 text-white opacity-75">
+            Hệ thống hỗ trợ kết nối sinh viên với giảng viên, giúp việc tư vấn học tập diễn ra thuận tiện, đúng hẹn và hiệu quả.
+        </p>
+        <p class="small text-muted mb-0">
+            Được xây dựng và phát triển bởi Nhóm 7 – Lập trình Web.
+        </p>
+    </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
