@@ -77,8 +77,8 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
 
 <main class="flex-grow-1"><?= $content ?></main>
 
-<footer class="app-footer py-3">
-    <div class="container small">Bài tập lớn Lập trình Web: PHP 8, MySQL, PDO, kiến trúc MVC.</div>
+<footer class="app-footer py-3 text-center">
+    <div class="container small">Bài tập lớn Lập trình Web – Nhóm 7</div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
