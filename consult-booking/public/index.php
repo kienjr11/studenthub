@@ -46,4 +46,4 @@ set_exception_handler(static function (Throwable $e): void {
 });
 
 PhienLamViec::start();
-(new DinhTuyen(require APP_PATH . '/tuyenduong.php'))->dispatch();
+(new DinhTuyen(require APP_PATH . '/tuyeduong.php'))->dispatch();
