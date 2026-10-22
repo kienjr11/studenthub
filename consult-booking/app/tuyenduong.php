@@ -41,4 +41,8 @@ return [
     // Đánh giá / Phản hồi của Sinh viên
     ['GET',  'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'index'],   // trang Lịch hẹn & Đánh giá
     ['POST', 'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'gui'],
+
+    // Sinh viên đặt lịch hẹn
+    ['GET',  'sinh-vien/dat-lich',   DieuKhienLichHenGiangVien::class, 'hienThiFormDatLich'],
+    ['POST', 'sinh-vien/dat-lich',   DieuKhienLichHenGiangVien::class, 'xuLyDatLich'],
 ];

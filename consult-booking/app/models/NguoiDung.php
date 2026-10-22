@@ -156,4 +156,17 @@ final class NguoiDung extends MoHinh
         $st->execute();
         return $st->fetchAll();
     }
+
+    /** Danh sách người dùng đang hoạt động theo vai trò (dùng cho ô chọn giảng viên khi đặt lịch). */
+    public function layTheoVaiTro(string $vaiTro): array
+    {
+        $st = $this->db->prepare(
+            "SELECT ma_nguoi_dung, ho_ten, email
+               FROM nguoi_dung
+              WHERE vai_tro = :vai_tro AND trang_thai = 'hoat_dong'
+              ORDER BY ho_ten"
+        );
+        $st->execute([':vai_tro' => $vaiTro]);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

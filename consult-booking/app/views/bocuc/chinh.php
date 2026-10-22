@@ -45,6 +45,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle<?= $active('sinh-vien/') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Sinh viên</a>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="<?= e(url('sinh-vien/dat-lich')) ?>">Đặt lịch hẹn</a></li>
                             <li><a class="dropdown-item" href="<?= e(url('sinh-vien/phan-hoi')) ?>">Lịch hẹn & Đánh giá</a></li>
                         </ul>
                     </li>
