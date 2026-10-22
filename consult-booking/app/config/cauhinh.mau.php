@@ -1,7 +1,6 @@
 <?php
 /**
  * Cấu hình mẫu (được commit lên Git).
- * Cách dùng: sao chép file này thành cauhinh.local.php rồi sửa thông tin thật.
  * cauhinh.local.php đã nằm trong .gitignore nên mật khẩu CSDL không bị đẩy lên repo.
  */
 return [
@@ -15,7 +14,7 @@ return [
         'port'    => 3306,
         'name'    => 'dat_lich_tu_van',
         'user'    => 'root',
-        'pass'    => '',                   // XAMPP mặc định để trống
+        'pass'    => '',                   
         'charset' => 'utf8mb4',
     ],
     'session' => [
