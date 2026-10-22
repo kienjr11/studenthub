@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -52,8 +53,12 @@ final class HoSoGiangVien extends MoHinh
                 ON DUPLICATE KEY UPDATE hoc_ham = VALUES(hoc_ham), hoc_vi = VALUES(hoc_vi), so_dien_thoai = VALUES(so_dien_thoai),
                                         phong_lam_viec = VALUES(phong_lam_viec), gioi_thieu = VALUES(gioi_thieu)');
             $st->execute([
-                'id' => $id, 'hh' => $d['hoc_ham'], 'hv' => $d['hoc_vi'], 'sdt' => $d['so_dien_thoai'],
-                'phong' => $d['phong_lam_viec'], 'gt' => $d['gioi_thieu'],
+                'id' => $id,
+                'hh' => $d['hoc_ham'],
+                'hv' => $d['hoc_vi'],
+                'sdt' => $d['so_dien_thoai'],
+                'phong' => $d['phong_lam_viec'],
+                'gt' => $d['gioi_thieu'],
             ]);
 
             $this->db->prepare('DELETE FROM giang_vien_chuyen_mon WHERE ma_giang_vien = :id')->execute(['id' => $id]);
@@ -147,7 +152,7 @@ final class HoSoGiangVien extends MoHinh
             'Giới thiệu bản thân'   => !empty($profile['gioi_thieu']),
             'Lĩnh vực tư vấn'       => !empty($profile['chuyen_mon']),
         ];
-        $missing = array_keys(array_filter($checks, static fn (bool $ok) => !$ok));
+        $missing = array_keys(array_filter($checks, static fn(bool $ok) => !$ok));
         return ['percent' => (int) round((count($checks) - count($missing)) * 100 / count($checks)), 'missing' => $missing];
     }
 
@@ -188,5 +193,31 @@ final class HoSoGiangVien extends MoHinh
         $st->bindValue(':lim', $limit, PDO::PARAM_INT);
         $st->execute();
         return $st->fetchAll();
+    }
+
+    /**
+     * Lấy danh sách toàn bộ giảng viên kèm tên đơn vị (khoa) và danh sách môn học/chuyên môn
+     */
+    public function layTatCaGiangVienKemThongTin(): array
+    {
+        $sql = "SELECT nd.ma_nguoi_dung, nd.ho_ten, nd.email, dv.ten_don_vi AS ten_khoa,
+                       (SELECT GROUP_CONCAT(cm.ten_chuyen_mon SEPARATOR '||')
+                          FROM giang_vien_chuyen_mon g 
+                          JOIN chuyen_mon cm ON cm.ma_chuyen_mon = g.ma_chuyen_mon
+                         WHERE g.ma_giang_vien = nd.ma_nguoi_dung) AS chuyen_mon_ds
+                FROM nguoi_dung nd
+                LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
+                WHERE nd.vai_tro = 'giang_vien' AND nd.trang_thai = 'hoat_dong'
+                ORDER BY nd.ho_ten ASC";
+
+        $st = $this->db->prepare($sql);
+        $st->execute();
+        $rows = $st->fetchAll();
+
+        foreach ($rows as &$r) {
+            $r['chuyen_mon_list'] = !empty($r['chuyen_mon_ds']) ? explode('||', $r['chuyen_mon_ds']) : [];
+        }
+
+        return $rows;
     }
 }

@@ -111,4 +111,33 @@
       }, 400);
     });
   }
+
+  // Trang đặt lịch: chọn giảng viên thì nạp danh sách môn học (chuyên môn) của giảng viên đó
+  var selGv = document.getElementById("giang_vien_id");
+  var selMon = document.getElementById("mon_hoc");
+  var khoiMon = document.getElementById("khoi_chon_mon");
+  if (selGv && selMon && khoiMon) {
+    var capNhatMon = function () {
+      var opt = selGv.options[selGv.selectedIndex];
+      var raw = opt ? opt.getAttribute("data-chuyenmon") || "" : "";
+      var ds = raw.split(/[,;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+      selMon.innerHTML = "";
+      var first = document.createElement("option");
+      first.value = "";
+      first.textContent = "-- Chọn môn học --";
+      selMon.appendChild(first);
+      ds.forEach(function (mon) {
+        var o = document.createElement("option");
+        o.value = mon;
+        o.textContent = mon;
+        selMon.appendChild(o);
+      });
+      selMon.required = ds.length > 0;
+      if (ds.length === 1) {
+        selMon.value = ds[0];
+      }
+    };
+    selGv.addEventListener("change", capNhatMon);
+    capNhatMon();
+  }
 })();

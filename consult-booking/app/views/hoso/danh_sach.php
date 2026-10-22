@@ -1,5 +1,6 @@
 <?php
 /** @var array $rows @var array $filters @var int $page @var int $pages @var int $total @var array $departments @var array $specialties */
+$nguoiXem = XacThuc::user();
 $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filter($filters + ['page' => $p > 1 ? $p : 0], static fn ($v) => $v !== '' && $v !== 0));
 ?>
 <div class="container py-4">
@@ -48,7 +49,12 @@ $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filte
                     <div class="d-flex flex-wrap gap-1 mb-3">
                         <?php foreach ($r['chuyen_mon'] as $cm): ?><span class="pill"><?= e($cm) ?></span><?php endforeach; ?>
                     </div>
-                    <a class="btn btn-sm btn-outline-primary mt-auto align-self-start" href="<?= e(url('giang-vien/chi-tiet', ['id' => $r['ma_nguoi_dung']])) ?>">Xem hồ sơ</a>
+                    <div class="d-flex gap-2 mt-auto">
+                        <a class="btn btn-sm btn-outline-primary" href="<?= e(url('giang-vien/chi-tiet', ['id' => $r['ma_nguoi_dung']])) ?>">Xem hồ sơ</a>
+                        <?php if (($nguoiXem['vai_tro'] ?? '') === 'sinh_vien'): ?>
+                            <a class="btn btn-sm btn-primary" href="<?= e(url('sinh-vien/dat-lich', ['giang_vien_id' => $r['ma_nguoi_dung']])) ?>">Đặt lịch</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>

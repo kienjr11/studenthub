@@ -20,7 +20,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $this->view('khuvuc/sinhvien/dat_lich', [
             'title'             => 'Đặt lịch hẹn tư vấn',
             'danhSachGiangVien' => (new NguoiDung())->layTheoVaiTro('giang_vien'),
-            'cu'                => $_SESSION['_dat_lich_cu'] ?? [],
+            // Có dữ liệu cũ (đặt lỗi) thì dùng lại; không thì lấy giảng viên được chọn từ trang "Tìm giảng viên".
+            'cu'                => $_SESSION['_dat_lich_cu'] ?? ['giang_vien_id' => (int) ($_GET['giang_vien_id'] ?? 0)],
         ]);
         unset($_SESSION['_dat_lich_cu']);
     }
