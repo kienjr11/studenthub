@@ -86,4 +86,46 @@ class CuocHen extends MoHinh
             ':ma_cuoc_hen' => $maCuocHen
         ]);
     }
+
+    /**
+     * Giảng viên đã có khung giờ (còn hiệu lực) chồng lên khoảng [bắt đầu, kết thúc) chưa?
+     * Khung giờ chỉ tính là "bận" khi có cuộc hẹn đang cho_duyet / da_duyet / hoan_thanh.
+     */
+    public function kiemTraTrungLich(int $maGiangVien, string $batDau, string $ketThuc): bool
+    {
+        $st = $this->db->prepare(
+            "SELECT COUNT(*)
+               FROM khung_gio kg
+               JOIN cuoc_hen ch ON ch.ma_khung_gio = kg.ma_khung_gio
+              WHERE kg.ma_giang_vien = :gv
+                AND ch.trang_thai IN ('cho_duyet', 'da_duyet', 'hoan_thanh')
+                AND kg.bat_dau < :ket_thuc AND kg.ket_thuc > :bat_dau"
+        );
+        $st->execute([':gv' => $maGiangVien, ':bat_dau' => $batDau, ':ket_thuc' => $ketThuc]);
+        return (int) $st->fetchColumn() > 0;
+    }
+
+    /**
+     * Sinh viên đặt lịch: tạo khung giờ theo giờ sinh viên chọn rồi tạo cuộc hẹn (cho_duyet) trong một transaction.
+     * Trả về mã cuộc hẹn mới.
+     */
+    public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe): int
+    {
+        $this->db->beginTransaction();
+        try {
+            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc) VALUES (:gv, :bd, :kt)')
+                ->execute([':gv' => $maGiangVien, ':bd' => $batDau, ':kt' => $ketThuc]);
+            $maKhungGio = (int) $this->db->lastInsertId();
+
+            $this->db->prepare("INSERT INTO cuoc_hen (ma_khung_gio, ma_sinh_vien, chu_de, trang_thai) VALUES (:kg, :sv, :cd, 'cho_duyet')")
+                ->execute([':kg' => $maKhungGio, ':sv' => $maSinhVien, ':cd' => $chuDe]);
+            $maCuocHen = (int) $this->db->lastInsertId();
+
+            $this->db->commit();
+            return $maCuocHen;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
 }
