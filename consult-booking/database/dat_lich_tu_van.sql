@@ -11,6 +11,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Dọn sạch các bảng cũ (nếu có)
+DROP TABLE IF EXISTS ho_so_giang_vien;
 DROP TABLE IF EXISTS feedback, appointments, slots, lecturer_specialties, users, specialties, departments;
 DROP TABLE IF EXISTS phan_hoi, cuoc_hen, khung_gio, giang_vien_chuyen_mon, nguoi_dung, chuyen_mon, don_vi;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -59,6 +60,22 @@ CREATE TABLE giang_vien_chuyen_mon (
     PRIMARY KEY (ma_giang_vien, ma_chuyen_mon),
     CONSTRAINT fk_gvcm_giang_vien FOREIGN KEY (ma_giang_vien) REFERENCES nguoi_dung(ma_nguoi_dung) ON DELETE CASCADE,
     CONSTRAINT fk_gvcm_chuyen_mon FOREIGN KEY (ma_chuyen_mon) REFERENCES chuyen_mon(ma_chuyen_mon) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- MODULE HỒ SƠ & CHUYÊN MÔN: ho_so_giang_vien (quan hệ 1-1 với nguoi_dung có vai trò giang_vien)
+-- Họ tên và đơn vị vẫn nằm ở nguoi_dung; bảng này chỉ chứa thông tin riêng của giảng viên.
+-- Lĩnh vực tư vấn dùng lại bảng giang_vien_chuyen_mon (quan hệ n-n) đã có.
+-- ---------------------------------------------------------------------
+CREATE TABLE ho_so_giang_vien (
+    ma_giang_vien  INT UNSIGNED NOT NULL PRIMARY KEY,
+    hoc_ham        ENUM('giao_su','pho_giao_su') NULL,
+    hoc_vi         ENUM('cu_nhan','ky_su','thac_si','tien_si') NULL,
+    so_dien_thoai  VARCHAR(20)  NULL,
+    phong_lam_viec VARCHAR(100) NULL,
+    gioi_thieu     VARCHAR(1000) NULL,
+    ngay_cap_nhat  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ho_so_giang_vien FOREIGN KEY (ma_giang_vien) REFERENCES nguoi_dung(ma_nguoi_dung) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -134,3 +151,7 @@ INSERT INTO nguoi_dung (ho_ten, email, mat_khau_bam, vai_tro, trang_thai, ma_don
  ('Đỗ Minh Khôi',       'sv.khoi@demo.test',    '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien',  'da_khoa',   NULL);
 
 INSERT INTO giang_vien_chuyen_mon (ma_giang_vien, ma_chuyen_mon) VALUES (2, 1), (2, 2), (3, 5), (3, 6);
+
+INSERT INTO ho_so_giang_vien (ma_giang_vien, hoc_ham, hoc_vi, so_dien_thoai, phong_lam_viec, gioi_thieu) VALUES
+ (2, NULL, 'tien_si', '0901234567', 'P.305 – Nhà A', 'Giảng dạy lập trình web và cơ sở dữ liệu; sẵn sàng tư vấn đồ án và định hướng nghề nghiệp lập trình viên.'),
+ (3, 'pho_giao_su', 'tien_si', NULL, 'P.210 – Nhà B', 'Tư vấn khởi nghiệp, xây dựng kế hoạch kinh doanh và kỹ năng xin việc.');
