@@ -122,6 +122,18 @@ final class HoSoGiangVien extends MoHinh
         return $rows;
     }
 
+    /** Chuyên môn mà ít nhất một giảng viên đang hoạt động của đơn vị đó có (chuyen_mon không gắn trực tiếp với don_vi). */
+    public function specialtiesOfDepartment(int $deptId): array
+    {
+        $st = $this->db->prepare("SELECT DISTINCT cm.ma_chuyen_mon AS ma, cm.ten_chuyen_mon AS ten
+            FROM giang_vien_chuyen_mon g
+            JOIN nguoi_dung nd ON nd.ma_nguoi_dung = g.ma_giang_vien AND nd.vai_tro = 'giang_vien' AND nd.trang_thai = 'hoat_dong'
+            JOIN chuyen_mon cm ON cm.ma_chuyen_mon = g.ma_chuyen_mon
+            WHERE nd.ma_don_vi = :d ORDER BY cm.ten_chuyen_mon");
+        $st->execute(['d' => $deptId]);
+        return $st->fetchAll();
+    }
+
     // ---- Dashboard cá nhân ----
 
     /** Mức độ hoàn thiện hồ sơ: phần trăm + danh sách mục còn thiếu. */

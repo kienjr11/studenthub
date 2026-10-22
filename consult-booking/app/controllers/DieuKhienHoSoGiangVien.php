@@ -96,6 +96,12 @@ final class DieuKhienHoSoGiangVien extends BoDieuKhien
             'spec' => max(0, (int) ($_GET['spec'] ?? 0)),
         ];
         $model = new HoSoGiangVien();
+        // Chọn khoa thì ô chuyên môn chỉ liệt kê chuyên môn có giảng viên của khoa đó
+        $specialties = $filters['dept'] > 0 ? $model->specialtiesOfDepartment($filters['dept']) : (new DanhMuc('specialties'))->all();
+        $specialtyIds = array_map('intval', array_column($specialties, 'ma'));
+        if ($filters['spec'] > 0 && !in_array($filters['spec'], $specialtyIds, true)) {
+            $filters['spec'] = 0;   // chuyên môn đang chọn không thuộc khoa mới -> bỏ lọc chuyên môn
+        }
         $total = $model->countSearch($filters);
         $pages = max(1, (int) ceil($total / self::PER_PAGE));
         $page = min(max(1, (int) ($_GET['page'] ?? 1)), $pages);
@@ -108,7 +114,7 @@ final class DieuKhienHoSoGiangVien extends BoDieuKhien
             'pages'       => $pages,
             'total'       => $total,
             'departments' => (new DanhMuc('departments'))->all(),
-            'specialties' => (new DanhMuc('specialties'))->all(),
+            'specialties' => $specialties,
         ]);
     }
 

@@ -12,13 +12,13 @@ $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filte
         <input type="hidden" name="r" value="giang-vien/danh-sach">
         <div class="col-md-4"><input type="search" class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Tìm theo tên giảng viên" maxlength="100" aria-label="Tìm theo tên"></div>
         <div class="col-6 col-md-3">
-            <select class="form-select" name="dept" aria-label="Lọc theo khoa/đơn vị">
+            <select class="form-select" name="dept" aria-label="Lọc theo khoa/đơn vị" data-autosubmit data-reset="spec">
                 <option value="0">Mọi khoa / đơn vị</option>
                 <?php foreach ($departments as $d): ?><option value="<?= e($d['ma']) ?>" <?= $filters['dept'] === (int) $d['ma'] ? 'selected' : '' ?>><?= e($d['ten']) ?></option><?php endforeach; ?>
             </select>
         </div>
         <div class="col-6 col-md-3">
-            <select class="form-select" name="spec" aria-label="Lọc theo chuyên môn">
+            <select class="form-select" name="spec" aria-label="Lọc theo chuyên môn" data-autosubmit>
                 <option value="0">Mọi chuyên môn</option>
                 <?php foreach ($specialties as $s): ?><option value="<?= e($s['ma']) ?>" <?= $filters['spec'] === (int) $s['ma'] ? 'selected' : '' ?>><?= e($s['ten']) ?></option><?php endforeach; ?>
             </select>
