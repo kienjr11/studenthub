@@ -10,6 +10,10 @@ Repo này gồm **khung dự án** và **module Hệ thống chung & Xác thực
 - Đăng ký / đăng nhập / đăng xuất cho Sinh viên, Giảng viên, Admin.
   - Sinh viên đăng ký xong dùng được ngay. Giảng viên đăng ký xong ở trạng thái **chờ duyệt** cho tới khi admin phê duyệt. Admin không đăng ký công khai (tạo bằng dữ liệu mẫu hoặc do admin khác phân quyền).
   - Kiểm tra email trùng ngay khi gõ bằng Fetch API (endpoint JSON `auth/check-email`).
+- Tài khoản của tôi (mọi vai trò): sửa họ tên, giảng viên chọn lĩnh vực tư vấn, đổi mật khẩu (phải nhập lại mật khẩu hiện tại; đổi xong các thiết bị khác bị đăng xuất).
+- Hồ sơ & chuyên môn của giảng viên: tự sửa họ tên, đơn vị, học hàm, học vị, số điện thoại, phòng làm việc, giới thiệu và lĩnh vực tư vấn; có bảng điều khiển (mức đầy đủ của hồ sơ, thống kê, lịch hẹn sắp tới).
+- Tìm giảng viên (mọi người dùng đã đăng nhập): tìm theo tên, lọc theo đơn vị / lĩnh vực, phân trang, xem trang chi tiết.
+- Đặt lịch và phản hồi: sinh viên chọn giảng viên và giờ hẹn (chặn giờ trong quá khứ và trùng lịch), xem lịch hẹn của mình và đánh giá sau khi cuộc hẹn được duyệt / hoàn thành; giảng viên duyệt, từ chối, hoàn thành và ghi chú phản hồi.
 - Admin Dashboard:
   - Số liệu tổng quan và danh sách giảng viên chờ duyệt.
   - Quản lý tài khoản: tìm kiếm, lọc theo vai trò/trạng thái, phân trang, khóa / mở khóa / phê duyệt, đổi vai trò và đơn vị.
@@ -58,9 +62,9 @@ public/                 Thư mục gốc web: index.php (front controller, giữ
 app/
   config/               cauhinh.mau.php (commit), cauhinh.local.php (không commit)
   core/                 CoSoDuLieu, PhienLamViec, ChongCsrf, XacThuc, KiemTraDuLieu, DinhTuyen, GiaoDien, BoDieuKhien, MoHinh
-  models/               NguoiDung, DanhMuc (Đơn vị / Chuyên môn)
-  controllers/          DieuKhienTrangChu, DieuKhienXacThuc, DieuKhienKhuVuc, DieuKhienQuanTri, DieuKhienDanhMuc
-  views/                bocuc/, trangchu/, xacthuc/, quantri/, khuvuc/, loi/
+  models/               NguoiDung, DanhMuc (Đơn vị / Chuyên môn), CuocHen, HoSoGiangVien, PhanHoi
+  controllers/          DieuKhienTrangChu, DieuKhienXacThuc, DieuKhienKhuVuc, DieuKhienQuanTri, DieuKhienDanhMuc, DieuKhienTaiKhoan, DieuKhienHoSoGiangVien, DieuKhienLichHenGiangVien, DieuKhienPhanHoi
+  views/                bocuc/, trangchu/, xacthuc/, quantri/, khuvuc/, taikhoan/, hoso/, loi/
   tuyenduong.php        Bảng route: [phương thức, route, controller, action]
   hamtro.php            e(), url(), redirect(), flash(), config() ...
 database/
@@ -68,7 +72,7 @@ database/
 docs/
   DATABASE.md           Giải thích CSDL: ERD, từ điển dữ liệu, ràng buộc
   TENFILE.md            Bảng đối chiếu tên file/class cũ và mới, quy ước đặt tên
-  TESTCASES.md          Checklist kiểm thử (26 trường hợp)
+  TESTCASES.md          Checklist kiểm thử (37 trường hợp)
 ```
 
 ## Luồng route → controller → model → view
@@ -91,6 +95,7 @@ Ví dụ đăng nhập (`POST ?r=auth/login`):
 | Session | Cookie `HttpOnly`, `SameSite=Lax`, `Secure` khi chạy HTTPS, strict mode, đổi session id sau đăng nhập và đăng xuất, hết phiên sau 30 phút không thao tác. |
 | CSRF | Token ngẫu nhiên theo phiên, kiểm tra tập trung trong `DinhTuyen` cho mọi POST (form dùng trường `_csrf`, Fetch dùng header `X-CSRF-Token`), đăng xuất bằng POST. |
 | Kiểm soát truy cập | `XacThuc::requireRole()` ở server. Người dùng được đọc lại từ CSDL ở mỗi request nên khóa tài khoản hoặc đổi vai trò có hiệu lực ngay. Admin không tự khóa hoặc tự đổi vai trò của mình. |
+| Đổi mật khẩu | Phải nhập lại mật khẩu hiện tại; sai 5 lần thì bị đăng xuất và khóa tạm (dùng chung bộ đếm với đăng nhập). Đổi xong, session id được cấp mới và mọi phiên khác của tài khoản bị vô hiệu nhờ \"dấu vân tay\" mật khẩu lưu trong phiên (không cần thêm cột CSDL). |
 | Chống dò mật khẩu / email | Khóa tạm 10 phút sau 5 lần sai; thông báo lỗi chung cho email sai và mật khẩu sai; hash giả để thời gian phản hồi gần bằng nhau; endpoint check-email giới hạn 20 lượt/phút/phiên. |
 | Header | CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`. |
 | Quản lý mã | `cauhinh.local.php` và `.env` nằm trong `.gitignore`; repo chỉ chứa `cauhinh.mau.php`. |

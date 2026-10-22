@@ -77,7 +77,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
             </ul>
             <div class="d-flex align-items-center gap-2">
                 <?php if ($me): ?>
-                    <span class="nav-user"><?= e($me['ho_ten']) ?> <span class="badge nav-role"><?= e(role_label($me['vai_tro'])) ?></span></span>
+                    <a class="nav-user" href="<?= e(url('tai-khoan/ho-so')) ?>" title="Tài khoản của tôi"><?= e($me['ho_ten']) ?> <span class="badge nav-role"><?= e(role_label($me['vai_tro'])) ?></span></a>
                     <form method="post" action="<?= e(url('auth/logout')) ?>" class="m-0">
                         <?= csrf_field() ?>
                         <button class="btn btn-sm btn-outline-light" type="submit">Đăng xuất</button>

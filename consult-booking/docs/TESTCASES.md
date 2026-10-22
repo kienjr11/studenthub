@@ -31,3 +31,14 @@ Loại: **H** = dữ liệu hợp lệ, **S** = dữ liệu sai, **Q** = truy c�
 | 24 | H | Đăng xuất | Bấm Đăng xuất, sau đó bấm Back và mở lại trang quản trị | Bị chuyển về đăng nhập; mở `?r=auth/logout` bằng URL (GET) không đăng xuất được | |
 | 25 | H | Fetch kiểm tra email (JSON) | Ở trang Đăng ký gõ email đã có / chưa có / sai dạng | Hiện lần lượt "đã được sử dụng" / "có thể sử dụng" / "chưa đúng định dạng" mà không tải lại trang | |
 | 26 | H | Hết phiên do không thao tác | Đặt `idle_timeout` = 10 trong config, đăng nhập, chờ 15 giây rồi tải lại | Bị đăng xuất kèm thông báo phiên hết hạn | |
+| 27 | Q | Chưa đăng nhập vào hồ sơ / đổi mật khẩu | Mở `?r=tai-khoan/ho-so` và `?r=tai-khoan/doi-mat-khau` | Chuyển về trang đăng nhập | |
+| 28 | H | Sửa họ tên hợp lệ | Hồ sơ cá nhân, nhập họ tên mới, Lưu | Báo đã cập nhật; tên mới hiện trên menu và trong CSDL | |
+| 29 | S | Họ tên không hợp lệ | Để trống; 1 ký tự; 101 ký tự; `<script>x</script>` | Báo lỗi dưới ô nhập; họ tên cũ giữ nguyên | |
+| 30 | Q | Gửi thêm trường không được phép khi sửa hồ sơ | Gửi POST kèm `vai_tro=quan_tri`, `email`, `ma_don_vi` | Các trường thừa bị bỏ qua; vai trò, email, đơn vị không đổi | |
+| 31 | H | Giảng viên chọn lĩnh vực tư vấn | Tick/bỏ tick chuyên môn, Lưu; thử gửi mã không tồn tại | Chỉ lưu các mã hợp lệ; bỏ hết thì danh sách rỗng; giảng viên khác không bị ảnh hưởng | |
+| 32 | Q | Sinh viên / admin gửi POST chọn chuyên môn | POST `tai-khoan/chuyen-mon` | Lỗi 403 | |
+| 33 | S | Đổi mật khẩu với dữ liệu sai | Để trống mật khẩu hiện tại; mật khẩu mới yếu / quá ngắn / nhập lại không khớp / trùng mật khẩu cũ | Báo lỗi tương ứng; mật khẩu không đổi | |
+| 34 | S | Mật khẩu hiện tại sai | Nhập sai mật khẩu hiện tại | Báo "không đúng"; bộ đếm sai tăng; mật khẩu không đổi | |
+| 35 | H | Đổi mật khẩu thành công | Nhập đúng mật khẩu hiện tại và mật khẩu mới hợp lệ | Báo thành công; đăng nhập được bằng mật khẩu mới, mật khẩu cũ không còn dùng được; session id đổi | |
+| 36 | H | Phiên ở thiết bị khác sau khi đổi mật khẩu | Đăng nhập cùng tài khoản ở 2 trình duyệt, đổi mật khẩu ở một nơi, tải lại nơi còn lại | Nơi còn lại bị đăng xuất; nơi đổi mật khẩu vẫn đăng nhập | |
+| 37 | S | Dò mật khẩu hiện tại | Nhập sai mật khẩu hiện tại 5 lần liên tiếp | Lần thứ 5 bị đăng xuất và khóa tạm; đăng nhập đúng mật khẩu vẫn bị chặn trong thời gian khóa | |

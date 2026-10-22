@@ -10,7 +10,8 @@ final class NguoiDung extends MoHinh
     /** Không trả mat_khau_bam để tránh vô tình đưa ra view. */
     public function find(int $id): ?array
     {
-        $st = $this->db->prepare('SELECT ' . self::COT_CONG_KHAI . ' FROM nguoi_dung nd
+        $st = $this->db->prepare('SELECT ' . self::COT_CONG_KHAI . ', LEFT(SHA2(nd.mat_khau_bam, 256), 16) AS dau_van_tay_mk
+            FROM nguoi_dung nd
             LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi WHERE nd.ma_nguoi_dung = :id');
         $st->execute(['id' => $id]);
         return $st->fetch() ?: null;
@@ -67,6 +68,55 @@ final class NguoiDung extends MoHinh
     {
         $st = $this->db->prepare('UPDATE nguoi_dung SET mat_khau_bam = :h WHERE ma_nguoi_dung = :id');
         $st->execute(['h' => $hash, 'id' => $id]);
+    }
+
+    // ---- Tài khoản của tôi ----
+
+    public function capNhatHoTen(int $id, string $hoTen): void
+    {
+        $st = $this->db->prepare('UPDATE nguoi_dung SET ho_ten = :t WHERE ma_nguoi_dung = :id');
+        $st->execute(['t' => $hoTen, 'id' => $id]);
+    }
+
+    public function layMatKhauBam(int $id): ?string
+    {
+        $st = $this->db->prepare('SELECT mat_khau_bam FROM nguoi_dung WHERE ma_nguoi_dung = :id');
+        $st->execute(['id' => $id]);
+        $bam = $st->fetchColumn();
+        return $bam === false ? null : (string) $bam;
+    }
+
+    /** Lưu mật khẩu mới (đã băm) và xóa trạng thái khóa tạm do đăng nhập sai. */
+    public function capNhatMatKhau(int $id, string $matKhauBam): void
+    {
+        $st = $this->db->prepare('UPDATE nguoi_dung SET mat_khau_bam = :h, so_lan_dang_nhap_sai = 0, khoa_den = NULL WHERE ma_nguoi_dung = :id');
+        $st->execute(['h' => $matKhauBam, 'id' => $id]);
+    }
+
+    /** @return int[] mã các chuyên môn của giảng viên */
+    public function layChuyenMon(int $maGiangVien): array
+    {
+        $st = $this->db->prepare('SELECT ma_chuyen_mon FROM giang_vien_chuyen_mon WHERE ma_giang_vien = :id');
+        $st->execute(['id' => $maGiangVien]);
+        return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /** Thay toàn bộ chuyên môn của giảng viên bằng danh sách mới (trong một giao dịch). */
+    public function datChuyenMon(int $maGiangVien, array $maChuyenMon): void
+    {
+        $this->db->beginTransaction();
+        try {
+            $xoa = $this->db->prepare('DELETE FROM giang_vien_chuyen_mon WHERE ma_giang_vien = :id');
+            $xoa->execute(['id' => $maGiangVien]);
+            $them = $this->db->prepare('INSERT INTO giang_vien_chuyen_mon (ma_giang_vien, ma_chuyen_mon) VALUES (:gv, :cm)');
+            foreach ($maChuyenMon as $cm) {
+                $them->execute(['gv' => $maGiangVien, 'cm' => (int) $cm]);
+            }
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     // ---- Quản trị ----
