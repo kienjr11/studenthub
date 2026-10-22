@@ -40,6 +40,16 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                     <li class="nav-item"><a class="nav-link<?= $route === 'giang-vien/danh-sach' || $route === 'giang-vien/chi-tiet' ? ' active' : '' ?>" href="<?= e(url('giang-vien/danh-sach')) ?>">Tìm giảng viên</a></li>
                 <?php endif; ?>
 
+                <!-- Menu dành riêng cho Sinh viên -->
+                <?php if ($me && $me['vai_tro'] === 'sinh_vien'): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle<?= $active('sinh-vien/') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Sinh viên</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="<?= e(url('sinh-vien/phan-hoi')) ?>">Lịch hẹn & Đánh giá</a></li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+
                 <!-- Menu dành riêng cho Giảng viên -->
                 <?php if ($me && $me['vai_tro'] === 'giang_vien'): ?>
                     <li class="nav-item dropdown">

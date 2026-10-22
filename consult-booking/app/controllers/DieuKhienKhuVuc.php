@@ -22,7 +22,8 @@ final class DieuKhienKhuVuc extends BoDieuKhien
 
     public function lecturer(): void
     {
-               $id = (int) XacThuc::id();
+        XacThuc::requireRole('giang_vien');
+        $id = (int) XacThuc::id();
         $model = new HoSoGiangVien();
         $profile = $model->find($id);
         $this->view('khuvuc/giangvien/bang_dieu_khien', [
