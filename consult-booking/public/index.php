@@ -21,7 +21,10 @@ spl_autoload_register(static function (string $class): void {
 });
 
 date_default_timezone_set((string) config('app.timezone', 'Asia/Ho_Chi_Minh'));
-ini_set('display_errors', config('app.debug') ? '1' : '0');
+
+// Bật hiển thị lỗi trực tiếp trên màn hình để dễ dàng debug khi gặp sự cố
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
@@ -37,7 +40,7 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' https://c
 set_exception_handler(static function (Throwable $e): void {
     error_log((string) $e);
     http_response_code(500);
-    $msg = config('app.debug') ? $e->getMessage() : 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+    $msg = $e->getMessage(); // Luôn hiển thị chi tiết thông điệp lỗi để debug nhanh chóng
     try {
         echo GiaoDien::render('loi/loi', ['code' => 500, 'heading' => 'Lỗi hệ thống', 'message' => $msg, 'title' => '500'], 'trong');
     } catch (Throwable) {

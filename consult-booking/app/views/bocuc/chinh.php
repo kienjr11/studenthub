@@ -36,6 +36,18 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                 <?php if ($me): ?>
                     <li class="nav-item"><a class="nav-link<?= $active('dashboard/') ?>" href="<?= e(url('dashboard/index')) ?>">Khu vực của tôi</a></li>
                 <?php endif; ?>
+
+                <!-- Menu dành riêng cho Giảng viên -->
+                <?php if ($me && $me['vai_tro'] === 'giang_vien'): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle<?= $active('giang-vien/') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Giảng viên</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="<?= e(url('giang-vien/lich-hen')) ?>">Quản lý lịch hẹn</a></li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+
+                <!-- Menu dành riêng cho Quản trị viên -->
                 <?php if ($me && $me['vai_tro'] === 'quan_tri'): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle<?= $active('admin/') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Quản trị</a>

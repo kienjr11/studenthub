@@ -29,8 +29,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $data = $this->cuocHenModel->layDanhSachChoGiangVien((int)$maGiangVien, $trangThai, $trang);
 
-        // Sử dụng GiaoDien::render chuẩn của framework
-        GiaoDien::render('khuvuc/giangvien/danh_sach_hen', [
+        // THÊM CHỮ "echo" Ở ĐÂY ĐỂ XUẤT HTML RA TRÌNH DUYỆT
+        echo GiaoDien::render('khuvuc/giangvien/danh_sach_hen', [
             'tieu_de'        => 'Quản lý lịch hẹn tư vấn',
             'danh_sach'      => $data['danh_sach'] ?? [],
             'tong_trang'     => $data['tong_trang'] ?? 1,
