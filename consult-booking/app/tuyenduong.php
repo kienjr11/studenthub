@@ -31,4 +31,10 @@ return [
     ['GET',  'giang-vien/lich-hen',         DieuKhienLichHenGiangVien::class, 'index'],
     ['POST', 'giang-vien/lich-hen/cap-nhat', DieuKhienLichHenGiangVien::class, 'capNhatTrangThai'],
     ['POST', 'giang-vien/lich-hen/phan-hoi',  DieuKhienLichHenGiangVien::class, 'luuPhanHoi'],
+    
+    // Hồ sơ & chuyên môn
+    ['GET',  'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'profile'],
+    ['POST', 'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'saveProfile'],
+    ['GET',  'giang-vien/danh-sach', DieuKhienHoSoGiangVien::class, 'directory'],
+    ['GET',  'giang-vien/chi-tiet',  DieuKhienHoSoGiangVien::class, 'detail'],
 ];

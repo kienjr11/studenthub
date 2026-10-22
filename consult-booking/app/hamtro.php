@@ -100,3 +100,12 @@ function initial(string $name): string
     $last = (string) end($parts);
     return mb_strtoupper(mb_substr($last, 0, 1)) ?: '?';
 }
+
+/** Tên hiển thị kèm học hàm, học vị: "PGS. TS. Trần Thu Hà". Cần các khóa ho_ten, hoc_ham, hoc_vi trong $row. */
+function lecturer_title(array $row): string
+{
+    $prefix = trim(
+        (HoSoGiangVien::HOC_HAM_NGAN[$row['hoc_ham'] ?? ''] ?? '') . ' ' . (HoSoGiangVien::HOC_VI_NGAN[$row['hoc_vi'] ?? ''] ?? '')
+    );
+    return ($prefix !== '' ? $prefix . ' ' : '') . $row['ho_ten'];
+}
