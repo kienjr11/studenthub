@@ -189,3 +189,11 @@ input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px var(--field) inset; -w
     .slot-row { grid-template-columns: repeat(4, 1fr); }
     .slot-who { grid-column: 1 / -1; font-weight: 600; }
 }
+
+/* ---- Tài khoản của tôi ---- */
+a.nav-user { text-decoration: none; }
+a.nav-user:hover { color: #fff; text-decoration: underline; }
+.form-check-input { background-color: var(--field); border-color: #3a5573; }
+.form-check-input:checked { background-color: var(--teal); border-color: var(--teal); }
+.form-check-input:focus { border-color: var(--teal-bright); box-shadow: 0 0 0 .2rem rgba(70, 201, 194, .22); }
+.chuyen-mon-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .5rem 1rem; }

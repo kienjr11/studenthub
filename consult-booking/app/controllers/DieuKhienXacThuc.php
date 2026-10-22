@@ -58,7 +58,8 @@ final class DieuKhienXacThuc extends BoDieuKhien
         }
 
         if (password_needs_rehash($user['mat_khau_bam'], PASSWORD_DEFAULT)) {
-            $users->updatePasswordHash((int) $user['ma_nguoi_dung'], password_hash($password, PASSWORD_DEFAULT));
+            $user['mat_khau_bam'] = password_hash($password, PASSWORD_DEFAULT);   // cập nhật cả bản sao để dấu vân tay phiên khớp
+            $users->updatePasswordHash((int) $user['ma_nguoi_dung'], $user['mat_khau_bam']);
         }
         $users->markLoggedIn((int) $user['ma_nguoi_dung']);
         XacThuc::login($user);

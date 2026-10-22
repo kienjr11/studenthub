@@ -17,8 +17,12 @@
                 <?php if ($me['vai_tro'] === 'giang_vien'): ?>
                     <div><dt>Đơn vị</dt><dd><?= e($me['ten_don_vi'] ?? 'Chưa gán đơn vị') ?></dd></div>
                 <?php endif; ?>
-                <div><dt>Đăng nhập lần trước</dt><dd><?= $me['dang_nhap_lan_cuoi'] ? e(date('d/m/Y H:i', strtotime($me['dang_nhap_lan_cuoi']))) : 'Lần đầu' ?></dd></div>
+                <div><dt>Đăng nhập gần nhất</dt><dd><?= $me['dang_nhap_lan_cuoi'] ? e(date('d/m/Y H:i', strtotime($me['dang_nhap_lan_cuoi']))) : 'Lần đầu' ?></dd></div>
             </dl>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-outline-primary btn-sm" href="<?= e(url('tai-khoan/ho-so')) ?>">Chỉnh sửa hồ sơ</a>
+                <a class="btn btn-outline-secondary btn-sm" href="<?= e(url('tai-khoan/doi-mat-khau')) ?>">Đổi mật khẩu</a>
+            </div>
         </div>
         <div class="col-md-7">
             <h2 class="h5">Chức năng</h2>

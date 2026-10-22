@@ -17,8 +17,10 @@ final class XacThuc
             return null;
         }
         $found = (new NguoiDung())->find((int) $id);
-        if ($found === null || $found['trang_thai'] !== 'hoat_dong') {
-            unset($_SESSION['uid']);
+        // Phiên gắn với "dấu vân tay" của mật khẩu hiện tại: đổi mật khẩu thì mọi phiên cũ (thiết bị khác) tự vô hiệu.
+        $khop = $found !== null && hash_equals((string) ($_SESSION['dvt'] ?? ''), (string) $found['dau_van_tay_mk']);
+        if ($found === null || $found['trang_thai'] !== 'hoat_dong' || !$khop) {
+            unset($_SESSION['uid'], $_SESSION['dvt']);
             return null;
         }
         return $user = $found;
@@ -40,6 +42,20 @@ final class XacThuc
         PhienLamViec::regenerate();            // chống session fixation
         unset($_SESSION['_csrf']);        // cấp CSRF token mới cho phiên đăng nhập
         $_SESSION['uid'] = (int) $user['ma_nguoi_dung'];
+        $_SESSION['dvt'] = self::dauVanTay((string) $user['mat_khau_bam']);
+    }
+
+    /** 16 ký tự đầu của SHA-256 chuỗi băm mật khẩu (khớp với LEFT(SHA2(mat_khau_bam, 256), 16) trong NguoiDung::find). */
+    public static function dauVanTay(string $matKhauBam): string
+    {
+        return substr(hash('sha256', $matKhauBam), 0, 16);
+    }
+
+    /** Gọi ngay sau khi đổi mật khẩu: đổi session id và cập nhật dấu vân tay để phiên hiện tại vẫn dùng được. */
+    public static function lamMoiPhien(string $matKhauBamMoi): void
+    {
+        PhienLamViec::regenerate();
+        $_SESSION['dvt'] = self::dauVanTay($matKhauBamMoi);
     }
 
     public static function logout(): void

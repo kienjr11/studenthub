@@ -38,6 +38,13 @@ return [
     ['GET',  'giang-vien/danh-sach', DieuKhienHoSoGiangVien::class, 'directory'],
     ['GET',  'giang-vien/chi-tiet',  DieuKhienHoSoGiangVien::class, 'detail'],
 
+    // Tài khoản của tôi (mọi vai trò đã đăng nhập)
+    ['GET',  'tai-khoan/ho-so',          DieuKhienTaiKhoan::class, 'hoSo'],
+    ['POST', 'tai-khoan/ho-so/cap-nhat', DieuKhienTaiKhoan::class, 'capNhatHoSo'],
+    ['POST', 'tai-khoan/chuyen-mon',     DieuKhienTaiKhoan::class, 'capNhatChuyenMon'],
+    ['GET',  'tai-khoan/doi-mat-khau',   DieuKhienTaiKhoan::class, 'formDoiMatKhau'],
+    ['POST', 'tai-khoan/doi-mat-khau',   DieuKhienTaiKhoan::class, 'doiMatKhau'],
+
     // Đánh giá / Phản hồi của Sinh viên
     ['GET',  'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'index'],   // trang Lịch hẹn & Đánh giá
     ['POST', 'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'gui'],
