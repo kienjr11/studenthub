@@ -1,0 +1,7 @@
+# Cấu hình thật (chứa mật khẩu CSDL) không được đưa lên repo công khai
+app/config/cauhinh.local.php
+.env
+*.log
+.idea/
+.vscode/
+.DS_Store
