@@ -8,9 +8,9 @@ final class DieuKhienKhuVuc extends BoDieuKhien
     {
         XacThuc::requireLogin();
         redirect(match (XacThuc::user()['vai_tro']) {
-            'quan_tri'   => 'admin/dashboard',
+            'quan_tri'    => 'admin/dashboard',
             'giang_vien' => 'dashboard/lecturer',
-            default      => 'dashboard/student',
+            default    => 'dashboard/student',
         });
     }
 
@@ -33,20 +33,6 @@ final class DieuKhienKhuVuc extends BoDieuKhien
             'completeness' => HoSoGiangVien::completeness($profile),
             'stats'        => $model->stats($id),
             'upcoming'     => $model->upcoming($id, 5),
-        ]);
-    }
-
-    /** Hiển thị trang đặt lịch hẹn tư vấn cho sinh viên */
-    public function datLich(): void
-    {
-        XacThuc::requireRole('sinh_vien');
-        $hoSoModel = new HoSoGiangVien();
-        $danhSachGiangVien = $hoSoModel->layTatCaGiangVienKemThongTin();
-
-        $this->view('khuvuc/sinhvien/dat_lich', [
-            'title'              => 'Đặt Lịch Hẹn Tư Vấn',
-            'me'                 => XacThuc::user(),
-            'danhSachGiangVien' => $danhSachGiangVien,
         ]);
     }
 }
