@@ -20,8 +20,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $this->view('khuvuc/sinhvien/dat_lich', [
             'title'             => 'Đặt lịch hẹn tư vấn',
             'danhSachGiangVien' => (new NguoiDung())->layTheoVaiTro('giang_vien'),
-            // Có dữ liệu cũ (đặt lỗi) thì dùng lại; không thì lấy giảng viên được chọn từ trang "Tìm giảng viên".
-            'cu'                => $_SESSION['_dat_lich_cu'] ?? ['giang_vien_id' => (int) ($_GET['giang_vien_id'] ?? 0)],
+            'cu'                => $_SESSION['_dat_lich_cu'] ?? [],
         ]);
         unset($_SESSION['_dat_lich_cu']);
     }
@@ -132,8 +131,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
-            flash('error', 'Cuộc hẹn không tồn tại hoặc bạn không có quyền thao tác.');
-            redirect(url('giang-vien/lich-hen'));
+            flash('danger', 'Cuộc hẹn không tồn tại hoặc bạn không có quyền thao tác.');
+            redirect('giang-vien/lich-hen');
             return;
         }
 
@@ -157,11 +156,11 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 }
                 break;
             default:
-                flash('error', 'Hành động không hợp lệ.');
+                flash('danger', 'Hành động không hợp lệ.');
                 break;
         }
 
-        redirect(url('giang-vien/lich-hen'));
+        redirect('giang-vien/lich-hen');
     }
 
     /**
@@ -182,13 +181,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
-            flash('error', 'Cuộc hẹn không tồn tại.');
-            redirect(url('giang-vien/lich-hen'));
+            flash('danger', 'Cuộc hẹn không tồn tại.');
+            redirect('giang-vien/lich-hen');
             return;
         }
 
         $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, $ghiChu);
         flash('success', 'Đã lưu ghi chú và phản hồi buổi tư vấn.');
-        redirect(url('giang-vien/lich-hen'));
+        redirect('giang-vien/lich-hen');
     }
 }

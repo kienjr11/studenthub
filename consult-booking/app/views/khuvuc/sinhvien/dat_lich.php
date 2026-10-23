@@ -15,7 +15,7 @@
                     <form action="<?= e(url('sinh-vien/dat-lich')) ?>" method="POST" class="booking-form">
                         <?= csrf_field() ?>
 
-                        <!-- Chọn Giảng viên (Hiển thị kèm Chuyên môn và Khoa) -->
+                        <!-- Chọn Giảng viên -->
                         <div class="mb-3">
                             <label for="giang_vien_id" class="form-label text-white fw-semibold">
                                 Giảng viên hướng dẫn / tư vấn <span class="text-danger">*</span>
@@ -24,29 +24,11 @@
                                 <option value="">-- Chọn giảng viên --</option>
                                 <?php if (!empty($danhSachGiangVien)): ?>
                                     <?php foreach ($danhSachGiangVien as $gv): ?>
-                                        <?php
-                                            $nhanHienThi = e($gv['ho_ten']);
-                                            if (!empty($gv['ten_khoa'])) {
-                                                $nhanHienThi .= ' - ' . e($gv['ten_khoa']);
-                                            }
-                                        ?>
-                                        <option value="<?= e($gv['ma_nguoi_dung']) ?>" 
-                                                data-chuyenmon="<?= e($gv['chuyen_mon'] ?? '') ?>"
-                                                <?= (int) ($cu['giang_vien_id'] ?? 0) === (int) $gv['ma_nguoi_dung'] ? ' selected' : '' ?>>
-                                            <?= $nhanHienThi ?>
+                                        <option value="<?= e($gv['ma_nguoi_dung']) ?>"<?= (int) ($cu['giang_vien_id'] ?? 0) === (int) $gv['ma_nguoi_dung'] ? ' selected' : '' ?>>
+                                            <?= e($gv['ho_ten']) ?> (<?= e($gv['email']) ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
-                            </select>
-                        </div>
-
-                        <!-- Chọn Môn học / Chuyên đề (Hiển thị động khi chọn GV có nhiều môn) -->
-                        <div class="mb-3" id="khoi_chon_mon">
-                            <label for="mon_hoc" class="form-label text-white fw-semibold">
-                                Môn học / Chuyên đề tư vấn <span class="text-danger">*</span>
-                            </label>
-                            <select id="mon_hoc" name="mon_hoc" class="form-select bg-dark text-white border-secondary">
-                                <option value="">-- Chọn môn học --</option>
                             </select>
                         </div>
 
