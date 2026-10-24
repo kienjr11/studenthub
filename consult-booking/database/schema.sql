@@ -39,6 +39,7 @@ INSERT INTO `chuyen_mon` (`ma_chuyen_mon`, `ten_chuyen_mon`, `mo_ta`, `ngay_tao`
 	(6, 'Hướng nghiệp', 'CV, phỏng vấn, lộ trình nghề nghiệp', '2026-10-22 17:35:11');
 
 -- Dumping structure for table dat_lich_tu_van.cuoc_hen
+-- TV4 đảm nhận phần chống trùng lịch
 CREATE TABLE IF NOT EXISTS `cuoc_hen` (
   `ma_cuoc_hen` int unsigned NOT NULL AUTO_INCREMENT,
   `ma_khung_gio` int unsigned NOT NULL,
