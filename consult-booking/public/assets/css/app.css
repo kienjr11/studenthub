@@ -197,3 +197,34 @@ a.nav-user:hover { color: #fff; text-decoration: underline; }
 .form-check-input:checked { background-color: var(--teal); border-color: var(--teal); }
 .form-check-input:focus { border-color: var(--teal-bright); box-shadow: 0 0 0 .2rem rgba(70, 201, 194, .22); }
 .chuyen-mon-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .5rem 1rem; }
+
+/* ---- Trang đặt lịch ---- */
+.dat-lich-dau { padding: 2.25rem 0 1.75rem; border-bottom: 1px solid var(--line);
+                background-image: radial-gradient(480px 240px at 85% 30%, rgba(70, 201, 194, .14), transparent 70%),
+                                  linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+                                  linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+                background-size: auto, 44px 44px, 44px 44px; }
+.buoc-dat { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 0; padding: 0; margin: 0; }
+.buoc-dat li { display: flex; align-items: center; gap: .75rem; }
+.buoc-dat li + li::before { content: ""; width: 2.75rem; height: 2px; margin: 0 1rem; background: var(--line); }
+.buoc-dat strong { display: block; color: var(--heading); font-weight: 600; line-height: 1.25; }
+.buoc-dat small { color: var(--text-dim); }
+.buoc-so { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--teal); color: #fff; font-weight: 600; box-shadow: 0 0 0 4px rgba(70, 201, 194, .14); }
+.buoc-so-nho { width: 1.7rem; height: 1.7rem; font-size: .85rem; box-shadow: none; }
+.dat-lich-form { padding: 1.75rem; }
+.nhom-form { padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px dashed var(--line); }
+.nhom-form-cuoi { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.nhom-tieu-de { display: flex; align-items: center; gap: .6rem; font-size: 1.05rem; margin: 0 0 1.1rem; }
+.bat-buoc { color: #f08a82; }
+.xem-truoc-gv { display: flex; align-items: flex-start; gap: .9rem; padding: .9rem 1rem; border: 1px solid var(--line); border-left: 4px solid var(--amber); border-radius: 10px; background: var(--surface-2); }
+.xem-truoc-ten { color: var(--heading); font-weight: 600; }
+.xem-truoc-gv .pill { font-size: .8rem; padding: .1rem .6rem; }
+.luu-y-dat-lich { position: sticky; top: 1rem; padding: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.danh-sach-luu-y { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .75rem; }
+.danh-sach-luu-y li { position: relative; padding-left: 1.6rem; color: var(--text-dim); font-size: .92rem; }
+.danh-sach-luu-y li::before { content: "\2713"; position: absolute; left: 0; color: var(--teal-bright); font-weight: 700; }
+@media (max-width: 767.98px) {
+    .buoc-dat { gap: .9rem 1.5rem; }
+    .buoc-dat li + li::before { display: none; }
+    .dat-lich-form { padding: 1.25rem; }
+}
