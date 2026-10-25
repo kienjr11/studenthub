@@ -6,8 +6,8 @@ $me = XacThuc::user();
     <div class="container">
         <div class="row align-items-center g-5">
             <div class="col-lg-6">
-                <h1 class="hero-title">Hẹn gặp giảng viên <span class="hl">mà không phải nhắn qua nhắn lại.</span></h1>
-                <p class="lead mb-4">Giảng viên mở khung giờ tư vấn, sinh viên chọn giờ còn trống và nêu rõ chủ đề. Mỗi khung giờ chỉ giữ được cho một người, nên không lo trùng lịch.</p>
+                <h1 class="hero-title">Đặt lịch tư vấn giảng viên <span class="hl">nhanh chóng, chủ động.</span></h1>
+                <p class="lead mb-4">Hệ thống kết nối sinh viên với giảng viên, giúp việc đặt lịch tư vấn học tập diễn ra thuận tiện, đúng hẹn và không trùng lịch.</p>
                 <div class="d-flex flex-wrap gap-2">
                     <?php if ($me): ?>
                         <a class="btn btn-primary btn-lg" href="<?= e(url('dashboard/index')) ?>">Vào khu vực của tôi</a>
