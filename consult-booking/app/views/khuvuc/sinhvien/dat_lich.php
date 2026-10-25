@@ -24,27 +24,11 @@
                                 <option value="">-- Chọn giảng viên --</option>
                                 <?php if (!empty($danhSachGiangVien)): ?>
                                     <?php foreach ($danhSachGiangVien as $gv): ?>
-                                        <?php
-                                            $nhan = $gv['ho_ten'];
-                                            if (!empty($gv['ten_khoa'])) {
-                                                $nhan .= ' - ' . $gv['ten_khoa'];
-                                            }
-                                        ?>
-                                        <option value="<?= e($gv['ma_nguoi_dung']) ?>" data-chuyenmon="<?= e($gv['chuyen_mon'] ?? '') ?>"<?= (int) ($cu['giang_vien_id'] ?? 0) === (int) $gv['ma_nguoi_dung'] ? ' selected' : '' ?>>
-                                            <?= e($nhan) ?>
+                                        <option value="<?= e($gv['ma_nguoi_dung']) ?>"<?= (int) ($cu['giang_vien_id'] ?? 0) === (int) $gv['ma_nguoi_dung'] ? ' selected' : '' ?>>
+                                            <?= e($gv['ho_ten']) ?> (<?= e($gv['email']) ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
-                            </select>
-                        </div>
-
-                        <!-- Chọn Môn học / Chuyên đề (nạp theo giảng viên bằng app.js) -->
-                        <div class="mb-3" id="khoi_chon_mon">
-                            <label for="mon_hoc" class="form-label text-white fw-semibold">
-                                Môn học / Chuyên đề tư vấn <span class="text-danger">*</span>
-                            </label>
-                            <select id="mon_hoc" name="mon_hoc" class="form-select bg-dark text-white border-secondary">
-                                <option value="">-- Chọn môn học --</option>
                             </select>
                         </div>
 

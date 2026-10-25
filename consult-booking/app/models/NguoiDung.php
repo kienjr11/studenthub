@@ -219,23 +219,4 @@ final class NguoiDung extends MoHinh
         $st->execute([':vai_tro' => $vaiTro]);
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    /** Danh sách giảng viên kèm khoa + chuyên môn, chỉ dùng cho form đặt lịch. */
-    public function layGiangVienChoDatLich(): array
-    {
-        $st = $this->db->prepare(
-            "SELECT nd.ma_nguoi_dung, nd.ho_ten, nd.email,
-                    dv.ten_don_vi AS ten_khoa,
-                    (SELECT GROUP_CONCAT(cm.ten_chuyen_mon ORDER BY cm.ten_chuyen_mon SEPARATOR ', ')
-                       FROM giang_vien_chuyen_mon g
-                       JOIN chuyen_mon cm ON cm.ma_chuyen_mon = g.ma_chuyen_mon
-                      WHERE g.ma_giang_vien = nd.ma_nguoi_dung) AS chuyen_mon
-               FROM nguoi_dung nd
-               LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
-              WHERE nd.vai_tro = 'giang_vien' AND nd.trang_thai = 'hoat_dong'
-              ORDER BY nd.ho_ten"
-        );
-        $st->execute();
-        return $st->fetchAll(PDO::FETCH_ASSOC);
-    }
 }
