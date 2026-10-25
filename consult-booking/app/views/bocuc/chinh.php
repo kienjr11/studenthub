@@ -58,6 +58,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="<?= e(url('giang-vien/ho-so')) ?>">Hồ sơ của tôi</a></li>
                             <li><a class="dropdown-item" href="<?= e(url('giang-vien/lich-hen')) ?>">Quản lý lịch hẹn</a></li>
+                            <li><a class="dropdown-item" href="<?= e(url('giang-vien/khung-gio')) ?>">Khung giờ tư vấn</a></li>
                         </ul>
                     </li>
                 <?php endif; ?>
@@ -117,5 +118,8 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
+<?php foreach (($scripts ?? []) as $__js): ?>
+<script src="<?= e(asset($__js)) ?>"></script>
+<?php endforeach; ?>
 </body>
 </html>
