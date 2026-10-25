@@ -3,20 +3,21 @@ declare(strict_types=1);
 
 /** [phương thức, route, controller, action] — thêm route cho module mới ở đây. */
 return [
-    ['GET',  'home/index',        DieuKhienTrangChu::class,       'index'],
+    ['GET',  'home/index',         DieuKhienTrangChu::class,       'index'],
 
     // Xác thực
-    ['GET',  'auth/login',        DieuKhienXacThuc::class,       'showLogin'],
-    ['POST', 'auth/login',        DieuKhienXacThuc::class,       'login'],
-    ['GET',  'auth/register',     DieuKhienXacThuc::class,       'showRegister'],
-    ['POST', 'auth/register',     DieuKhienXacThuc::class,       'register'],
-    ['POST', 'auth/logout',       DieuKhienXacThuc::class,       'logout'],
-    ['GET',  'auth/check-email',  DieuKhienXacThuc::class,       'checkEmail'],   // endpoint JSON cho Fetch API
+    ['GET',  'auth/login',         DieuKhienXacThuc::class,       'showLogin'],
+    ['POST', 'auth/login',         DieuKhienXacThuc::class,       'login'],
+    ['GET',  'auth/register',      DieuKhienXacThuc::class,       'showRegister'],
+    ['POST', 'auth/register',      DieuKhienXacThuc::class,       'register'],
+    ['POST', 'auth/logout',        DieuKhienXacThuc::class,       'logout'],
+    ['GET',  'auth/check-email',   DieuKhienXacThuc::class,       'checkEmail'],   // endpoint JSON cho Fetch API
 
     // Khu vực theo vai trò
-    ['GET',  'dashboard/index',   DieuKhienKhuVuc::class, 'index'],
-    ['GET',  'dashboard/student',   DieuKhienKhuVuc::class, 'student'],
-    ['GET',  'dashboard/lecturer', DieuKhienKhuVuc::class, 'lecturer'],
+    ['GET',  'dashboard/index',    DieuKhienKhuVuc::class, 'index'],
+    ['GET',  'dashboard/student',  DieuKhienKhuVuc::class, 'student'],
+    // Cập nhật route dashboard giảng viên trỏ trực tiếp đến DieuKhienLichHenGiangVien để hiển thị thống kê
+    ['GET',  'dashboard/lecturer', DieuKhienLichHenGiangVien::class, 'dashboard'],
 
     // Quản trị
     ['GET',  'admin/dashboard',    DieuKhienQuanTri::class,     'dashboard'],
@@ -33,12 +34,12 @@ return [
     ['POST', 'giang-vien/lich-hen/phan-hoi',  DieuKhienLichHenGiangVien::class, 'luuPhanHoi'],
 
     // Khung giờ tư vấn (slot) của Giảng viên: trang quản lý + các endpoint JSON cho Fetch API
-    ['GET',  'giang-vien/khung-gio',           DieuKhienKhungGioGiangVien::class, 'index'],
+    ['GET',  'giang-vien/khung-gio',              DieuKhienKhungGioGiangVien::class, 'index'],
     ['GET',  'giang-vien/khung-gio/danh-sach', DieuKhienKhungGioGiangVien::class, 'danhSach'],
     ['POST', 'giang-vien/khung-gio/them',      DieuKhienKhungGioGiangVien::class, 'them'],
     ['POST', 'giang-vien/khung-gio/sua',       DieuKhienKhungGioGiangVien::class, 'sua'],
     ['POST', 'giang-vien/khung-gio/xoa',       DieuKhienKhungGioGiangVien::class, 'xoa'],
-    ['GET',  'khung-gio/trong',                DieuKhienKhungGioGiangVien::class, 'slotTrong'],   // slot còn trống theo ngày + giảng viên
+    ['GET',  'khung-gio/trong',                    DieuKhienKhungGioGiangVien::class, 'slotTrong'],   // slot còn trống theo ngày + giảng viên
     
     // Hồ sơ & chuyên môn
     ['GET',  'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'profile'],
@@ -47,7 +48,7 @@ return [
     ['GET',  'giang-vien/chi-tiet',  DieuKhienHoSoGiangVien::class, 'detail'],
 
     // Tài khoản của tôi (mọi vai trò đã đăng nhập)
-    ['GET',  'tai-khoan/ho-so',          DieuKhienTaiKhoan::class, 'hoSo'],
+    ['GET',  'tai-khoan/ho-so',           DieuKhienTaiKhoan::class, 'hoSo'],
     ['POST', 'tai-khoan/ho-so/cap-nhat', DieuKhienTaiKhoan::class, 'capNhatHoSo'],
     ['POST', 'tai-khoan/chuyen-mon',     DieuKhienTaiKhoan::class, 'capNhatChuyenMon'],
     ['GET',  'tai-khoan/doi-mat-khau',   DieuKhienTaiKhoan::class, 'formDoiMatKhau'],

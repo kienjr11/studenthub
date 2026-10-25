@@ -36,6 +36,14 @@ final class HoSoGiangVien extends MoHinh
     }
 
     /**
+     * Phương thức tương thích ngược nếu Controller gọi tên tiếng Việt.
+     */
+    public function layHoSoVaChuyenMon(int $id): ?array
+    {
+        return $this->find($id);
+    }
+
+    /**
      * Lưu hồ sơ trong MỘT giao dịch: hoặc cập nhật hết, hoặc không đổi gì.
      * @param array{ho_ten:string,ma_don_vi:int,hoc_ham:?string,hoc_vi:?string,so_dien_thoai:?string,phong_lam_viec:?string,gioi_thieu:?string} $d
      * @param int[] $specialtyIds
@@ -50,7 +58,7 @@ final class HoSoGiangVien extends MoHinh
             $st = $this->db->prepare('INSERT INTO ho_so_giang_vien (ma_giang_vien, hoc_ham, hoc_vi, so_dien_thoai, phong_lam_viec, gioi_thieu)
                 VALUES (:id, :hh, :hv, :sdt, :phong, :gt)
                 ON DUPLICATE KEY UPDATE hoc_ham = VALUES(hoc_ham), hoc_vi = VALUES(hoc_vi), so_dien_thoai = VALUES(so_dien_thoai),
-                                        phong_lam_viec = VALUES(phong_lam_viec), gioi_thieu = VALUES(gioi_thieu)');
+                                    phong_lam_viec = VALUES(phong_lam_viec), gioi_thieu = VALUES(gioi_thieu)');
             $st->execute([
                 'id' => $id, 'hh' => $d['hoc_ham'], 'hv' => $d['hoc_vi'], 'sdt' => $d['so_dien_thoai'],
                 'phong' => $d['phong_lam_viec'], 'gt' => $d['gioi_thieu'],
