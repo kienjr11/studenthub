@@ -15,12 +15,15 @@ final class DieuKhienQuanTri extends BoDieuKhien
     public function dashboard(): void
     {
         $users = new NguoiDung();
+        $cuocHenModel = new CuocHen();
+
         $this->view('quantri/bangdieukhien', [
-            'title'     => 'Bảng điều khiển quản trị',
-            'stats'     => $users->stats(),
-            'pending'     => $users->pendingLecturers(5),
-            'deptCount' => (new DanhMuc('departments'))->count(),
-            'specCount' => (new DanhMuc('specialties'))->count(),
+            'title'          => 'Bảng điều khiển quản trị',
+            'stats'          => $users->stats(),
+            'pending'        => $users->pendingLecturers(5),
+            'deptCount'      => (new DanhMuc('departments'))->count(),
+            'specCount'      => (new DanhMuc('specialties'))->count(),
+            'thongKeCuocHen' => $cuocHenModel->thongKeTongQuanAdmin(),
         ]);
     }
 

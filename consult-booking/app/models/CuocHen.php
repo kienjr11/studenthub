@@ -128,4 +128,109 @@ class CuocHen extends MoHinh
             throw $e;
         }
     }
+
+    /**
+     * Thống kê tổng quan số lượng cuộc hẹn cho Admin (toàn hệ thống)
+     */
+    public function thongKeTongQuanAdmin(): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) as tong_so,
+                    SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
+                    SUM(CASE WHEN ch.trang_thai = 'da_duyet' THEN 1 ELSE 0 END) as da_duyet,
+                    SUM(CASE WHEN ch.trang_thai = 'tu_choi' THEN 1 ELSE 0 END) as tu_choi,
+                    SUM(CASE WHEN ch.trang_thai = 'da_huy' THEN 1 ELSE 0 END) as da_huy,
+                    SUM(CASE WHEN ch.trang_thai = 'hoan_thanh' THEN 1 ELSE 0 END) as hoan_thanh
+                FROM cuoc_hen ch";
+        $stmt = $this->db->query($sql);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [
+            'tong_so' => 0, 'cho_duyet' => 0, 'da_duyet' => 0, 
+            'tu_choi' => 0, 'da_huy' => 0, 'hoan_thanh' => 0
+        ];
+    }
+
+    /**
+     * Thống kê số lượng cuộc hẹn riêng cho một Giảng viên cụ thể
+     */
+    public function thongKeChoGiangVien(int $maGiangVien): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) as tong_so,
+                    SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
+                    SUM(CASE WHEN ch.trang_thai = 'da_duyet' THEN 1 ELSE 0 END) as da_duyet,
+                    SUM(CASE WHEN ch.trang_thai = 'tu_choi' THEN 1 ELSE 0 END) as tu_choi,
+                    SUM(CASE WHEN ch.trang_thai = 'da_huy' THEN 1 ELSE 0 END) as da_huy,
+                    SUM(CASE WHEN ch.trang_thai = 'hoan_thanh' THEN 1 ELSE 0 END) as hoan_thanh
+                FROM cuoc_hen ch
+                JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                WHERE kg.ma_giang_vien = :ma_gv";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':ma_gv' => $maGiangVien]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [
+            'tong_so' => 0, 'cho_duyet' => 0, 'da_duyet' => 0, 
+            'tu_choi' => 0, 'da_huy' => 0, 'hoan_thanh' => 0
+        ];
+    }
+
+    /**
+     * Thống kê chi tiết phục vụ cho giao diện Dashboard chi tiết của Giảng viên ($stats)
+     */
+    public function thongKeChiTietChoGiangVien(int $maGiangVien): array
+    {
+        $sql = "SELECT 
+                    SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
+                    SUM(CASE WHEN ch.trang_thai = 'da_duyet' AND DATE(kg.bat_dau) = CURDATE() THEN 1 ELSE 0 END) as hom_nay,
+                    SUM(CASE WHEN ch.trang_thai = 'hoan_thanh' THEN 1 ELSE 0 END) as hoan_thanh
+                FROM cuoc_hen ch
+                JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                WHERE kg.ma_giang_vien = :ma_gv";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':ma_gv' => $maGiangVien]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $sqlSlot = "SELECT COUNT(*) FROM khung_gio WHERE ma_giang_vien = :ma_gv AND ket_thuc >= NOW()";
+        $stmtSlot = $this->db->prepare($sqlSlot);
+        $stmtSlot->execute([':ma_gv' => $maGiangVien]);
+        $slotSapToi = (int) $stmtSlot->fetchColumn();
+
+        $sqlDanhGia = "SELECT COUNT(ph.ma_phan_hoi) as so_danh_gia, AVG(ph.diem_danh_gia) as diem_tb
+                       FROM phan_hoi ph
+                       JOIN cuoc_hen ch ON ph.ma_cuoc_hen = ch.ma_cuoc_hen
+                       JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                       WHERE kg.ma_giang_vien = :ma_gv";
+        $stmtDG = $this->db->prepare($sqlDanhGia);
+        $stmtDG->execute([':ma_gv' => $maGiangVien]);
+        $dg = $stmtDG->fetch(PDO::FETCH_ASSOC) ?: ['so_danh_gia' => 0, 'diem_tb' => 0];
+
+        return [
+            'cho_duyet'    => (int) ($res['cho_duyet'] ?? 0),
+            'hom_nay'      => (int) ($res['hom_nay'] ?? 0),
+            'slot_sap_toi' => $slotSapToi,
+            'hoan_thanh'   => (int) ($res['hoan_thanh'] ?? 0),
+            'so_danh_gia'  => (int) ($dg['so_danh_gia'] ?? 0),
+            'diem_tb'      => (float) ($dg['diem_tb'] ?? 0),
+        ];
+    }
+
+    /**
+     * Lấy danh sách các cuộc hẹn sắp tới của giảng viên ($upcoming)
+     */
+    public function layCuocHenSapToiChoGiangVien(int $maGiangVien, int $gioiHan = 5): array
+    {
+        $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai,
+                       sv.ho_ten AS ten_sinh_vien,
+                       kg.bat_dau, kg.ket_thuc
+                FROM cuoc_hen ch
+                JOIN nguoi_dung sv ON ch.ma_sinh_vien = sv.ma_nguoi_dung
+                JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                WHERE kg.ma_giang_vien = :ma_gv 
+                  AND ch.trang_thai IN ('cho_duyet', 'da_duyet')
+                  AND kg.bat_dau >= NOW()
+                ORDER BY kg.bat_dau ASC
+                LIMIT {$gioiHan}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':ma_gv' => $maGiangVien]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
