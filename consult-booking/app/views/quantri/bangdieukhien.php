@@ -1,6 +1,58 @@
-<?php /** @var array $stats @var array $pending @var int $deptCount @var int $specCount */ ?>
+<?php /** @var array $stats @var array $pending @var int $deptCount @var int $specCount @var array $thongKeCuocHen */ ?>
 <div class="container py-4">
     <h1 class="h3 mb-4 page-title">Bảng điều khiển quản trị</h1>
+
+    <!-- Thống kê tổng quan cuộc hẹn toàn hệ thống -->
+    <div class="row mb-4">
+        <div class="col-md-4 col-xl-2 mb-3">
+            <div class="card bg-primary text-white shadow-sm h-100">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase small font-weight-bold mb-1">Tổng cuộc hẹn</h6>
+                    <h4 class="mb-0"><?= e($thongKeCuocHen['tong_so'] ?? 0) ?></h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2 mb-3">
+            <div class="card bg-warning text-dark shadow-sm h-100">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase small font-weight-bold mb-1">Chờ duyệt</h6>
+                    <h4 class="mb-0"><?= e($thongKeCuocHen['cho_duyet'] ?? 0) ?></h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2 mb-3">
+            <div class="card bg-success text-white shadow-sm h-100">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase small font-weight-bold mb-1">Đã duyệt</h6>
+                    <h4 class="mb-0"><?= e($thongKeCuocHen['da_duyet'] ?? 0) ?></h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2 mb-3">
+            <div class="card bg-info text-white shadow-sm h-100">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase small font-weight-bold mb-1">Hoàn thành</h6>
+                    <h4 class="mb-0"><?= e($thongKeCuocHen['hoan_thanh'] ?? 0) ?></h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2 mb-3">
+            <div class="card bg-danger text-white shadow-sm h-100">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase small font-weight-bold mb-1">Từ chối</h6>
+                    <h4 class="mb-0"><?= e($thongKeCuocHen['tu_choi'] ?? 0) ?></h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2 mb-3">
+            <div class="card bg-secondary text-white shadow-sm h-100">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase small font-weight-bold mb-1">Đã hủy</h6>
+                    <h4 class="mb-0"><?= e($thongKeCuocHen['da_huy'] ?? 0) ?></h4>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row g-4">
         <div class="col-lg-7">
@@ -10,9 +62,9 @@
                     <?php foreach ($pending as $u): ?>
                         <li class="list-group-item d-flex justify-content-between align-items-center gap-3">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="avatar avatar-giang_vien" aria-hidden="true"><?= e(initial($u['ho_ten'])) ?></span>
+                                <span class="avatar avatar-giang_vien" aria-hidden="true"><?= e(initial($u['ho_ten'] ?? 'GV')) ?></span>
                                 <div>
-                                    <div class="fw-semibold"><?= e($u['ho_ten']) ?></div>
+                                    <div class="fw-semibold"><?= e($u['ho_ten'] ?? 'Chưa cập nhật tên') ?></div>
                                     <div class="small text-muted"><?= e($u['email']) ?> – <?= e($u['ten_don_vi'] ?? 'Chưa chọn đơn vị') ?></div>
                                 </div>
                             </div>

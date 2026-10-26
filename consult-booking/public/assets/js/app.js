@@ -111,4 +111,60 @@
       }, 400);
     });
   }
+
+  // Trang đặt lịch: chọn giảng viên thì nạp danh sách môn học (chuyên môn) của giảng viên đó
+  var selGv = document.getElementById("giang_vien_id");
+  var selMon = document.getElementById("mon_hoc");
+  if (selGv && selMon) {
+    var capNhatMon = function () {
+      var opt = selGv.options[selGv.selectedIndex];
+      var raw = opt ? opt.getAttribute("data-chuyenmon") || "" : "";
+      var ds = raw.split(/[,;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+      selMon.innerHTML = "";
+      var first = document.createElement("option");
+      first.value = "";
+      first.textContent = "-- Chọn môn học --";
+      selMon.appendChild(first);
+      ds.forEach(function (mon) {
+        var o = document.createElement("option");
+        o.value = mon;
+        o.textContent = mon;
+        selMon.appendChild(o);
+      });
+      selMon.required = ds.length > 0;
+      if (ds.length === 1) {
+        selMon.value = ds[0];
+      }
+    };
+    selGv.addEventListener("change", capNhatMon);
+    capNhatMon();
+  }
+
+  // Trang đặt lịch: hiện thẻ xem trước giảng viên đang chọn (họ tên, khoa, chuyên môn)
+  var xemTruoc = document.getElementById("xem_truoc_gv");
+  if (selGv && xemTruoc) {
+    var veXemTruoc = function () {
+      var opt = selGv.options[selGv.selectedIndex];
+      if (!opt || !opt.value) {
+        xemTruoc.classList.add("d-none");
+        return;
+      }
+      var ten = opt.getAttribute("data-ten") || "";
+      var tu = ten.trim().split(/\s+/);
+      xemTruoc.querySelector('[data-o="chu-cai"]').textContent = (tu[tu.length - 1] || "?").charAt(0).toUpperCase();
+      xemTruoc.querySelector('[data-o="ten"]').textContent = ten;
+      xemTruoc.querySelector('[data-o="khoa"]').textContent = opt.getAttribute("data-khoa") || "Chưa gán đơn vị";
+      var khungMon = xemTruoc.querySelector('[data-o="mon"]');
+      khungMon.textContent = "";
+      (opt.getAttribute("data-chuyenmon") || "").split(/[,;]+/).map(function (x) { return x.trim(); }).filter(Boolean).forEach(function (mon) {
+        var the = document.createElement("span");
+        the.className = "pill";
+        the.textContent = mon;
+        khungMon.appendChild(the);
+      });
+      xemTruoc.classList.remove("d-none");
+    };
+    selGv.addEventListener("change", veXemTruoc);
+    veXemTruoc();
+  }
 })();
