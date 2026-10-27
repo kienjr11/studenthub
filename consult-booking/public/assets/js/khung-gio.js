@@ -21,11 +21,81 @@
   var thongBao = document.getElementById("thongBao");
   var ghiChuKhoa = document.getElementById("ghiChuKhoa");
   var btnPhut = document.querySelectorAll(".btn-phut");
+  // ---------- Ô chọn giờ 24h (00–23 : phút) ----------
+  // <input type="time"> hiển thị AM/PM theo hệ điều hành và không ép được -> thay bằng 2 ô chọn Giờ / Phút.
+  // Trả về đối tượng có value ("HH:MM" hoặc ""), min, disabled, focus, addEventListener như một input.
+  function gioSelect(input) {
+    var wrap = document.createElement("div");
+    wrap.className = "d-flex align-items-center gap-2";
+    var h = document.createElement("select");
+    var m = document.createElement("select");
+    h.className = m.className = "form-select";
+    h.id = input.id;
+    h.required = m.required = input.required;
+    h.setAttribute("aria-label", "Giờ");
+    m.setAttribute("aria-label", "Phút");
+ 
+    function opt(sel, val, text) {
+      var e = document.createElement("option");
+      e.value = val;
+      e.textContent = text;
+      sel.appendChild(e);
+      return e;
+    }
+    opt(h, "", "--");
+    opt(m, "", "--");
+    for (var i = 0; i < 24; i++) opt(h, p2(i), p2(i));
+    for (var j = 0; j < 60; j += 5) opt(m, p2(j), p2(j));
+    var sep = document.createElement("span");
+    sep.textContent = ":";
+    wrap.appendChild(h);
+    wrap.appendChild(sep);
+    wrap.appendChild(m);
+    input.replaceWith(wrap);
+ 
+    var minStr = "";
+    function ganMin() {                                   // làm mờ (disable) các giờ/phút đã qua
+      var mh = minStr ? +minStr.slice(0, 2) : -1;
+      var mm = minStr ? +minStr.slice(3, 5) : -1;
+      Array.prototype.forEach.call(h.options, function (e) { e.disabled = e.value !== "" && +e.value < mh; });
+      Array.prototype.forEach.call(m.options, function (e) {
+        e.disabled = e.value !== "" && minStr !== "" && h.value !== "" && +h.value === mh && +e.value < mm;
+      });
+    }
+    h.addEventListener("change", function () {
+      if (h.value !== "" && m.value === "") m.value = "00";   // chọn giờ xong là có giá trị đầy đủ
+      ganMin();
+    });
+ 
+    return {
+      get value() { return h.value !== "" && m.value !== "" ? h.value + ":" + m.value : ""; },
+      set value(v) {
+        if (!v) { h.value = ""; m.value = ""; ganMin(); return; }
+        var x = v.split(":");
+        h.value = x[0];
+        if (!Array.prototype.some.call(m.options, function (e) { return e.value === x[1]; })) {
+          // phút lẻ (vd 11:47 tạo từ trước) vẫn hiển thị đúng khi sửa
+          var e = opt(m, x[1], x[1]);
+          var cho = Array.prototype.find.call(m.options, function (z) { return z.value !== "" && +z.value > +x[1]; });
+          if (cho) m.insertBefore(e, cho);
+        }
+        m.value = x[1];
+        ganMin();
+      },
+      get min() { return minStr; },
+      set min(v) { minStr = v || ""; ganMin(); },
+      get disabled() { return h.disabled; },
+      set disabled(v) { h.disabled = m.disabled = !!v; },
+      focus: function () { h.focus(); },
+      addEventListener: function (ev, fn) { h.addEventListener(ev, fn); m.addEventListener(ev, fn); },
+    };
+  }
+ 
   var f = {
     id: document.getElementById("ma_khung_gio"),
     ngay: document.getElementById("ngay"),
-    bd: document.getElementById("gio_bat_dau"),
-    kt: document.getElementById("gio_ket_thuc"),
+    bd: gioSelect(document.getElementById("gio_bat_dau")),
+    kt: gioSelect(document.getElementById("gio_ket_thuc")),
     sl: document.getElementById("suc_chua"),
     dd: document.getElementById("dia_diem"),
   };
