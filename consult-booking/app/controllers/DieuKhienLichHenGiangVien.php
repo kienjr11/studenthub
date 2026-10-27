@@ -38,7 +38,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         // Lấy số liệu thống kê chi tiết cho các tiles
         $stats = $this->cuocHenModel->thongKeChiTietChoGiangVien($maGiangVien);
-        
+       
         // Lấy danh sách cuộc hẹn sắp tới
         $upcoming = $this->cuocHenModel->layCuocHenSapToiChoGiangVien($maGiangVien, 5);
 
@@ -162,7 +162,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
     }
 
     /**
-     * Xử lý cập nhật trạng thái (Duyệt / Từ chối / Hoàn thành)
+     * Xử lý cập nhật trạng thái (Duyệt / Từ chối / Hoàn thành / Hủy)
      */
     public function capNhatTrangThai(): void
     {
@@ -174,6 +174,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $maCuocHen = (int)($_POST['ma_cuoc_hen'] ?? 0);
         $hanhDong = $_POST['hanh_dong'] ?? '';
+        $lyDoHuy = trim($_POST['ly_do_huy'] ?? ''); // Lấy lý do hủy do giảng viên nhập từ Modal
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
 
@@ -201,6 +202,19 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 if ($cuocHen['trang_thai'] === 'da_duyet') {
                     $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'hoan_thanh');
                     flash('success', 'Đã đánh dấu hoàn thành buổi tư vấn.');
+                }
+                break;
+            case 'da_huy':
+                if ($cuocHen['trang_thai'] === 'da_duyet') {
+                    // Cập nhật trạng thái thành 'da_huy'
+                    $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'da_huy');
+                   
+                    // Nếu có nhập lý do hủy, lưu vào ghi chú của giảng viên để bên Sinh viên có thể đọc được
+                    if (!empty($lyDoHuy)) {
+                        $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, "Lý do hủy lịch hẹn: " . $lyDoHuy);
+                    }
+                   
+                    flash('success', 'Đã hủy lịch hẹn và ghi nhận lý do thành công.');
                 }
                 break;
             default:
@@ -237,5 +251,33 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, $ghiChu);
         flash('success', 'Đã lưu ghi chú và phản hồi buổi tư vấn.');
         redirect('giang-vien/lich-hen');
+    }
+
+    /**
+     * Xử lý hành động Hủy lịch hẹn phía Sinh viên
+     */
+    public function huyLichSinhVien(): void
+    {
+        // Kiểm tra quyền truy cập của sinh viên
+        XacThuc::requireRole('sinh_vien');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $maCuocHen = (int) ($_POST['ma_cuoc_hen'] ?? 0);
+            $maSinhVien = (int) XacThuc::id();
+
+            if ($maCuocHen > 0 && $maSinhVien > 0) {
+                $ketQua = $this->cuocHenModel->huyLichBoiSinhVien($maCuocHen, $maSinhVien);
+
+                if ($ketQua) {
+                    flash('success', 'Hủy lịch hẹn thành công.');
+                } else {
+                    flash('danger', 'Không thể hủy lịch hẹn (Lịch đã hoàn thành hoặc không hợp lệ).');
+                }
+            } else {
+                flash('danger', 'Dữ liệu không hợp lệ.');
+            }
+        }
+
+        redirect('sinh-vien/phan-hoi');
     }
 }

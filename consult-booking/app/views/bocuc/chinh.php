@@ -119,7 +119,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
 <?php foreach (($scripts ?? []) as $__js): ?>
-<script src="<?= e(asset($__js)) ?>"></script>
+<script src="<?= e(asset($__js) . '?v=' . (@filemtime(dirname(__DIR__, 3) . '/public/assets/' . $__js) ?: time())) ?>"></script>
 <?php endforeach; ?>
 </body>
 </html>

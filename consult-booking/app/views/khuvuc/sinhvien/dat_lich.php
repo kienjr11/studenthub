@@ -79,11 +79,11 @@ $coGiangVien = !empty($danhSachGiangVien);
                         </div>
                         <div class="col-6 col-md-4">
                             <label for="gio_bat_dau" class="form-label">Giờ bắt đầu <span class="bat-buoc" aria-hidden="true">*</span></label>
-                            <input type="time" id="gio_bat_dau" name="gio_bat_dau" class="form-control" value="<?= e($cu['gio_bat_dau'] ?? '') ?>" required>
+                            <input type="time" data-gio24 id="gio_bat_dau" name="gio_bat_dau" class="form-control" value="<?= e($cu['gio_bat_dau'] ?? '') ?>" required>
                         </div>
                         <div class="col-6 col-md-4">
                             <label for="gio_ket_thuc" class="form-label">Giờ kết thúc <span class="bat-buoc" aria-hidden="true">*</span></label>
-                            <input type="time" id="gio_ket_thuc" name="gio_ket_thuc" class="form-control" value="<?= e($cu['gio_ket_thuc'] ?? '') ?>" required>
+                            <input type="time" data-gio24 id="gio_ket_thuc" name="gio_ket_thuc" class="form-control" value="<?= e($cu['gio_ket_thuc'] ?? '') ?>" required>
                         </div>
                     </div>
                 </div>

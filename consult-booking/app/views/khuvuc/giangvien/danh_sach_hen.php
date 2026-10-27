@@ -14,7 +14,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
         </h2>
     </div>
 
-    <!-- Bộ lọc trạng thái -->
+    <!-- Bộ lọc trạng thái có nút Lọc -->
     <div class="card mb-4 shadow-sm border-0">
         <div class="card-body py-3">
             <form method="GET" action="<?= url('giang-vien/lich-hen') ?>" class="row g-2 align-items-center">
@@ -23,13 +23,24 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                     <label class="form-label mb-0 fw-semibold">Lọc theo trạng thái:</label>
                 </div>
                 <div class="col-auto">
-                    <select name="trang_thai" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <select name="trang_thai" class="form-select form-select-sm">
                         <option value="">-- Tất cả trạng thái --</option>
                         <option value="cho_duyet" <?= $trang_thai_loc === 'cho_duyet' ? 'selected' : '' ?>>Chờ duyệt</option>
                         <option value="da_duyet" <?= $trang_thai_loc === 'da_duyet' ? 'selected' : '' ?>>Đã duyệt</option>
                         <option value="hoan_thanh" <?= $trang_thai_loc === 'hoan_thanh' ? 'selected' : '' ?>>Hoàn thành</option>
                         <option value="tu_choi" <?= $trang_thai_loc === 'tu_choi' ? 'selected' : '' ?>>Đã từ chối</option>
+                        <option value="da_huy" <?= $trang_thai_loc === 'da_huy' ? 'selected' : '' ?>>Đã hủy</option>
                     </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
+                    <?php if (!empty($trang_thai_loc)): ?>
+                        <a href="<?= url('giang-vien/lich-hen') ?>" class="btn btn-outline-secondary btn-sm" title="Xóa bộ lọc">
+                            <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
+                        </a>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>
@@ -100,7 +111,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                         </form>
                                     <?php endif; ?>
 
-                                    <!-- Nút đánh dấu hoàn thành khi đã duyệt -->
+                                    <!-- Nút hoàn thành và nút hủy kèm Modal nhập lý do khi đã duyệt -->
                                     <?php if ($item['trang_thai'] === 'da_duyet'): ?>
                                         <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
                                             <?= csrf_field() ?>
@@ -108,6 +119,86 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                             <input type="hidden" name="hanh_dong" value="hoan_thanh">
                                             <button type="submit" class="btn btn-sm btn-outline-primary" title="Đánh dấu đã hoàn thành tư vấn">Hoàn thành</button>
                                         </form>
+
+                                        <!-- Nút mở modal hủy lịch hẹn -->
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalHuy<?= $item['ma_cuoc_hen'] ?>" title="Hủy cuộc hẹn">
+                                            Hủy
+                                        </button>
+
+                                        <!-- Modal Nhập lý do hủy -->
+                                        <div class="modal fade text-start" id="modalHuy<?= $item['ma_cuoc_hen'] ?>" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="modal-content">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
+                                                    <input type="hidden" name="hanh_dong" value="da_huy">
+                                                    
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">Xác nhận hủy lịch hẹn</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    
+                                                    <div class="modal-body">
+                                                        <p class="text-muted small">Vui lòng nêu rõ lý do hủy để sinh viên nắm bắt thông tin qua hệ thống:</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Lý do hủy lịch hẹn <span class="text-danger">*</span>:</label>
+                                                            <textarea name="ly_do_huy" class="form-control" rows="3" placeholder="Nhập lý do hủy (VD: Giảng viên bận công tác đột xuất...)" required></textarea>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm">Xác nhận hủy lịch</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <!-- Nút xem đánh giá khi trạng thái là hoàn thành -->
+                                    <?php if ($item['trang_thai'] === 'hoan_thanh'): ?>
+                                        <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalDanhGia<?= $item['ma_cuoc_hen'] ?>" title="Xem đánh giá của sinh viên">
+                                            <i class="bi bi-star-fill text-warning"></i> Xem đánh giá
+                                        </button>
+
+                                        <!-- Modal Xem Đánh Giá (Tối ưu hóa màu sắc cho Dark Mode) -->
+                                        <div class="modal fade text-start" id="modalDanhGia<?= $item['ma_cuoc_hen'] ?>" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content bg-dark text-white border-secondary shadow">
+                                                    <div class="modal-header border-secondary">
+                                                        <h5 class="modal-title text-white fw-bold">
+                                                            <i class="bi bi-star-fill text-warning"></i> Đánh giá từ sinh viên
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <?php if (!empty($item['diem_danh_gia'])): ?>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold text-white-50">Điểm đánh giá:</label>
+                                                                <div class="fs-4 text-warning fw-bold d-flex align-items-center gap-2">
+                                                                    <span><?= $item['diem_danh_gia'] ?> / 5</span> 
+                                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                                </div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold text-white-50">Nhận xét chi tiết:</label>
+                                                                <div class="p-3 bg-secondary bg-opacity-25 rounded border border-secondary text-white">
+                                                                    <em>"<?= nl2br(e($item['nhan_xet_sinh_vien'] ?? 'Sinh viên không để lại lời nhận xét.')) ?>"</em>
+                                                                </div>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <div class="text-center py-4 text-white-50">
+                                                                <i class="bi bi-chat-square-dots display-6"></i>
+                                                                <p class="mt-2 mb-0">Sinh viên chưa thực hiện đánh giá cho buổi tư vấn này.</p>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="modal-footer border-secondary">
+                                                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     <?php endif; ?>
 
                                     <!-- Nút ghi chú phản hồi (hiển thị khi đã duyệt hoặc hoàn thành) -->

@@ -233,4 +233,34 @@ class CuocHen extends MoHinh
         $stmt->execute([':ma_gv' => $maGiangVien]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Hủy lịch hẹn bởi Sinh viên
+     * Kiểm tra quyền sở hữu và không cho phép hủy lịch đã hoàn thành.
+     */
+    public function huyLichBoiSinhVien(int $maCuocHen, int $maSinhVien): bool
+    {
+        // 1. Kiểm tra tồn tại cuộc hẹn thuộc về sinh viên này
+        $sqlSelect = "SELECT trang_thai FROM cuoc_hen WHERE ma_cuoc_hen = :ma_cuoc_hen AND ma_sinh_vien = :ma_sv";
+        $stmtSelect = $this->db->prepare($sqlSelect);
+        $stmtSelect->execute([
+            ':ma_cuoc_hen' => $maCuocHen,
+            ':ma_sv'       => $maSinhVien
+        ]);
+        $cuocHen = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+
+        if (!$cuocHen) {
+            return false;
+        }
+
+        // 2. Quy tắc nghiệp vụ: Không hủy lịch đã hoàn thành
+        if ($cuocHen['trang_thai'] === 'hoan_thanh') {
+            return false;
+        }
+
+        // 3. Cập nhật trạng thái thành 'da_huy'
+        $sqlUpdate = "UPDATE cuoc_hen SET trang_thai = 'da_huy' WHERE ma_cuoc_hen = :ma_cuoc_hen";
+        $stmtUpdate = $this->db->prepare($sqlUpdate);
+        return $stmtUpdate->execute([':ma_cuoc_hen' => $maCuocHen]);
+    }
 }

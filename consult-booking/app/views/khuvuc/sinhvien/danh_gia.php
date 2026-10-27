@@ -1,6 +1,6 @@
 <?php
 /** 
- * File view hiển thị nút và modal đánh giá cuộc hẹn dành cho Sinh viên.
+ * File view hiển thị nút và modal đánh giá / hủy cuộc hẹn dành cho Sinh viên.
  * Biến đầu vào: $item (mảng chứa thông tin cuộc hẹn)
  */
 $maCuocHen = $item['ma_cuoc_hen'] ?? 0;
@@ -9,7 +9,8 @@ $diemCu = $item['diem_danh_gia'] ?? 5;
 $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
 ?>
 
-<?php if ($trangThai === 'hoan_thanh' || $trangThai === 'da_duyet'): ?>
+<?php if ($trangThai === 'hoan_thanh'): ?>
+    <!-- LỊCH ĐÃ HOÀN THÀNH: GIỮ NGUYÊN LOGIC CŨ (Chỉ hiển thị Đánh giá / Sửa đánh giá) -->
     <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalDanhGia<?= $maCuocHen ?>">
         ⭐ <?= !empty($item['diem_danh_gia']) ? 'Sửa đánh giá' : 'Đánh giá' ?>
     </button>
@@ -58,4 +59,22 @@ $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
             </form>
         </div>
     </div>
+
+<?php elseif (in_array($trangThai, ['cho_duyet', 'da_duyet'])): ?>
+    <!-- LỊCH CHƯA HOÀN THÀNH (Chờ duyệt / Đã duyệt): HIỂN THỊ NÚT HỦY LỊCH -->
+    <form method="POST" action="<?= url('sinh-vien/huy-lich') ?>" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?');">
+        <?= csrf_field() ?>
+        <input type="hidden" name="ma_cuoc_hen" value="<?= $maCuocHen ?>">
+        <button type="submit" class="btn btn-sm btn-outline-danger">
+            Hủy lịch
+        </button>
+    </form>
+
+<?php elseif ($trangThai === 'da_huy'): ?>
+    <!-- LỊCH ĐÃ HỦY: DÙNG BTN NÊN KÍCH THƯỚC Ô SẼ RỘNG VÀ ĐỒNG BỘ VỚI CÁC NÚT KHÁC -->
+    <button type="button" class="btn btn-sm btn-secondary" disabled>Đã hủy</button>
+
+<?php else: ?>
+    <!-- CÁC TRẠNG THÁI KHÁC (Đã từ chối) -->
+    <button type="button" class="btn btn-sm btn-secondary" disabled>Đã từ chối</button>
 <?php endif; ?>
