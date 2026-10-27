@@ -40,6 +40,8 @@ INSERT INTO `chuyen_mon` (`ma_chuyen_mon`, `ten_chuyen_mon`, `mo_ta`, `ngay_tao`
 
 -- Dumping structure for table dat_lich_tu_van.cuoc_hen
 -- TV4 đảm nhận phần chống trùng lịch
+-- Lưu ý: khóa UNIQUE cũ trên khung_gio_hieu_luc đã được bỏ để 1 khung giờ nhận được nhiều sinh viên;
+-- số lượng tối đa nằm ở khung_gio.suc_chua và do ứng dụng kiểm tra khi sinh viên đăng ký.
 CREATE TABLE IF NOT EXISTS `cuoc_hen` (
   `ma_cuoc_hen` int unsigned NOT NULL AUTO_INCREMENT,
   `ma_khung_gio` int unsigned NOT NULL,
@@ -51,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `cuoc_hen` (
   `ngay_tao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `ngay_cap_nhat` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`ma_cuoc_hen`),
-  UNIQUE KEY `uq_mot_cuoc_hen_hieu_luc_moi_khung_gio` (`khung_gio_hieu_luc`),
+  KEY `idx_cuoc_hen_khung_gio_hieu_luc` (`khung_gio_hieu_luc`),
   KEY `idx_cuoc_hen_sinh_vien` (`ma_sinh_vien`,`trang_thai`),
   KEY `fk_cuoc_hen_khung_gio` (`ma_khung_gio`),
   CONSTRAINT `fk_cuoc_hen_khung_gio` FOREIGN KEY (`ma_khung_gio`) REFERENCES `khung_gio` (`ma_khung_gio`) ON DELETE RESTRICT,
@@ -118,17 +120,20 @@ INSERT INTO `ho_so_giang_vien` (`ma_giang_vien`, `hoc_ham`, `hoc_vi`, `so_dien_t
 	(4, 'pho_giao_su', 'thac_si', '0919337474', 'P.306 nhà B', 'đẹp trai', '2026-10-22 21:57:11');
 
 -- Dumping structure for table dat_lich_tu_van.khung_gio
+-- suc_chua: số sinh viên tối đa của khung giờ (1..50), do giảng viên đặt khi tạo/sửa slot.
 CREATE TABLE IF NOT EXISTS `khung_gio` (
   `ma_khung_gio` int unsigned NOT NULL AUTO_INCREMENT,
   `ma_giang_vien` int unsigned NOT NULL,
   `bat_dau` datetime NOT NULL,
   `ket_thuc` datetime NOT NULL,
   `dia_diem` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `suc_chua` tinyint unsigned NOT NULL DEFAULT '1',
   `ngay_tao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ma_khung_gio`),
   KEY `idx_khung_gio_giang_vien_bat_dau` (`ma_giang_vien`,`bat_dau`),
   CONSTRAINT `fk_khung_gio_giang_vien` FOREIGN KEY (`ma_giang_vien`) REFERENCES `nguoi_dung` (`ma_nguoi_dung`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_khung_gio_thoi_gian` CHECK ((`ket_thuc` > `bat_dau`))
+  CONSTRAINT `chk_khung_gio_thoi_gian` CHECK ((`ket_thuc` > `bat_dau`)),
+  CONSTRAINT `chk_khung_gio_suc_chua` CHECK ((`suc_chua` between 1 and 50))
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table dat_lich_tu_van.khung_gio: ~2 rows (approximately)

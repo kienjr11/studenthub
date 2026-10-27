@@ -1,14 +1,17 @@
 <?php
 declare(strict_types=1);
 
+
 class DieuKhienLichHenGiangVien extends BoDieuKhien
 {
     private CuocHen $cuocHenModel;
+
 
     public function __construct()
     {
         $this->cuocHenModel = new CuocHen();
     }
+
 
     /**
      * Hiển thị bảng điều khiển / trang chủ của Giảng viên (bao gồm thống kê cuộc hẹn)
@@ -21,6 +24,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             XacThuc::yeuCauVaiTro('giang_vien');
         }
 
+
         $user = XacThuc::user();
         if (!is_array($user)) {
             $user = [];
@@ -29,6 +33,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $user['email'] = $user['email'] ?? '';
         $maGiangVien = (int) ($user['ma_nguoi_dung'] ?? 0);
 
+
         // Lấy thông tin hồ sơ và chuyên môn của giảng viên
         $hoSoModel = new HoSoGiangVien();
         $profile = $hoSoModel->layHoSoVaChuyenMon($maGiangVien) ?? [
@@ -36,17 +41,20 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             'chuyen_mon' => []
         ];
 
+
         // Lấy số liệu thống kê chi tiết cho các tiles
         $stats = $this->cuocHenModel->thongKeChiTietChoGiangVien($maGiangVien);
-        
+       
         // Lấy danh sách cuộc hẹn sắp tới
         $upcoming = $this->cuocHenModel->layCuocHenSapToiChoGiangVien($maGiangVien, 5);
+
 
         // Tính % hoàn thiện hồ sơ
         $completeness = [
             'percent' => !empty($profile['chuyen_mon']) ? 100 : 50,
             'missing' => empty($profile['chuyen_mon']) ? ['Lĩnh vực chuyên môn'] : []
         ];
+
 
         echo GiaoDien::render('khuvuc/giangvien/bang_dieu_khien', [
             'tieu_de'      => 'Bảng điều khiển Giảng viên',
@@ -58,12 +66,14 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         ]);
     }
 
+
     /**
      * Hiển thị giao diện Đặt lịch hẹn dành cho Sinh viên
      */
     public function hienThiFormDatLich(): void
     {
         XacThuc::requireRole('sinh_vien');
+
 
         $this->view('khuvuc/sinhvien/dat_lich', [
             'title'             => 'Đặt lịch hẹn tư vấn',
@@ -73,6 +83,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         unset($_SESSION['_dat_lich_cu']);
     }
 
+
     /**
      * Xử lý lưu yêu cầu Đặt lịch hẹn của Sinh viên
      */
@@ -80,11 +91,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
     {
         XacThuc::requireRole('sinh_vien');
 
+
         $giangVienId = (int) ($_POST['giang_vien_id'] ?? 0);
         $ngayHen     = $this->input('ngay_hen');
         $gioBatDau   = $this->input('gio_bat_dau');
         $gioKetThuc  = $this->input('gio_ket_thuc');
         $chuDe       = mb_substr($this->input('chu_de'), 0, 255);   // cột chu_de là VARCHAR(255)
+
 
         $loi = function (string $msg) use ($giangVienId, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe): never {
             $_SESSION['_dat_lich_cu'] = [
@@ -95,9 +108,11 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             redirect('sinh-vien/dat-lich');
         };
 
+
         if ($giangVienId <= 0 || $ngayHen === '' || $gioBatDau === '' || $gioKetThuc === '' || $chuDe === '') {
             $loi('Vui lòng nhập đầy đủ các thông tin bắt buộc.');
         }
+
 
         $batDau  = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioBatDau");
         $ketThuc = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioKetThuc");
@@ -111,17 +126,20 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             $loi('Thời gian hẹn phải ở tương lai.');
         }
 
+
         // Giảng viên phải tồn tại và đang hoạt động
         $hopLe = array_column((new NguoiDung())->layTheoVaiTro('giang_vien'), 'ma_nguoi_dung');
         if (!in_array((string) $giangVienId, array_map('strval', $hopLe), true)) {
             $loi('Giảng viên không hợp lệ.');
         }
 
+
         $bd = $batDau->format('Y-m-d H:i:s');
         $kt = $ketThuc->format('Y-m-d H:i:s');
         if ($this->cuocHenModel->kiemTraTrungLich($giangVienId, $bd, $kt)) {
             $loi('Giảng viên đã có lịch hẹn trong khoảng thời gian này. Vui lòng chọn giờ khác.');
         }
+
 
         try {
             $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe);
@@ -130,9 +148,11 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             $loi('Đã xảy ra lỗi, vui lòng thử lại.');
         }
 
+
         flash('success', 'Đặt lịch hẹn tư vấn thành công! Vui lòng chờ giảng viên phê duyệt.');
         redirect('sinh-vien/phan-hoi');   // trang "Lịch hẹn & Đánh giá" của sinh viên
     }
+
 
     /**
      * Hiển thị danh sách cuộc hẹn của giảng viên
@@ -145,12 +165,15 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             XacThuc::yeuCauVaiTro('giang_vien');
         }
 
+
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
         $trangThai = $_GET['trang_thai'] ?? null;
         $trang = max(1, (int)($_GET['trang'] ?? 1));
 
+
         $data = $this->cuocHenModel->layDanhSachChoGiangVien((int)$maGiangVien, $trangThai, $trang);
+
 
         echo GiaoDien::render('khuvuc/giangvien/danh_sach_hen', [
             'tieu_de'        => 'Quản lý lịch hẹn tư vấn',
@@ -161,8 +184,9 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         ]);
     }
 
+
     /**
-     * Xử lý cập nhật trạng thái (Duyệt / Từ chối / Hoàn thành)
+     * Xử lý cập nhật trạng thái (Duyệt / Từ chối / Hoàn thành / Hủy)
      */
     public function capNhatTrangThai(): void
     {
@@ -172,10 +196,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             XacThuc::yeuCauVaiTro('giang_vien');
         }
 
+
         $maCuocHen = (int)($_POST['ma_cuoc_hen'] ?? 0);
         $hanhDong = $_POST['hanh_dong'] ?? '';
+        $lyDoHuy = trim($_POST['ly_do_huy'] ?? ''); // Lấy lý do hủy do giảng viên nhập từ Modal
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
+
 
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
@@ -183,6 +210,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             redirect('giang-vien/lich-hen');
             return;
         }
+
 
         switch ($hanhDong) {
             case 'duyet':
@@ -203,13 +231,28 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                     flash('success', 'Đã đánh dấu hoàn thành buổi tư vấn.');
                 }
                 break;
+            case 'da_huy':
+                if ($cuocHen['trang_thai'] === 'da_duyet') {
+                    // Cập nhật trạng thái thành 'da_huy'
+                    $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'da_huy');
+                   
+                    // Nếu có nhập lý do hủy, lưu vào ghi chú của giảng viên để bên Sinh viên có thể đọc được
+                    if (!empty($lyDoHuy)) {
+                        $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, "Lý do hủy lịch hẹn: " . $lyDoHuy);
+                    }
+                   
+                    flash('success', 'Đã hủy lịch hẹn và ghi nhận lý do thành công.');
+                }
+                break;
             default:
                 flash('danger', 'Hành động không hợp lệ.');
                 break;
         }
 
+
         redirect('giang-vien/lich-hen');
     }
+
 
     /**
      * Lưu ghi chú phản hồi
@@ -222,10 +265,12 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             XacThuc::yeuCauVaiTro('giang_vien');
         }
 
+
         $maCuocHen = (int)($_POST['ma_cuoc_hen'] ?? 0);
         $ghiChu = trim($_POST['ghi_chu_giang_vien'] ?? '');
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
+
 
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
@@ -233,6 +278,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             redirect('giang-vien/lich-hen');
             return;
         }
+
 
         $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, $ghiChu);
         flash('success', 'Đã lưu ghi chú và phản hồi buổi tư vấn.');

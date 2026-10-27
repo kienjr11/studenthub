@@ -7,6 +7,7 @@ $tong_trang       = $tong_trang ?? 1;
 $trang_hien_tai   = $trang_hien_tai ?? 1;
 ?>
 
+
 <div class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="h4 fw-bold text-primary mb-0">
@@ -14,7 +15,8 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
         </h2>
     </div>
 
-    <!-- Bộ lọc trạng thái -->
+
+    <!-- Bộ lọc trạng thái có nút Lọc -->
     <div class="card mb-4 shadow-sm border-0">
         <div class="card-body py-3">
             <form method="GET" action="<?= url('giang-vien/lich-hen') ?>" class="row g-2 align-items-center">
@@ -23,17 +25,29 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                     <label class="form-label mb-0 fw-semibold">Lọc theo trạng thái:</label>
                 </div>
                 <div class="col-auto">
-                    <select name="trang_thai" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <select name="trang_thai" class="form-select form-select-sm">
                         <option value="">-- Tất cả trạng thái --</option>
                         <option value="cho_duyet" <?= $trang_thai_loc === 'cho_duyet' ? 'selected' : '' ?>>Chờ duyệt</option>
                         <option value="da_duyet" <?= $trang_thai_loc === 'da_duyet' ? 'selected' : '' ?>>Đã duyệt</option>
                         <option value="hoan_thanh" <?= $trang_thai_loc === 'hoan_thanh' ? 'selected' : '' ?>>Hoàn thành</option>
                         <option value="tu_choi" <?= $trang_thai_loc === 'tu_choi' ? 'selected' : '' ?>>Đã từ chối</option>
+                        <option value="da_huy" <?= $trang_thai_loc === 'da_huy' ? 'selected' : '' ?>>Đã hủy</option>
                     </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
+                    <?php if (!empty($trang_thai_loc)): ?>
+                        <a href="<?= url('giang-vien/lich-hen') ?>" class="btn btn-outline-secondary btn-sm" title="Xóa bộ lọc">
+                            <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
+                        </a>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>
     </div>
+
 
     <!-- Danh sách cuộc hẹn -->
     <div class="card shadow-sm border-0">
@@ -92,6 +106,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                             <button type="submit" class="btn btn-sm btn-success" title="Phê duyệt cuộc hẹn">Duyệt</button>
                                         </form>
 
+
                                         <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
@@ -100,7 +115,8 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                         </form>
                                     <?php endif; ?>
 
-                                    <!-- Nút đánh dấu hoàn thành khi đã duyệt -->
+
+                                    <!-- Nút hoàn thành và nút hủy kèm Modal nhập lý do khi đã duyệt -->
                                     <?php if ($item['trang_thai'] === 'da_duyet'): ?>
                                         <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
                                             <?= csrf_field() ?>
@@ -108,13 +124,51 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                             <input type="hidden" name="hanh_dong" value="hoan_thanh">
                                             <button type="submit" class="btn btn-sm btn-outline-primary" title="Đánh dấu đã hoàn thành tư vấn">Hoàn thành</button>
                                         </form>
+
+
+                                        <!-- Nút mở modal hủy lịch hẹn -->
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalHuy<?= $item['ma_cuoc_hen'] ?>" title="Hủy cuộc hẹn">
+                                            Hủy
+                                        </button>
+
+
+                                        <!-- Modal Nhập lý do hủy -->
+                                        <div class="modal fade text-start" id="modalHuy<?= $item['ma_cuoc_hen'] ?>" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="modal-content">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
+                                                    <input type="hidden" name="hanh_dong" value="da_huy">
+                                                   
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">Xác nhận hủy lịch hẹn</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                   
+                                                    <div class="modal-body">
+                                                        <p class="text-muted small">Vui lòng nêu rõ lý do hủy để sinh viên nắm bắt thông tin qua hệ thống:</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Lý do hủy lịch hẹn <span class="text-danger">*</span>:</label>
+                                                            <textarea name="ly_do_huy" class="form-control" rows="3" placeholder="Nhập lý do hủy (VD: Giảng viên bận công tác đột xuất...)" required></textarea>
+                                                        </div>
+                                                    </div>
+                                                   
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm">Xác nhận hủy lịch</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
                                     <?php endif; ?>
+
 
                                     <!-- Nút ghi chú phản hồi (hiển thị khi đã duyệt hoặc hoàn thành) -->
                                     <?php if (in_array($item['trang_thai'], ['da_duyet', 'hoan_thanh'])): ?>
                                         <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalGhiChu<?= $item['ma_cuoc_hen'] ?>">
                                             <i class="bi bi-chat-left-text"></i> Ghi chú
                                         </button>
+
 
                                         <!-- Modal Ghi chú & Phản hồi -->
                                         <div class="modal fade text-start" id="modalGhiChu<?= $item['ma_cuoc_hen'] ?>" tabindex="-1" aria-hidden="true">
@@ -155,6 +209,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
         </div>
     </div>
 
+
     <!-- Phân trang -->
     <?php if ($tong_trang > 1): ?>
         <nav class="mt-4">
@@ -168,3 +223,4 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
         </nav>
     <?php endif; ?>
 </div>
+
