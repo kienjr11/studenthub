@@ -13,7 +13,6 @@ Phân công công việc
       - Chức năng Đăng nhập, Đăng ký tài khoản (Phân biệt vai trò Sinh viên, Giảng viên, Admin).
       - Xây dựng bộ khung kết nối PDO và cơ chế bảo mật Session, chống CSRF, băm mật khẩu.
       - Bổ sung Admin Dashboard: Giao diện quản lý tài khoản người dùng (khóa/mở tài khoản, phân quyền) và cấu hình danh mục chuyên môn/đơn vị. 
-    
     2. Đỗ Minh Hằng: Module Quản lý Hồ sơ & Chuyên môn
       - Trang quản lý hồ sơ cá nhân của Giảng viên (Cập nhật thông tin, học hàm, học vị, lĩnh vực tư vấn).
       - Trang danh sách giảng viên để sinh viên tìm kiếm theo tên, khoa/đơn vị.
