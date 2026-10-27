@@ -34,13 +34,14 @@ return [
     ['POST', 'giang-vien/lich-hen/phan-hoi',  DieuKhienLichHenGiangVien::class, 'luuPhanHoi'],
 
     // Khung giờ tư vấn (slot) của Giảng viên: trang quản lý + các endpoint JSON cho Fetch API
-    ['GET',  'giang-vien/khung-gio',              DieuKhienKhungGioGiangVien::class, 'index'],
+    ['GET',  'giang-vien/khung-gio',           DieuKhienKhungGioGiangVien::class, 'index'],
     ['GET',  'giang-vien/khung-gio/danh-sach', DieuKhienKhungGioGiangVien::class, 'danhSach'],
+    ['GET',  'giang-vien/khung-gio/sinh-vien', DieuKhienKhungGioGiangVien::class, 'sinhVienDangKy'],   // nút "con mắt": SV đã đăng ký slot
     ['POST', 'giang-vien/khung-gio/them',      DieuKhienKhungGioGiangVien::class, 'them'],
     ['POST', 'giang-vien/khung-gio/sua',       DieuKhienKhungGioGiangVien::class, 'sua'],
     ['POST', 'giang-vien/khung-gio/xoa',       DieuKhienKhungGioGiangVien::class, 'xoa'],
-    ['GET',  'khung-gio/trong',                    DieuKhienKhungGioGiangVien::class, 'slotTrong'],   // slot còn trống theo ngày + giảng viên
-    
+    ['GET',  'khung-gio/trong',                DieuKhienKhungGioGiangVien::class, 'slotTrong'],        // slot còn chỗ theo ngày + giảng viên
+
     // Hồ sơ & chuyên môn
     ['GET',  'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'profile'],
     ['POST', 'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'saveProfile'],

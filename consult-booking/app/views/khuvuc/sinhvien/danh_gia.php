@@ -9,7 +9,7 @@ $diemCu = $item['diem_danh_gia'] ?? 5;
 $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
 ?>
 
-<?php if ($trangThai === 'hoan_thanh' || $trangThai === 'da_duyet'): ?>
+<?php if ($trangThai === 'hoan_thanh'): ?>
     <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalDanhGia<?= $maCuocHen ?>">
         ⭐ <?= !empty($item['diem_danh_gia']) ? 'Sửa đánh giá' : 'Đánh giá' ?>
     </button>
