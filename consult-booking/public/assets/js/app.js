@@ -167,4 +167,93 @@
     selGv.addEventListener("change", veXemTruoc);
     veXemTruoc();
   }
+
+  // ---------- Ô nhập giờ 24h (gõ hoặc chọn) cho <input type="time" data-gio24> ----------
+  // <input type="time"> hiển thị SA/CH theo hệ điều hành và không ép được -> thay bằng 2 ô Giờ (00–23) / Phút (00–59).
+  // Mỗi ô vừa gõ số trực tiếp được, vừa bấm để chọn từ danh sách gợi ý (datalist).
+  // Giá trị gửi lên server vẫn là "HH:MM" qua một input ẩn mang đúng name cũ.
+  Array.prototype.forEach.call(document.querySelectorAll('input[type="time"][data-gio24]'), function (input) {
+    function p2(n) { return (n < 10 ? "0" : "") + n; }
+
+    var goc = input.id || input.name;
+    function taoDanhSach(id, max, buoc) {
+      var dl = document.createElement("datalist");
+      dl.id = id;
+      for (var i = 0; i <= max; i += buoc) {
+        var o = document.createElement("option");
+        o.value = p2(i);
+        dl.appendChild(o);
+      }
+      return dl;
+    }
+    function taoO(nhan, dsId) {
+      var e = document.createElement("input");
+      e.type = "text";
+      e.className = "form-control text-center";
+      e.inputMode = "numeric";
+      e.maxLength = 2;
+      e.placeholder = "--";
+      e.autocomplete = "off";
+      e.required = input.required;
+      e.setAttribute("list", dsId);
+      e.setAttribute("aria-label", nhan);
+      return e;
+    }
+
+    var dsH = taoDanhSach(goc + "_ds_gio", 23, 1);
+    var dsM = taoDanhSach(goc + "_ds_phut", 59, 5);
+    var h = taoO("Giờ", dsH.id);
+    var m = taoO("Phút", dsM.id);
+    h.id = input.id;                                       // <label for> trỏ vào ô Giờ
+
+    var an = document.createElement("input");
+    an.type = "hidden";
+    an.name = input.name;
+
+    var sep = document.createElement("span");
+    sep.textContent = ":";
+    var wrap = document.createElement("div");
+    wrap.className = "d-flex align-items-center gap-2";
+    [h, sep, m, an, dsH, dsM].forEach(function (x) { wrap.appendChild(x); });
+
+    function dongBo() {
+      var ok = h.value !== "" && m.value !== "" && +h.value <= 23 && +m.value <= 59;
+      an.value = ok ? p2(+h.value) + ":" + p2(+m.value) : "";
+    }
+
+    // Chuẩn hóa một ô: "7" -> "07"; vượt giới hạn thì báo lỗi ngay trên ô
+    function chuanHoa(e, max, ten) {
+      if (e.value === "") { e.setCustomValidity(""); return; }
+      var n = +e.value;
+      if (n > max) { e.setCustomValidity(ten + " phải từ 00 đến " + p2(max) + "."); return; }
+      e.value = p2(n);
+      e.setCustomValidity("");
+    }
+
+    function ganSuKien(e, max, ten, ke, soDau) {
+      e.addEventListener("input", function () {
+        e.value = e.value.replace(/\D/g, "");               // chỉ giữ chữ số
+        // Đủ 2 số, hoặc số đầu lớn đến mức không thể thành số 2 chữ số hợp lệ -> chuẩn hóa và nhảy sang ô kế
+        if (e.value.length === 2 || (e.value.length === 1 && +e.value > soDau)) {
+          chuanHoa(e, max, ten);
+          if (ke && e.validity.valid) { ke.focus(); ke.select(); }
+        }
+        dongBo();
+      });
+      e.addEventListener("change", function () {
+        chuanHoa(e, max, ten);
+        if (e === h && h.value !== "" && h.validity.valid && m.value === "") m.value = "00";  // chọn giờ xong là có giá trị đầy đủ
+        dongBo();
+      });
+      e.addEventListener("blur", function () { chuanHoa(e, max, ten); dongBo(); });
+      e.addEventListener("focus", function () { e.select(); });
+    }
+    ganSuKien(h, 23, "Giờ", m, 2);
+    ganSuKien(m, 59, "Phút", null, 5);
+
+    var v = /^(\d{2}):(\d{2})/.exec(input.value || "");     // nạp lại giá trị cũ khi form báo lỗi
+    if (v) { h.value = v[1]; m.value = v[2]; dongBo(); }
+
+    input.replaceWith(wrap);
+  });
 })();

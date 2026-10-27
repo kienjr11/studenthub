@@ -59,7 +59,8 @@ return [
     ['GET',  'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'index'],   // trang Lịch hẹn & Đánh giá
     ['POST', 'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'gui'],
 
-    // Sinh viên đặt lịch hẹn
+    // Sinh viên đặt lịch hẹn & Hủy lịch hẹn
     ['GET',  'sinh-vien/dat-lich',   DieuKhienLichHenGiangVien::class, 'hienThiFormDatLich'],
     ['POST', 'sinh-vien/dat-lich',   DieuKhienLichHenGiangVien::class, 'xuLyDatLich'],
+    ['POST', 'sinh-vien/huy-lich',   DieuKhienLichHenGiangVien::class, 'huyLichSinhVien'],
 ];
