@@ -71,11 +71,11 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
 
         if ($daDangKy > 0) {
             // Đã có sinh viên đăng ký: GIỮ NGUYÊN giờ, chỉ cho đổi địa điểm và số lượng tối đa.
-            $dd = mb_substr($this->input('dia_diem'), 0, 150);
+            $dd = $this->diaDiemHopLe();
             // Môn cũng giữ nguyên (sinh viên đã đăng ký theo môn đó).
             $this->khungGio->damBaoCotChuyenMon();
             $monCu = isset($slot['ma_chuyen_mon']) ? (int) $slot['ma_chuyen_mon'] : null;
-            $this->khungGio->capNhat($id, $maGv, (string) $slot['bat_dau'], (string) $slot['ket_thuc'], $dd === '' ? null : $dd, $sucChua, $monCu);
+            $this->khungGio->capNhat($id, $maGv, (string) $slot['bat_dau'], (string) $slot['ket_thuc'], $dd, $sucChua, $monCu);
         } else {
             [$bd, $kt, $dd] = $this->doiTuongHopLe($maGv, $id);
             $maMon = $this->chuyenMonHopLe($maGv);
@@ -285,13 +285,29 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         if ($bd->format('Y-m-d') !== $kt->format('Y-m-d')) {
             $loi('Khung giờ phải bắt đầu và kết thúc trong cùng một ngày.');
         }
-        $diaDiem = mb_substr($this->input('dia_diem'), 0, 150);   // cột dia_diem là VARCHAR(150)
+        $diaDiem = $this->diaDiemHopLe();
 
         $bdStr = $bd->format('Y-m-d H:i:s');
         $ktStr = $kt->format('Y-m-d H:i:s');
         if ($this->khungGio->biTrung($maGv, $bdStr, $ktStr, $boQua)) {
             $loi('Khung giờ này bị trùng với một khung giờ khác của bạn.');
         }
-        return [$bdStr, $ktStr, $diaDiem === '' ? null : $diaDiem];
+        return [$bdStr, $ktStr, $diaDiem];
+    }
+
+    /**
+     * Địa điểm BẮT BUỘC: tên phòng hoặc link họp online (http/https). Cột dia_diem là VARCHAR(150) nên quá dài thì báo lỗi
+     * (không cắt ngầm, vì link bị cắt sẽ không dùng được).
+     */
+    private function diaDiemHopLe(): string
+    {
+        $dd = trim($this->input('dia_diem'));
+        if ($dd === '') {
+            $this->json(['success' => false, 'message' => 'Vui lòng nhập địa điểm hoặc link họp online.'], 422);
+        }
+        if (mb_strlen($dd) > 150) {
+            $this->json(['success' => false, 'message' => 'Địa điểm / link tối đa 150 ký tự (hiện ' . mb_strlen($dd) . '). Hãy dùng link rút gọn.'], 422);
+        }
+        return $dd;
     }
 }

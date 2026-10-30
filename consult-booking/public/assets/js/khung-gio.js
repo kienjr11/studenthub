@@ -1,5 +1,5 @@
 /* Trang "Khung giờ tư vấn" của giảng viên. JS thuần, không inline script (tương thích CSP). */
-/* PHIEN-BAN: v2.1 — gom ngay/gio, so sinh vien toi da, nut con mat, thoi luong nhanh */
+/* PHIEN-BAN: v2.2 — gom ngay/gio, so sinh vien toi da, nut con mat, thoi luong nhanh, loc ngay, dia diem bat buoc + link bam duoc */
 (function () {
   "use strict";
  
@@ -21,6 +21,11 @@
   var thongBao = document.getElementById("thongBao");
   var ghiChuKhoa = document.getElementById("ghiChuKhoa");
   var btnPhut = document.querySelectorAll(".btn-phut");
+  var locTu = document.getElementById("locTuNgay");
+  var locDen = document.getElementById("locDenNgay");
+  var btnXoaLoc = document.getElementById("btnXoaLoc");
+  var locDem = document.getElementById("locDem");
+  var dsTatCa = [];   // toàn bộ khung giờ đã tải; bảng chỉ vẽ phần lọt qua bộ lọc ngày
   // ---------- Ô chọn giờ 24h (00–23 : phút) ----------
   // <input type="time"> hiển thị AM/PM theo hệ điều hành và không ép được -> thay bằng 2 ô chọn Giờ / Phút.
   // Trả về đối tượng có value ("HH:MM" hoặc ""), min, disabled, focus, addEventListener như một input.
@@ -220,6 +225,29 @@
     return el;
   }
  
+  // Đổ text vào el; đoạn nào là link (http://, https://, www.) thì thành thẻ <a> bấm được, mở tab mới.
+  // Dựng bằng DOM + textContent nên dữ liệu người dùng không chèn được HTML.
+  function gan(el, text) {
+    el.replaceChildren();
+    String(text || "").split(/((?:https?:\/\/|www\.)[^\s<>"']+)/i).forEach(function (p, i) {
+      if (i % 2 === 0) {
+        if (p) el.appendChild(document.createTextNode(p));
+        return;
+      }
+      var duoi = "";                                   // dấu câu dính cuối link không thuộc link
+      var mm = /[.,;:!?)\]]+$/.exec(p);
+      if (mm) { duoi = mm[0]; p = p.slice(0, p.length - duoi.length); }
+      var a = document.createElement("a");
+      a.href = /^www\./i.test(p) ? "https://" + p : p;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = p;
+      el.appendChild(a);
+      if (duoi) el.appendChild(document.createTextNode(duoi));
+    });
+    return el;
+  }
+
   // Biểu tượng "con mắt" (SVG, không cần thư viện icon)
   function bieuTuongMat() {
     var ns = "http://www.w3.org/2000/svg";
@@ -241,11 +269,22 @@
   }
  
   // ---------- Bảng danh sách ----------
+  // Lọc theo khoảng ngày (Từ ngày / Đến ngày, có thể bỏ trống một đầu) rồi vẽ bảng
+  function locVaVe() {
+    var tu = locTu.value, den = locDen.value;
+    var ds = dsTatCa.filter(function (it) {
+      var ngay = it.bat_dau.slice(0, 10);
+      return (!tu || ngay >= tu) && (!den || ngay <= den);
+    });
+    locDem.textContent = (tu || den) ? "Hiển thị " + ds.length + " / " + dsTatCa.length + " khung giờ" : "";
+    veBang(ds);
+  }
+
   function veBang(ds) {
     tbody.replaceChildren();
     if (!ds.length) {
       var tr0 = o("tr");
-      var td0 = o("td", "Chưa có khung giờ nào.", "text-center text-muted py-4");
+      var td0 = o("td", dsTatCa.length ? "Không có khung giờ nào trong khoảng ngày đã chọn." : "Chưa có khung giờ nào.", "text-center text-muted py-4");
       td0.colSpan = 8;
       tr0.appendChild(td0);
       tbody.appendChild(tr0);
@@ -259,7 +298,11 @@
       tr.appendChild(o("td", hienThi(it.bat_dau)));
       tr.appendChild(o("td", hienThi(it.ket_thuc)));
       tr.appendChild(o("td", it.ten_chuyen_mon || "—"));
-      tr.appendChild(o("td", it.dia_diem || "Chưa cập nhật"));
+      var tdDd = o("td", undefined, "text-break");
+      tdDd.style.maxWidth = "260px";
+      if (it.dia_diem) gan(tdDd, it.dia_diem);
+      else tdDd.textContent = "Chưa cập nhật";
+      tr.appendChild(tdDd);
       tr.appendChild(o("td", it.so_dang_ky + " / " + it.suc_chua, "text-center fw-semibold"));
  
       var tt = o("td");
@@ -305,7 +348,7 @@
     var lan = ++daiTai; // bỏ qua kết quả cũ nếu người dùng đổi ngày liên tục
     goi(URL_DS).then(function (res) {   // không lọc ngày: lấy tất cả khung giờ của giảng viên
       if (lan !== daiTai) return;
-      if (res.success) veBang(res.data);
+      if (res.success) { dsTatCa = res.data; locVaVe(); }
       else bao(false, res.message || "Không tải được danh sách.");
     }).catch(function () { bao(false, "Lỗi kết nối máy chủ."); });
   }
@@ -397,7 +440,8 @@
  
   function veSinhVien(res) {
     var s = res.slot;
-    svPhu.textContent = hienThi(s.bat_dau) + " – " + hienThi(s.ket_thuc).slice(-5) + (s.dia_diem ? " · " + s.dia_diem : "");
+    svPhu.replaceChildren(document.createTextNode(hienThi(s.bat_dau) + " – " + hienThi(s.ket_thuc).slice(-5) + (s.dia_diem ? " · " : "")));
+    if (s.dia_diem) svPhu.appendChild(gan(document.createElement("span"), s.dia_diem));
     svDem.textContent = "Đã đăng ký: " + res.so_dang_ky + " / " + s.suc_chua + " sinh viên";
     bangSV.replaceChildren();
  
@@ -491,6 +535,17 @@
       f.mon.focus();
       return;
     }
+    var diaDiem = f.dd.value.trim();
+    if (!diaDiem) {
+      bao(false, "Vui lòng nhập địa điểm hoặc link họp online.");
+      f.dd.focus();
+      return;
+    }
+    if (diaDiem.length > 150) {
+      bao(false, "Địa điểm / link tối đa 150 ký tự (hiện " + diaDiem.length + "). Hãy dùng link rút gọn.");
+      f.dd.focus();
+      return;
+    }
     var sl = parseInt(f.sl.value, 10);
     var slMin = parseInt(f.sl.min || "1", 10);
     if (isNaN(sl) || sl < 1 || sl > 50) {
@@ -509,7 +564,7 @@
       ket_thuc: f.ngay.value + "T" + f.kt.value,
       suc_chua: String(sl),
       ma_chuyen_mon: f.mon.value,
-      dia_diem: f.dd.value,
+      dia_diem: diaDiem,
     });
  
     btnLuu.disabled = true;
@@ -526,6 +581,23 @@
   });
  
   btnHuy.addEventListener("click", datLaiForm);
+
+  // ---------- Bộ lọc ngày của bảng danh sách ----------
+  function doiLoc() {
+    locDen.min = locTu.value || "";
+    if (locTu.value && locDen.value && locDen.value < locTu.value) {
+      bao(false, "Ngày kết thúc lọc phải sau hoặc bằng ngày bắt đầu.");
+      locDen.value = locTu.value;
+    }
+    locVaVe();
+  }
+  locTu.addEventListener("change", doiLoc);
+  locDen.addEventListener("change", doiLoc);
+  btnXoaLoc.addEventListener("click", function () {
+    locTu.value = "";
+    locDen.value = "";
+    doiLoc();
+  });
  
   capNhatGioiHan();
   taiDanhSach();

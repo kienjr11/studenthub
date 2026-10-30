@@ -46,9 +46,10 @@
                         <label class="form-label" for="suc_chua">Số sinh viên tối đa</label>
                         <input type="number" class="form-control" id="suc_chua" min="1" max="50" step="1" value="1" required>
                     </div>
-                    <div class="col-6 col-md-9">
-                        <label class="form-label" for="dia_diem">Địa điểm / Phòng</label>
-                        <input type="text" class="form-control" id="dia_diem" maxlength="150" placeholder="P.306 nhà B / Online">
+                    <div class="col-12 col-md-9">
+                        <label class="form-label" for="dia_diem">Địa điểm / Phòng / Link online <span class="text-danger" aria-hidden="true">*</span></label>
+                        <input type="text" class="form-control" id="dia_diem" placeholder="P.306 nhà B hoặc https://meet.google.com/abc-defg-hij" required>
+                        <div class="form-text">Bắt buộc. Nhập phòng học hoặc dán link họp online (Google Meet, Zoom, Teams...) — link sẽ bấm được ở danh sách. Tối đa 150 ký tự.</div>
                     </div>
                 </div>
 
@@ -71,8 +72,16 @@
 
     <!-- Danh sách theo ngày (tải bằng Fetch API, không reload trang) -->
     <div class="card shadow-sm">
-        <div class="card-header">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
             <h5 class="mb-0">Danh sách khung giờ</h5>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <label class="small text-secondary mb-0" for="locTuNgay">Từ ngày</label>
+                <input type="date" class="form-control form-control-sm w-auto" id="locTuNgay">
+                <label class="small text-secondary mb-0" for="locDenNgay">Đến ngày</label>
+                <input type="date" class="form-control form-control-sm w-auto" id="locDenNgay">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnXoaLoc">Xóa lọc</button>
+                <span class="small text-secondary" id="locDem" aria-live="polite"></span>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">

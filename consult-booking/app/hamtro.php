@@ -25,6 +25,34 @@ function e(mixed $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/**
+ * In địa điểm ra HTML: đoạn nào là link (http://, https://, www.) thì thành thẻ <a> bấm được (mở tab mới),
+ * phần còn lại vẫn được mã hóa an toàn. Rỗng thì in $fallback.
+ */
+function lien_ket_dia_diem(?string $text, string $fallback = ''): string
+{
+    $text = trim((string) $text);
+    if ($text === '') {
+        return e($fallback);
+    }
+    $parts = preg_split('~((?:https?://|www\.)[^\s<>"\']+)~iu', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $out = '';
+    foreach ($parts as $i => $p) {
+        if ($i % 2 === 0) {                      // đoạn chữ thường
+            $out .= e($p);
+            continue;
+        }
+        $duoi = '';                              // dấu câu dính cuối link (vd "...abc.") không thuộc link
+        if (preg_match('~[.,;:!?)\]]+$~', $p, $m)) {
+            $duoi = $m[0];
+            $p    = substr($p, 0, -strlen($duoi));
+        }
+        $href = stripos($p, 'www.') === 0 ? 'https://' . $p : $p;
+        $out .= '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer">' . e($p) . '</a>' . e($duoi);
+    }
+    return $out;
+}
+
 /** Thư mục gốc của public/ tính từ URL (chạy được cả ở gốc domain lẫn thư mục con như /consult-booking/public). */
 function base_path(): string
 {

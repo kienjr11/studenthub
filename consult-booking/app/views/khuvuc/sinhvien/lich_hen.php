@@ -70,7 +70,7 @@ $nhanTrangThai = [
                             <td>
                                 <?= e(date('H:i d/m/Y', strtotime($item['bat_dau']))) ?>
                                 – <?= e(date('H:i', strtotime($item['ket_thuc']))) ?><br>
-                                <small class="text-muted"><?= e($item['dia_diem'] ?? 'Trực tuyến / Chưa có') ?></small>
+                                <small class="text-muted"><?= lien_ket_dia_diem($item['dia_diem'] ?? null, 'Trực tuyến / Chưa có') ?></small>
                             </td>
                             <td><?= e($item['chu_de']) ?></td>
                             <td><span class="badge bg-<?= e($mau) ?>"><?= e($nhan) ?></span></td>
