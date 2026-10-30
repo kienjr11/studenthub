@@ -69,21 +69,31 @@ $coGiangVien = !empty($danhSachGiangVien);
                     </div>
                 </div>
 
-                <!-- Bước 2: thời gian -->
+                <!-- Bước 2: thời gian. Có thể bấm 1 khung giờ rảnh của giảng viên (tự điền ngày/giờ) hoặc tự chọn ngày giờ -->
                 <div class="nhom-form">
                     <h2 class="nhom-tieu-de"><span class="buoc-so buoc-so-nho" aria-hidden="true">2</span>Thời gian</h2>
+
+                    <input type="hidden" id="ma_khung_gio" name="ma_khung_gio" value="<?= e($cu['ma_khung_gio'] ?? '') ?>">
+                    <div class="mb-3">
+                        <div class="form-label">Khung giờ rảnh của giảng viên <span class="text-muted small">(bấm để chọn nhanh)</span></div>
+                        <div id="khoi_khung_gio" data-url="<?= e(url('khung-gio/sap-toi')) ?>" aria-live="polite">
+                            <p class="text-muted mb-0">Hãy chọn giảng viên để xem các khung giờ rảnh.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-text mb-2">Hoặc tự chọn ngày và giờ:</div>
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label for="ngay_hen" class="form-label">Ngày hẹn <span class="bat-buoc" aria-hidden="true">*</span></label>
-                            <input type="date" id="ngay_hen" name="ngay_hen" class="form-control" min="<?= date('Y-m-d') ?>" value="<?= e($cu['ngay_hen'] ?? '') ?>" required>
+                            <input type="date" id="ngay_hen" name="ngay_hen" class="form-control" min="<?= date('Y-m-d') ?>" value="<?= e($cu['ngay_hen'] ?? '') ?>">
                         </div>
                         <div class="col-6 col-md-4">
                             <label for="gio_bat_dau" class="form-label">Giờ bắt đầu <span class="bat-buoc" aria-hidden="true">*</span></label>
-                            <input type="time" data-gio24 id="gio_bat_dau" name="gio_bat_dau" class="form-control" value="<?= e($cu['gio_bat_dau'] ?? '') ?>" required>
+                            <input type="time" data-gio24 id="gio_bat_dau" name="gio_bat_dau" class="form-control" value="<?= e($cu['gio_bat_dau'] ?? '') ?>">
                         </div>
                         <div class="col-6 col-md-4">
                             <label for="gio_ket_thuc" class="form-label">Giờ kết thúc <span class="bat-buoc" aria-hidden="true">*</span></label>
-                            <input type="time" data-gio24 id="gio_ket_thuc" name="gio_ket_thuc" class="form-control" value="<?= e($cu['gio_ket_thuc'] ?? '') ?>" required>
+                            <input type="time" data-gio24 id="gio_ket_thuc" name="gio_ket_thuc" class="form-control" value="<?= e($cu['gio_ket_thuc'] ?? '') ?>">
                         </div>
                     </div>
                 </div>
@@ -109,6 +119,7 @@ $coGiangVien = !empty($danhSachGiangVien);
             <aside class="luu-y-dat-lich" aria-labelledby="luu-y-tieu-de">
                 <h2 id="luu-y-tieu-de" class="h6 mb-3">Trước khi gửi yêu cầu</h2>
                 <ul class="danh-sach-luu-y">
+                    <li>Số chỗ của khung giờ chỉ giảm sau khi giảng viên duyệt yêu cầu của bạn.</li>
                     <li>Thời gian hẹn phải ở tương lai, và giờ kết thúc phải sau giờ bắt đầu.</li>
                     <li>Nếu giảng viên đã có lịch hẹn trùng khoảng giờ đó, hệ thống sẽ báo để bạn chọn giờ khác.</li>
                     <li>Sau khi gửi, yêu cầu ở trạng thái <span class="badge text-bg-<?= e($mauChoDuyet) ?>"><?= e($nhanChoDuyet) ?></span> cho đến khi giảng viên duyệt hoặc từ chối.</li>

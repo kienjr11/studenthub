@@ -11,9 +11,9 @@
   var URL_THEM = app.dataset.urlThem;
   var URL_SUA = app.dataset.urlSua;
   var URL_XOA = app.dataset.urlXoa;
+  var URL_CN_HEN = app.dataset.urlCapNhatHen;
  
   var form = document.getElementById("formKhungGio");
-  var ngayLoc = document.getElementById("ngayLoc");
   var tbody = document.getElementById("bangSlot");
   var tieuDe = document.getElementById("tieuDeForm");
   var btnLuu = document.getElementById("btnLuu");
@@ -98,6 +98,7 @@
     kt: gioSelect(document.getElementById("gio_ket_thuc")),
     sl: document.getElementById("suc_chua"),
     dd: document.getElementById("dia_diem"),
+    mon: document.getElementById("ma_chuyen_mon"),
   };
  
   // ---------- Đồng hồ: lấy theo giờ máy chủ (không tin đồng hồ máy người dùng) ----------
@@ -148,7 +149,7 @@
  
   function khoaGio(khoa) {
     daKhoaGio = khoa;
-    f.ngay.disabled = f.bd.disabled = f.kt.disabled = khoa;
+    f.ngay.disabled = f.bd.disabled = f.kt.disabled = f.mon.disabled = khoa;
     btnPhut.forEach(function (b) { b.disabled = khoa; });
     ghiChuKhoa.classList.toggle("d-none", !khoa);
   }
@@ -244,8 +245,8 @@
     tbody.replaceChildren();
     if (!ds.length) {
       var tr0 = o("tr");
-      var td0 = o("td", "Chưa có khung giờ nào trong ngày này.", "text-center text-muted py-4");
-      td0.colSpan = 7;
+      var td0 = o("td", "Chưa có khung giờ nào.", "text-center text-muted py-4");
+      td0.colSpan = 8;
       tr0.appendChild(td0);
       tbody.appendChild(tr0);
       return;
@@ -257,6 +258,7 @@
       tr.appendChild(o("td", String(i + 1)));
       tr.appendChild(o("td", hienThi(it.bat_dau)));
       tr.appendChild(o("td", hienThi(it.ket_thuc)));
+      tr.appendChild(o("td", it.ten_chuyen_mon || "—"));
       tr.appendChild(o("td", it.dia_diem || "Chưa cập nhật"));
       tr.appendChild(o("td", it.so_dang_ky + " / " + it.suc_chua, "text-center fw-semibold"));
  
@@ -301,7 +303,7 @@
   var daiTai = 0;
   function taiDanhSach() {
     var lan = ++daiTai; // bỏ qua kết quả cũ nếu người dùng đổi ngày liên tục
-    goi(URL_DS + "&ngay=" + encodeURIComponent(ngayLoc.value)).then(function (res) {
+    goi(URL_DS).then(function (res) {   // không lọc ngày: lấy tất cả khung giờ của giảng viên
       if (lan !== daiTai) return;
       if (res.success) veBang(res.data);
       else bao(false, res.message || "Không tải được danh sách.");
@@ -314,6 +316,69 @@
   var bangSV = document.getElementById("bangSinhVien");
   var svPhu = document.getElementById("modalSinhVienPhu");
   var svDem = document.getElementById("modalSinhVienDem");
+  var svBao = document.getElementById("modalSinhVienThongBao");
+  var slotDangXem = null;   // khung giờ đang mở trong bảng "con mắt" (để tải lại sau khi duyệt / từ chối...)
+
+  function baoModal(ok, msg) {
+    svBao.textContent = msg;
+    svBao.className = "alert m-3 mb-0 " + (ok ? "alert-success" : "alert-danger");
+  }
+
+  // Nút thao tác của từng sinh viên: giống trang "Quản lý lịch hẹn tư vấn"
+  function cotThaoTac(r) {
+    var td = o("td", undefined, "text-end text-nowrap");
+    function nut(text, cls, hanhDong) {
+      var b = o("button", text, "btn btn-sm ms-1 " + cls);
+      b.type = "button";
+      b.addEventListener("click", function () { thucHienHen(r, hanhDong, b); });
+      td.appendChild(b);
+    }
+    if (r.trang_thai === "cho_duyet") {
+      nut("Duyệt", "btn-success", "duyet");
+      nut("Từ chối", "btn-outline-danger", "tu_choi");
+    } else if (r.trang_thai === "da_duyet") {
+      nut("Hoàn thành", "btn-outline-primary", "hoan_thanh");
+      nut("Hủy", "btn-outline-danger", "da_huy");
+    } else if (r.trang_thai === "hoan_thanh") {
+      if (r.diem_danh_gia) {
+        var d = parseInt(r.diem_danh_gia, 10);
+        td.appendChild(o("span", new Array(d + 1).join("★") + new Array(6 - d).join("☆"), "text-warning"));
+        if (r.nhan_xet) {
+          td.appendChild(document.createElement("br"));
+          td.appendChild(o("small", r.nhan_xet, "text-muted"));
+        }
+      } else {
+        td.appendChild(o("small", "Chưa đánh giá", "text-muted"));
+      }
+    }
+    return td;
+  }
+
+  function thucHienHen(r, hanhDong, nutBam) {
+    var lyDo = "";
+    if (hanhDong === "tu_choi" && !window.confirm("Bạn có chắc muốn từ chối lịch hẹn này?")) return;
+    if (hanhDong === "da_huy") {
+      lyDo = (window.prompt("Nhập lý do hủy lịch hẹn (sinh viên sẽ xem được):") || "").trim();
+      if (!lyDo) { baoModal(false, "Cần nhập lý do để hủy lịch hẹn."); return; }
+    }
+    nutBam.disabled = true;
+    goi(URL_CN_HEN, new URLSearchParams({ ma_cuoc_hen: r.ma_cuoc_hen, hanh_dong: hanhDong, ly_do_huy: lyDo }))
+      .then(function (res) {
+        return taiLaiSinhVien(slotDangXem).then(function () {
+          baoModal(!!res.success, res.message || "");
+          taiDanhSach();   // cập nhật số sinh viên / trạng thái ở bảng chính
+        });
+      })
+      .catch(function () { baoModal(false, "Lỗi kết nối máy chủ."); });
+  }
+
+  // Tải lại dữ liệu bảng "con mắt" của 1 khung giờ
+  function taiLaiSinhVien(it) {
+    return goi(URL_SV + "&ma_khung_gio=" + encodeURIComponent(it.ma_khung_gio)).then(function (res) {
+      if (res.success) veSinhVien(res);
+      else baoModal(false, res.message || "Không tải được danh sách sinh viên.");
+    });
+  }
  
   var NHAN_TT = {
     cho_duyet: ["Chờ duyệt", "warning"],
@@ -339,7 +404,7 @@
     if (!res.data.length) {
       var tr0 = o("tr");
       var td0 = o("td", "Chưa có sinh viên nào đăng ký khung giờ này.", "text-center text-muted py-4");
-      td0.colSpan = 6;
+      td0.colSpan = 7;
       tr0.appendChild(td0);
       bangSV.appendChild(tr0);
       return;
@@ -356,11 +421,14 @@
       td.appendChild(o("span", tt[0], "badge text-bg-" + tt[1]));
       tr.appendChild(td);
       tr.appendChild(o("td", hienThi(r.ngay_tao), "text-nowrap"));
+      tr.appendChild(cotThaoTac(r));
       bangSV.appendChild(tr);
     });
   }
  
   function xemSinhVien(it) {
+    slotDangXem = it;
+    svBao.className = "alert d-none m-3 mb-0";   // xóa thông báo của lần mở trước
     goi(URL_SV + "&ma_khung_gio=" + encodeURIComponent(it.ma_khung_gio)).then(function (res) {
       if (!res.success) { bao(false, res.message || "Không tải được danh sách sinh viên."); return; }
       veSinhVien(res);
@@ -374,8 +442,7 @@
     form.reset();                                   // suc_chua trở về 1 (thuộc tính value mặc định)
     f.sl.min = "1";
     f.id.value = "";
-    // Gợi ý sẵn ngày đang xem trong bảng (nếu không phải quá khứ)
-    f.ngay.value = ngayLoc.value && ngayLoc.value >= strNgay(moc()) ? ngayLoc.value : "";
+    f.ngay.value = "";                              // capNhatGioiHan() điền ngày gần nhất có thể đặt
     tieuDe.textContent = "Thêm khung giờ rảnh mới";
     btnLuu.textContent = "Lưu khung giờ";
     btnHuy.classList.add("d-none");
@@ -391,6 +458,7 @@
     f.sl.value = it.suc_chua;
     f.sl.min = String(Math.max(1, it.so_dang_ky));  // không cho giảm xuống dưới số đã đăng ký
     f.dd.value = it.dia_diem || "";
+    f.mon.value = it.ma_chuyen_mon ? String(it.ma_chuyen_mon) : "";
     tieuDe.textContent = "Cập nhật khung giờ";
     btnLuu.textContent = "Cập nhật";
     btnHuy.classList.remove("d-none");
@@ -418,6 +486,11 @@
       bao(false, "Giờ kết thúc phải sau giờ bắt đầu.");
       return;
     }
+    if (f.mon.required && !f.mon.disabled && !f.mon.value) {
+      bao(false, "Vui lòng chọn môn tư vấn.");
+      f.mon.focus();
+      return;
+    }
     var sl = parseInt(f.sl.value, 10);
     var slMin = parseInt(f.sl.min || "1", 10);
     if (isNaN(sl) || sl < 1 || sl > 50) {
@@ -435,6 +508,7 @@
       bat_dau: f.ngay.value + "T" + f.bd.value,    // gộp lại đúng định dạng backend đang nhận
       ket_thuc: f.ngay.value + "T" + f.kt.value,
       suc_chua: String(sl),
+      ma_chuyen_mon: f.mon.value,
       dia_diem: f.dd.value,
     });
  
@@ -443,7 +517,6 @@
       .then(function (res) {
         bao(!!res.success, res.message || "");
         if (res.success) {
-          ngayLoc.value = f.ngay.value;              // chuyển bảng sang ngày vừa lưu để thấy ngay kết quả
           datLaiForm();
           taiDanhSach();
         }
@@ -453,10 +526,6 @@
   });
  
   btnHuy.addEventListener("click", datLaiForm);
-  ngayLoc.addEventListener("change", function () {
-    if (!f.id.value && ngayLoc.value >= strNgay(moc())) { f.ngay.value = ngayLoc.value; capNhatGioiHan(); }
-    taiDanhSach();
-  });
  
   capNhatGioiHan();
   taiDanhSach();

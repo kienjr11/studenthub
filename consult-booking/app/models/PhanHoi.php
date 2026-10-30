@@ -20,12 +20,15 @@ class PhanHoi extends MoHinh
             $params[':trang_thai'] = $trangThai;
         }
 
+        (new KhungGioModel())->damBaoCotChuyenMon();   // đảm bảo có cột khung_gio.ma_chuyen_mon trước khi truy vấn
+
         $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien,
                        gv.ho_ten AS ten_giang_vien,
-                       kg.bat_dau, kg.ket_thuc, kg.dia_diem,
+                       kg.bat_dau, kg.ket_thuc, kg.dia_diem, cm.ten_chuyen_mon,
                        ph.diem_danh_gia, ph.nhan_xet AS nhan_xet_sinh_vien
                 FROM cuoc_hen ch
                 JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                LEFT JOIN chuyen_mon cm ON cm.ma_chuyen_mon = kg.ma_chuyen_mon
                 JOIN nguoi_dung gv ON kg.ma_giang_vien = gv.ma_nguoi_dung
                 LEFT JOIN phan_hoi ph ON ch.ma_cuoc_hen = ph.ma_cuoc_hen
                 {$where}

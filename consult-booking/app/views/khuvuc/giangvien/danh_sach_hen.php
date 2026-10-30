@@ -53,6 +53,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                 <thead class="table-light">
                     <tr>
                         <th>Sinh viên</th>
+                        <th>Môn</th>
                         <th>Thời gian & Địa điểm</th>
                         <th>Chủ đề tư vấn</th>
                         <th>Trạng thái</th>
@@ -62,7 +63,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                 <tbody>
                     <?php if (empty($danh_sach)): ?>
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">Không có lịch hẹn nào phù hợp.</td>
+                            <td colspan="6" class="text-center py-4 text-muted">Không có lịch hẹn nào phù hợp.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($danh_sach as $item): ?>
@@ -71,6 +72,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                     <strong><?= e($item['ten_sinh_vien']) ?></strong><br>
                                     <small class="text-muted"><?= e($item['email_sinh_vien']) ?></small>
                                 </td>
+                                <td><?= e($item['ten_chuyen_mon'] ?? '') !== '' ? e($item['ten_chuyen_mon']) : '—' ?></td>
                                 <td>
                                     <i class="bi bi-clock text-secondary"></i> <?= date('H:i - d/m/Y', strtotime($item['bat_dau'])) ?><br>
                                     <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= e($item['dia_diem'] ?? 'Trực tuyến / Chưa có') ?></small>

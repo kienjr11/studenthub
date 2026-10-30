@@ -48,6 +48,7 @@ $nhanTrangThai = [
                 <thead>
                     <tr>
                         <th>Giảng viên</th>
+                        <th>Môn</th>
                         <th>Thời gian &amp; Địa điểm</th>
                         <th>Chủ đề tư vấn</th>
                         <th>Trạng thái</th>
@@ -58,13 +59,14 @@ $nhanTrangThai = [
                 <tbody>
                 <?php if (empty($danh_sach)): ?>
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">Bạn chưa có lịch hẹn nào phù hợp.</td>
+                        <td colspan="7" class="text-center py-4 text-muted">Bạn chưa có lịch hẹn nào phù hợp.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($danh_sach as $item): ?>
                         <?php [$nhan, $mau] = $nhanTrangThai[$item['trang_thai']] ?? [$item['trang_thai'], 'secondary']; ?>
                         <tr>
                             <td><strong><?= e($item['ten_giang_vien']) ?></strong></td>
+                            <td><?= e($item['ten_chuyen_mon'] ?? '') !== '' ? e($item['ten_chuyen_mon']) : '—' ?></td>
                             <td>
                                 <?= e(date('H:i d/m/Y', strtotime($item['bat_dau']))) ?>
                                 – <?= e(date('H:i', strtotime($item['ket_thuc']))) ?><br>

@@ -4,7 +4,8 @@
      data-url-sinh-vien="<?= e(url('giang-vien/khung-gio/sinh-vien')) ?>"
      data-url-them="<?= e(url('giang-vien/khung-gio/them')) ?>"
      data-url-sua="<?= e(url('giang-vien/khung-gio/sua')) ?>"
-     data-url-xoa="<?= e(url('giang-vien/khung-gio/xoa')) ?>">
+     data-url-xoa="<?= e(url('giang-vien/khung-gio/xoa')) ?>"
+     data-url-cap-nhat-hen="<?= e(url('giang-vien/khung-gio/cap-nhat-hen')) ?>">
 
     <h2 class="mb-4">Quản lý khung giờ tư vấn</h2>
 
@@ -29,11 +30,23 @@
                         <label class="form-label" for="gio_ket_thuc">Đến</label>
                         <input type="time" class="form-control" id="gio_ket_thuc" step="300" required>
                     </div>
-                    <div class="col-6 col-md-2">
+                    <div class="col-md-5">
+                        <label class="form-label" for="ma_chuyen_mon">Môn tư vấn</label>
+                        <select class="form-select" id="ma_chuyen_mon" <?= !empty($chuyenMon) ? 'required' : '' ?>>
+                            <option value=""><?= !empty($chuyenMon) ? '-- Chọn môn --' : '(Chưa có môn nào trong hồ sơ)' ?></option>
+                            <?php foreach (($chuyenMon ?? []) as $m): ?>
+                                <option value="<?= (int) $m['ma_chuyen_mon'] ?>"><?= e($m['ten_chuyen_mon']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (empty($chuyenMon)): ?>
+                            <div class="form-text">Hãy thêm môn bạn dạy trong <a href="<?= e(url('tai-khoan/ho-so')) ?>">hồ sơ giảng viên</a> để chọn ở đây.</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-6 col-md-3">
                         <label class="form-label" for="suc_chua">Số sinh viên tối đa</label>
                         <input type="number" class="form-control" id="suc_chua" min="1" max="50" step="1" value="1" required>
                     </div>
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-9">
                         <label class="form-label" for="dia_diem">Địa điểm / Phòng</label>
                         <input type="text" class="form-control" id="dia_diem" maxlength="150" placeholder="P.306 nhà B / Online">
                     </div>
@@ -58,18 +71,14 @@
 
     <!-- Danh sách theo ngày (tải bằng Fetch API, không reload trang) -->
     <div class="card shadow-sm">
-        <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <div class="card-header">
             <h5 class="mb-0">Danh sách khung giờ</h5>
-            <div class="d-flex align-items-center gap-2">
-                <label for="ngayLoc" class="mb-0 small">Ngày:</label>
-                <input type="date" id="ngayLoc" class="form-control form-control-sm" value="<?= e(date('Y-m-d')) ?>">
-            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>#</th><th>Bắt đầu</th><th>Kết thúc</th><th>Địa điểm</th>
+                        <th>#</th><th>Bắt đầu</th><th>Kết thúc</th><th>Môn</th><th>Địa điểm</th>
                         <th class="text-center">Sinh viên</th><th>Trạng thái</th><th class="text-end">Thao tác</th>
                     </tr>
                 </thead>
@@ -80,7 +89,7 @@
 
     <!-- Modal: sinh viên đã đăng ký khung giờ (nút con mắt) -->
     <div class="modal fade" id="modalSinhVien" tabindex="-1" aria-labelledby="modalSinhVienTieuDe" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <div>
@@ -90,10 +99,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
                 <div class="modal-body p-0">
+                    <div id="modalSinhVienThongBao" class="alert d-none m-3 mb-0" role="alert"></div>
                     <div class="table-responsive">
                         <table class="table align-middle mb-0">
                             <thead>
-                                <tr><th>#</th><th>Họ tên</th><th>Email</th><th>Chủ đề</th><th>Trạng thái</th><th>Đăng ký lúc</th></tr>
+                                <tr><th>#</th><th>Họ tên</th><th>Email</th><th>Chủ đề</th><th>Trạng thái</th><th>Đăng ký lúc</th><th class="text-end">Thao tác</th></tr>
                             </thead>
                             <tbody id="bangSinhVien"></tbody>
                         </table>

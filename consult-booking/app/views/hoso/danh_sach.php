@@ -3,7 +3,7 @@
 $nguoiXem = XacThuc::user();
 $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filter($filters + ['page' => $p > 1 ? $p : 0], static fn ($v) => $v !== '' && $v !== 0));
 ?>
-<div class="container py-4">
+<div class="container py-4">">
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h1 class="h3 mb-0 page-title">Tìm giảng viên</h1>
         <span class="text-muted"><?= e($total) ?> giảng viên</span>
@@ -48,6 +48,45 @@ $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filte
                     <?php if ($r['phong_lam_viec']): ?><div class="small mb-2">Phòng: <?= e($r['phong_lam_viec']) ?></div><?php endif; ?>
                     <div class="d-flex flex-wrap gap-1 mb-3">
                         <?php foreach ($r['chuyen_mon'] as $cm): ?><span class="pill"><?= e($cm) ?></span><?php endforeach; ?>
+                    </div>
+                    <?php
+                        $laSinhVien = ($nguoiXem['vai_tro'] ?? '') === 'sinh_vien';
+                        $khungGio   = $r['khung_gio'] ?? [];
+                        $hienThi    = array_slice($khungGio, 0, 6);
+                    ?>
+                    <div class="mb-3">
+                        <div class="small fw-semibold mb-1">Khung giờ rảnh</div>
+                        <?php if (!$hienThi): ?>
+                            <div class="small text-muted">Chưa có khung giờ rảnh sắp tới.</div>
+                        <?php else: ?>
+                            <div class="d-flex flex-wrap gap-1">
+                                <?php foreach ($hienThi as $kg): ?>
+                                    <?php
+                                        $bd   = strtotime($kg['bat_dau']);
+                                        $kt   = strtotime($kg['ket_thuc']);
+                                        $nhan = date('d/m', $bd) . ' · ' . date('H:i', $bd) . '–' . date('H:i', $kt);
+                                        $cho  = 'còn ' . $kg['con_lai'] . '/' . $kg['suc_chua'] . ' chỗ';
+                                        $mon  = (string) ($kg['ten_chuyen_mon'] ?? '');
+                                        $dong2 = ($mon !== '' ? $mon . ' · ' : '') . $cho;
+                                        $tip  = ($mon !== '' ? $mon . ' · ' : '') . ($kg['dia_diem'] ?: 'Chưa cập nhật địa điểm') . ' · ' . $cho;
+                                    ?>
+                                    <?php if ($laSinhVien): ?>
+                                        <a class="btn btn-sm btn-outline-primary" title="<?= e($tip) ?>"
+                                           href="<?= e(url('sinh-vien/dat-lich', ['giang_vien_id' => $r['ma_nguoi_dung'], 'ma_khung_gio' => $kg['ma_khung_gio']])) ?>">
+                                            <?= e($nhan) ?><span class="d-block small opacity-75"><?= e($dong2) ?></span>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="pill" title="<?= e($tip) ?>"><?= e($nhan) ?> · <?= e($dong2) ?></span>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php if ($laSinhVien): ?>
+                                <div class="form-text mt-1">
+                                    Bấm vào một khung giờ để đặt lịch<?php if (count($khungGio) > count($hienThi)): ?> ·
+                                    <a href="<?= e(url('sinh-vien/dat-lich', ['giang_vien_id' => $r['ma_nguoi_dung']])) ?>">Xem thêm khung giờ</a><?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                     <div class="d-flex gap-2 mt-auto">
                         <a class="btn btn-sm btn-outline-primary" href="<?= e(url('giang-vien/chi-tiet', ['id' => $r['ma_nguoi_dung']])) ?>">Xem hồ sơ</a>
