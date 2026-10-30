@@ -12,7 +12,6 @@ $me = XacThuc::user();
                     <?php if ($me): ?>
                         <a class="btn btn-primary btn-lg" href="<?= e(url('dashboard/index')) ?>">Vào khu vực của tôi</a>
                     <?php else: ?>
-                        <a class="btn btn-primary btn-lg" href="<?= e(url('auth/register')) ?>">Tạo tài khoản sinh viên</a>
                         <a class="btn btn-outline-light btn-lg" href="<?= e(url('auth/login')) ?>">Đăng nhập</a>
                     <?php endif; ?>
                 </div>
