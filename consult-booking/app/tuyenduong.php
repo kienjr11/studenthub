@@ -24,31 +24,32 @@ return [
     ['GET',  'admin/catalog',      DieuKhienDanhMuc::class,   'index'],
     ['POST', 'admin/catalog-save', DieuKhienDanhMuc::class,   'save'],
     ['POST', 'admin/catalog-delete', DieuKhienDanhMuc::class, 'delete'],
+    ['GET',  'admin/lich-hen',     DieuKhienQuanTri::class,     'lichHen'], // <--- ROUTE MỚI CHO TRANG LỊCH HẸN ADMIN
 
     // Quản lý lịch hẹn của Giảng viên
     ['GET',  'giang-vien/lich-hen',         DieuKhienLichHenGiangVien::class, 'index'],
     ['POST', 'giang-vien/lich-hen/cap-nhat', DieuKhienLichHenGiangVien::class, 'capNhatTrangThai'],
     ['POST', 'giang-vien/lich-hen/phan-hoi',  DieuKhienLichHenGiangVien::class, 'luuPhanHoi'],
 
-    // Khung giờ tư vấn (slot) của Giảng viên: trang quản lý + các endpoint JSON cho Fetch API
+    // Khung giờ tư vấn (slot) của Giảng viên
     ['GET',  'giang-vien/khung-gio',              DieuKhienKhungGioGiangVien::class, 'index'],
     ['GET',  'giang-vien/khung-gio/danh-sach',    DieuKhienKhungGioGiangVien::class, 'danhSach'],
-    ['GET',  'giang-vien/khung-gio/sinh-vien',    DieuKhienKhungGioGiangVien::class, 'sinhVienDangKy'],   // nút "con mắt": SV đã đăng ký slot
+    ['GET',  'giang-vien/khung-gio/sinh-vien',    DieuKhienKhungGioGiangVien::class, 'sinhVienDangKy'],
     ['POST', 'giang-vien/khung-gio/them',         DieuKhienKhungGioGiangVien::class, 'them'],
     ['POST', 'giang-vien/khung-gio/sua',          DieuKhienKhungGioGiangVien::class, 'sua'],
     ['POST', 'giang-vien/khung-gio/xoa',          DieuKhienKhungGioGiangVien::class, 'xoa'],
-    ['POST', 'giang-vien/khung-gio/cap-nhat-hen', DieuKhienKhungGioGiangVien::class, 'capNhatLichHen'],   // duyệt / từ chối / hoàn thành / hủy ngay trong bảng "con mắt"
-    ['GET',  'khung-gio/trong',                   DieuKhienKhungGioGiangVien::class, 'slotTrong'],        // slot còn chỗ theo ngày + giảng viên
-    ['GET',  'khung-gio/sap-toi',                 DieuKhienKhungGioGiangVien::class, 'slotSapToi'],       // mọi slot còn chỗ sắp tới của 1 giảng viên
+    ['POST', 'giang-vien/khung-gio/cap-nhat-hen', DieuKhienKhungGioGiangVien::class, 'capNhatLichHen'],
+    ['GET',  'khung-gio/trong',                   DieuKhienKhungGioGiangVien::class, 'slotTrong'],
+    ['GET',  'khung-gio/sap-toi',                 DieuKhienKhungGioGiangVien::class, 'slotSapToi'],
 
     // Hồ sơ & chuyên môn
-    ['GET',  'giang-vien/ho-so',    DieuKhienHoSoGiangVien::class, 'profile'],        // chế độ xem
-    ['GET',  'giang-vien/ho-so/sua', DieuKhienHoSoGiangVien::class, 'editProfile'],    // form sửa (nút "Chỉnh sửa")
-    ['POST', 'giang-vien/ho-so',    DieuKhienHoSoGiangVien::class, 'saveProfile'],
+    ['GET',  'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'profile'],
+    ['GET',  'giang-vien/ho-so/sua', DieuKhienHoSoGiangVien::class, 'editProfile'],
+    ['POST', 'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'saveProfile'],
     ['GET',  'giang-vien/danh-sach', DieuKhienHoSoGiangVien::class, 'directory'],
     ['GET',  'giang-vien/chi-tiet',  DieuKhienHoSoGiangVien::class, 'detail'],
 
-    // Tài khoản của tôi (mọi vai trò đã đăng nhập)
+    // Tài khoản của tôi
     ['GET',  'tai-khoan/ho-so',            DieuKhienTaiKhoan::class, 'hoSo'],
     ['POST', 'tai-khoan/ho-so/cap-nhat',   DieuKhienTaiKhoan::class, 'capNhatHoSo'],
     ['POST', 'tai-khoan/chuyen-mon',       DieuKhienTaiKhoan::class, 'capNhatChuyenMon'],
@@ -56,7 +57,7 @@ return [
     ['POST', 'tai-khoan/doi-mat-khau',     DieuKhienTaiKhoan::class, 'doiMatKhau'],
 
     // Đánh giá / Phản hồi của Sinh viên
-    ['GET',  'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'index'],   // trang Lịch hẹn & Đánh giá
+    ['GET',  'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'index'],
     ['POST', 'sinh-vien/phan-hoi',   DieuKhienPhanHoi::class,       'gui'],
 
     // Sinh viên đặt lịch hẹn & Hủy lịch hẹn
