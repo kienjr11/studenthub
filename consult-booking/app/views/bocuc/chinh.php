@@ -36,7 +36,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                 <?php if ($me): ?>
                     <li class="nav-item"><a class="nav-link<?= $active('dashboard/') ?>" href="<?= e(url('dashboard/index')) ?>">Khu vực của tôi</a></li>
                 <?php endif; ?>
-                <?php if ($me): ?>
+                <?php if ($me && ($me['vai_tro'] ?? '') !== 'giang_vien'): ?>
                     <li class="nav-item"><a class="nav-link<?= $route === 'giang-vien/danh-sach' || $route === 'giang-vien/chi-tiet' ? ' active' : '' ?>" href="<?= e(url('giang-vien/danh-sach')) ?>">Tìm giảng viên</a></li>
                 <?php endif; ?>
 
@@ -68,7 +68,6 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle<?= $active('admin/') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Quản trị</a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="<?= e(url('admin/dashboard')) ?>">Tổng quan</a></li>
                             <li><a class="dropdown-item" href="<?= e(url('admin/users')) ?>">Tài khoản người dùng</a></li>
                             <li><a class="dropdown-item" href="<?= e(url('admin/catalog', ['type' => 'departments'])) ?>">Danh mục đơn vị</a></li>
                             <li><a class="dropdown-item" href="<?= e(url('admin/catalog', ['type' => 'specialties'])) ?>">Danh mục chuyên môn</a></li>
@@ -85,7 +84,6 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                     </form>
                 <?php else: ?>
                     <a class="btn btn-sm btn-outline-light" href="<?= e(url('auth/login')) ?>">Đăng nhập</a>
-                    <a class="btn btn-sm btn-light" href="<?= e(url('auth/register')) ?>">Đăng ký</a>
                 <?php endif; ?>
             </div>
         </div>
