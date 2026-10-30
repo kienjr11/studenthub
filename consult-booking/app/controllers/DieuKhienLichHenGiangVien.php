@@ -60,7 +60,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $gioBatDau   = $this->input('gio_bat_dau');
         $gioKetThuc  = $this->input('gio_ket_thuc');
         $chuDe       = mb_substr($this->input('chu_de'), 0, 255);   // cột chu_de là VARCHAR(255)
-        $monHoc      = $this->input('mon_hoc');                      // tên môn sinh viên chọn trên form
+        $monHoc      = $this->input('mon_hoc');                    // tên môn sinh viên chọn trên form
 
         $loi = function (string $msg) use ($giangVienId, $maKhungGio, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe): never {
             $_SESSION['_dat_lich_cu'] = [
@@ -157,9 +157,11 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
         $trangThai = $_GET['trang_thai'] ?? null;
+        $ngay = $_GET['ngay'] ?? null; // Bắt thêm tham số ngày từ URL khi bấm vào ô "Lịch hẹn hôm nay"
         $trang = max(1, (int)($_GET['trang'] ?? 1));
 
-        $data = $this->cuocHenModel->layDanhSachChoGiangVien((int)$maGiangVien, $trangThai, $trang);
+        // Truyền thêm biến $ngay vào hàm layDanhSachChoGiangVien ở Model
+        $data = $this->cuocHenModel->layDanhSachChoGiangVien((int)$maGiangVien, $trangThai, $trang, 10, $ngay);
 
         echo GiaoDien::render('khuvuc/giangvien/danh_sach_hen', [
             'tieu_de'        => 'Quản lý lịch hẹn tư vấn',

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class CuocHen extends MoHinh
 {
-    public function layDanhSachChoGiangVien(int $maGiangVien, ?string $trangThai = null, int $trang = 1, int $gioiHan = 10): array
+    public function layDanhSachChoGiangVien(int $maGiangVien, ?string $trangThai = null, int $trang = 1, int $gioiHan = 10, ?string $ngay = null): array
     {
         $offset = ($trang - 1) * $gioiHan;
         $params = [':ma_gv' => $maGiangVien];
@@ -12,6 +12,12 @@ class CuocHen extends MoHinh
         if ($trangThai && in_array($trangThai, ['cho_duyet', 'da_duyet', 'tu_choi', 'da_huy', 'hoan_thanh'])) {
             $whereSql .= " AND ch.trang_thai = :trang_thai";
             $params[':trang_thai'] = $trangThai;
+        }
+
+        // Bổ sung điều kiện lọc chính xác theo ngày nếu có truyền vào từ URL
+        if ($ngay) {
+            $whereSql .= " AND DATE(kg.bat_dau) = :ngay";
+            $params[':ngay'] = $ngay;
         }
 
         (new KhungGioModel())->damBaoCotChuyenMon();   // đảm bảo có cột khung_gio.ma_chuyen_mon trước khi truy vấn
@@ -90,10 +96,6 @@ class CuocHen extends MoHinh
         ]);
     }
 
-    /**
-     * Giảng viên đã có khung giờ (còn hiệu lực) chồng lên khoảng [bắt đầu, kết thúc) chưa?
-     * Khung giờ chỉ tính là "bận" khi có cuộc hẹn đã được duyệt (da_duyet / hoan_thanh).
-     */
     public function kiemTraTrungLich(int $maGiangVien, string $batDau, string $ketThuc): bool
     {
         $st = $this->db->prepare(
@@ -108,13 +110,9 @@ class CuocHen extends MoHinh
         return (int) $st->fetchColumn() > 0;
     }
 
-    /**
-     * Sinh viên đặt lịch: tạo khung giờ theo giờ sinh viên chọn rồi tạo cuộc hẹn (cho_duyet) trong một transaction.
-     * Trả về mã cuộc hẹn mới.
-     */
     public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe): int
     {
-        $coCot = (new KhungGioModel())->damBaoCotTuNhap();   // phải chạy trước beginTransaction (ALTER TABLE tự commit)
+        $coCot = (new KhungGioModel())->damBaoCotTuNhap();   
         $this->db->beginTransaction();
         try {
             $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc' . ($coCot ? ', la_tu_nhap' : '') . ') VALUES (:gv, :bd, :kt' . ($coCot ? ', 1' : '') . ')')
@@ -133,12 +131,6 @@ class CuocHen extends MoHinh
         }
     }
 
-    /**
-     * Sinh viên đặt vào MỘT KHUNG GIỜ CÓ SẴN của giảng viên (khung giờ do giảng viên mở ở trang "Khung giờ tư vấn").
-     * Khóa dòng khung giờ trong transaction để 2 sinh viên không cùng giành chỗ cuối.
-     * Ném DomainException (thông báo tiếng Việt, hiển thị được cho người dùng) nếu không đặt được.
-     * Trả về mã cuộc hẹn mới.
-     */
     public function datVaoKhungGio(int $maSinhVien, int $maKhungGio, string $chuDe): int
     {
         $this->db->beginTransaction();
@@ -153,7 +145,6 @@ class CuocHen extends MoHinh
                 throw new DomainException('Khung giờ này đã qua. Vui lòng chọn khung giờ khác.');
             }
 
-            // Chỗ chỉ bị trừ khi giảng viên DUYỆT -> ở đây chỉ đếm lịch đã duyệt/hoàn thành để chặn khung giờ đã đủ người.
             $st = $this->db->prepare(
                 "SELECT COALESCE(SUM(trang_thai IN ('da_duyet', 'hoan_thanh')), 0) AS da_duyet,
                         COALESCE(SUM(ma_sinh_vien = :sv AND trang_thai IN ('cho_duyet', 'da_duyet', 'hoan_thanh')), 0) AS cua_toi
@@ -181,11 +172,6 @@ class CuocHen extends MoHinh
         }
     }
 
-    /**
-     * Giảng viên duyệt 1 yêu cầu: lúc này chỗ trong khung giờ mới bị trừ.
-     * Khóa dòng cuộc hẹn + khung giờ, kiểm tra còn chỗ rồi mới đổi trạng thái.
-     * Ném DomainException (thông báo tiếng Việt) nếu không duyệt được.
-     */
     public function duyetCuocHen(int $maCuocHen): void
     {
         $this->db->beginTransaction();
@@ -219,9 +205,6 @@ class CuocHen extends MoHinh
         }
     }
 
-    /**
-     * Thống kê tổng quan số lượng cuộc hẹn cho Admin (toàn hệ thống)
-     */
     public function thongKeTongQuanAdmin(): array
     {
         $sql = "SELECT 
@@ -239,14 +222,12 @@ class CuocHen extends MoHinh
         ];
     }
 
-    /**
-     * Thống kê số lượng cuộc hẹn riêng cho một Giảng viên cụ thể
-     */
     public function thongKeChoGiangVien(int $maGiangVien): array
     {
         $sql = "SELECT 
                     COUNT(*) as tong_so,
                     SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
+                    SUM(CASE WHEN ch.trang_thai = 'da_duyet' AND DATE(kg.bat_dau) = CURDATE() THEN 1 ELSE 0 END) as hom_nay,
                     SUM(CASE WHEN ch.trang_thai = 'da_duyet' THEN 1 ELSE 0 END) as da_duyet,
                     SUM(CASE WHEN ch.trang_thai = 'tu_choi' THEN 1 ELSE 0 END) as tu_choi,
                     SUM(CASE WHEN ch.trang_thai = 'da_huy' THEN 1 ELSE 0 END) as da_huy,
@@ -258,18 +239,13 @@ class CuocHen extends MoHinh
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':ma_gv' => $maGiangVien]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [
-            'tong_so' => 0, 'cho_duyet' => 0, 'da_duyet' => 0, 
+            'tong_so' => 0, 'cho_duyet' => 0, 'hom_nay' => 0, 'da_duyet' => 0, 
             'tu_choi' => 0, 'da_huy' => 0, 'hoan_thanh' => 0
         ];
     }
 
-    /**
-     * Hủy lịch hẹn bởi Sinh viên
-     * Kiểm tra quyền sở hữu và không cho phép hủy lịch đã hoàn thành.
-     */
     public function huyLichBoiSinhVien(int $maCuocHen, int $maSinhVien): bool
     {
-        // 1. Kiểm tra tồn tại cuộc hẹn thuộc về sinh viên này
         $sqlSelect = "SELECT trang_thai FROM cuoc_hen WHERE ma_cuoc_hen = :ma_cuoc_hen AND ma_sinh_vien = :ma_sv";
         $stmtSelect = $this->db->prepare($sqlSelect);
         $stmtSelect->execute([
@@ -278,16 +254,10 @@ class CuocHen extends MoHinh
         ]);
         $cuocHen = $stmtSelect->fetch(PDO::FETCH_ASSOC);
 
-        if (!$cuocHen) {
+        if (!$cuocHen || $cuocHen['trang_thai'] === 'hoan_thanh') {
             return false;
         }
 
-        // 2. Quy tắc nghiệp vụ: Không hủy lịch đã hoàn thành
-        if ($cuocHen['trang_thai'] === 'hoan_thanh') {
-            return false;
-        }
-
-        // 3. Cập nhật trạng thái thành 'da_huy'
         $sqlUpdate = "UPDATE cuoc_hen SET trang_thai = 'da_huy' WHERE ma_cuoc_hen = :ma_cuoc_hen";
         $stmtUpdate = $this->db->prepare($sqlUpdate);
         return $stmtUpdate->execute([':ma_cuoc_hen' => $maCuocHen]);
