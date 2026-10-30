@@ -60,6 +60,55 @@ class CuocHen extends MoHinh
         ];
     }
 
+    /**
+     * Lấy danh sách toàn bộ cuộc hẹn phục vụ cho Quản trị viên (có lọc trạng thái và phân trang)
+     */
+    public function layDanhSachChoAdmin(?string $trangThai = null, int $trang = 1, int $gioiHan = 15): array
+    {
+        $offset = ($trang - 1) * $gioiHan;
+        $params = [];
+        $whereSql = "WHERE 1=1";
+
+        if ($trangThai && in_array($trangThai, ['cho_duyet', 'da_duyet', 'tu_choi', 'da_huy', 'hoan_thanh'], true)) {
+            $whereSql .= " AND ch.trang_thai = :trang_thai";
+            $params[':trang_thai'] = $trangThai;
+        }
+
+        $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ngay_tao,
+                       sv.ho_ten AS ten_sinh_vien, sv.email AS email_sinh_vien,
+                       gv.ho_ten AS ten_giang_vien, gv.email AS email_giang_vien,
+                       kg.bat_dau, kg.ket_thuc, kg.dia_diem
+                FROM cuoc_hen ch
+                JOIN nguoi_dung sv ON ch.ma_sinh_vien = sv.ma_nguoi_dung
+                JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                JOIN nguoi_dung gv ON kg.ma_giang_vien = gv.ma_nguoi_dung
+                {$whereSql}
+                ORDER BY kg.bat_dau DESC
+                LIMIT {$gioiHan} OFFSET {$offset}";
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->execute();
+        $danhSach = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $sqlCount = "SELECT COUNT(*) FROM cuoc_hen ch JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio {$whereSql}";
+        $stmtCount = $this->db->prepare($sqlCount);
+        foreach ($params as $k => $v) {
+            $stmtCount->bindValue($k, $v);
+        }
+        $stmtCount->execute();
+        $tongBanGhi = (int) $stmtCount->fetchColumn();
+
+        return [
+            'danh_sach'      => $danhSach,
+            'tong_so'        => $tongBanGhi,
+            'tong_trang'     => (int) ceil($tongBanGhi / $gioiHan),
+            'trang_hien_tai' => $trang
+        ];
+    }
+
     public function timTheoIdVaGiangVien(int $maCuocHen, int $maGiangVien): ?array
     {
         $sql = "SELECT ch.*, kg.ma_giang_vien, kg.bat_dau, kg.ket_thuc, kg.dia_diem,

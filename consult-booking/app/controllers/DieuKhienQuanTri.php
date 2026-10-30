@@ -118,6 +118,25 @@ final class DieuKhienQuanTri extends BoDieuKhien
         $this->back();
     }
 
+    /** Quản lý danh sách cuộc hẹn toàn hệ thống dành cho Admin */
+    public function lichHen(): void
+    {
+        $trangThai = $_GET['trang_thai'] ?? null;
+        $trang     = max(1, (int)($_GET['trang'] ?? 1));
+
+        // Gọi qua Model CuocHen để lấy dữ liệu an toàn, không gọi trực tiếp kết nối CSDL tại Controller
+        $cuocHenModel = new CuocHen();
+        $data = $cuocHenModel->layDanhSachChoAdmin($trangThai, $trang, 15);
+
+        $this->view('quantri/danh_sach_hen', [
+            'title'          => 'Quản lý danh sách cuộc hẹn toàn hệ thống',
+            'danh_sach'      => $data['danh_sach'] ?? [],
+            'tong_trang'     => $data['tong_trang'] ?? 1,
+            'trang_hien_tai' => $data['trang_hien_tai'] ?? 1,
+            'trang_thai_loc' => $trangThai
+        ]);
+    }
+
     private function targetUser(): array
     {
         $user = (new NguoiDung())->find((int) ($_POST['id'] ?? 0));
