@@ -19,10 +19,32 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $this->view('khuvuc/sinhvien/dat_lich', [
             'title'             => 'Đặt lịch hẹn tư vấn',
+            'scripts'           => ['js/Dat_lich_khung_gio.js'],
             'danhSachGiangVien' => (new NguoiDung())->layGiangVienChoDatLich(),
-            'cu'                => $_SESSION['_dat_lich_cu'] ?? ['giang_vien_id' => (int) ($_GET['giang_vien_id'] ?? 0)],
+            'cu'                => $_SESSION['_dat_lich_cu'] ?? $this->giaTriDienSan(),
         ]);
         unset($_SESSION['_dat_lich_cu']);
+    }
+
+    /** Giá trị điền sẵn cho form đặt lịch từ URL (ví dụ khi bấm 1 khung giờ trong nút "Lịch rảnh" ở trang Tìm giảng viên). */
+    private function giaTriDienSan(): array
+    {
+        $cu = [
+            'giang_vien_id' => (int) ($_GET['giang_vien_id'] ?? 0),
+            'ma_khung_gio'  => (int) ($_GET['ma_khung_gio'] ?? 0),
+        ];
+        // Có khung giờ được chọn sẵn -> điền luôn ngày/giờ của khung giờ đó vào form (nếu còn ở tương lai)
+        if ($cu['giang_vien_id'] > 0 && $cu['ma_khung_gio'] > 0) {
+            $kg = (new KhungGioModel())->timTheoId($cu['ma_khung_gio'], $cu['giang_vien_id']);
+            if ($kg && strtotime($kg['bat_dau']) > time()) {
+                $cu['ngay_hen']      = date('Y-m-d', strtotime($kg['bat_dau']));
+                $cu['gio_bat_dau']   = date('H:i', strtotime($kg['bat_dau']));
+                $cu['gio_ket_thuc']  = date('H:i', strtotime($kg['ket_thuc']));
+            } else {
+                $cu['ma_khung_gio'] = 0;
+            }
+        }
+        return $cu;
     }
 
     /**
@@ -33,34 +55,25 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         XacThuc::requireRole('sinh_vien');
 
         $giangVienId = (int) ($_POST['giang_vien_id'] ?? 0);
+        $maKhungGio  = (int) ($_POST['ma_khung_gio'] ?? 0);   // > 0: sinh viên bấm 1 khung giờ rảnh có sẵn của giảng viên
         $ngayHen     = $this->input('ngay_hen');
         $gioBatDau   = $this->input('gio_bat_dau');
         $gioKetThuc  = $this->input('gio_ket_thuc');
         $chuDe       = mb_substr($this->input('chu_de'), 0, 255);   // cột chu_de là VARCHAR(255)
+        $monHoc      = $this->input('mon_hoc');                      // tên môn sinh viên chọn trên form
 
-        $loi = function (string $msg) use ($giangVienId, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe): never {
+        $loi = function (string $msg) use ($giangVienId, $maKhungGio, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe): never {
             $_SESSION['_dat_lich_cu'] = [
-                'giang_vien_id' => $giangVienId, 'ngay_hen' => $ngayHen,
+                'giang_vien_id' => $giangVienId, 'ma_khung_gio' => $maKhungGio, 'ngay_hen' => $ngayHen,
                 'gio_bat_dau' => $gioBatDau, 'gio_ket_thuc' => $gioKetThuc, 'chu_de' => $chuDe,
             ];
             flash('danger', $msg);
             redirect('sinh-vien/dat-lich');
         };
 
-        if ($giangVienId <= 0 || $ngayHen === '' || $gioBatDau === '' || $gioKetThuc === '' || $chuDe === '') {
+        $thieuGio = $maKhungGio <= 0 && ($ngayHen === '' || $gioBatDau === '' || $gioKetThuc === '');
+        if ($giangVienId <= 0 || $chuDe === '' || $thieuGio) {
             $loi('Vui lòng nhập đầy đủ các thông tin bắt buộc.');
-        }
-
-        $batDau  = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioBatDau");
-        $ketThuc = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioKetThuc");
-        if (!$batDau || !$ketThuc) {
-            $loi('Ngày hoặc giờ không hợp lệ.');
-        }
-        if ($ketThuc <= $batDau) {
-            $loi('Giờ kết thúc phải sau giờ bắt đầu.');
-        }
-        if ($batDau <= new DateTime()) {
-            $loi('Thời gian hẹn phải ở tương lai.');
         }
 
         // Giảng viên phải tồn tại và đang hoạt động
@@ -69,17 +82,61 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             $loi('Giảng viên không hợp lệ.');
         }
 
-        $bd = $batDau->format('Y-m-d H:i:s');
-        $kt = $ketThuc->format('Y-m-d H:i:s');
-        if ($this->cuocHenModel->kiemTraTrungLich($giangVienId, $bd, $kt)) {
-            $loi('Giảng viên đã có lịch hẹn trong khoảng thời gian này. Vui lòng chọn giờ khác.');
+        if ($maKhungGio > 0) {
+            // Khung giờ phải đúng là của giảng viên đã chọn (chống sửa HTML gửi id bậy).
+            $kgChon = (new KhungGioModel())->timTheoId($maKhungGio, $giangVienId);
+            if ($kgChon === null) {
+                $loi('Khung giờ không thuộc giảng viên đã chọn. Vui lòng chọn lại.');
+            }
+            // Sinh viên đã sửa ngày/giờ khác với khung giờ đang chọn -> hiểu là tự nhập giờ, bỏ qua khung giờ cũ
+            if ($ngayHen !== '' && $gioBatDau !== '' && $gioKetThuc !== ''
+                && ($ngayHen !== date('Y-m-d', strtotime($kgChon['bat_dau']))
+                    || $gioBatDau !== date('H:i', strtotime($kgChon['bat_dau']))
+                    || $gioKetThuc !== date('H:i', strtotime($kgChon['ket_thuc'])))) {
+                $maKhungGio = 0;
+            }
         }
 
-        try {
-            $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe);
-        } catch (Throwable $e) {
-            error_log('Đặt lịch thất bại: ' . $e->getMessage());
-            $loi('Đã xảy ra lỗi, vui lòng thử lại.');
+        if ($maKhungGio > 0) {
+            // Khung giờ giảng viên đã mở cho một môn thì sinh viên chỉ được đặt đúng môn đó.
+            $monKhung = (new KhungGioModel())->layTenChuyenMonCuaKhungGio($maKhungGio);
+            if ($monKhung !== null && $monHoc !== '' && $monHoc !== $monKhung) {
+                $loi('Khung giờ này giảng viên mở cho môn "' . $monKhung . '", bạn không thể đặt môn "' . $monHoc . '". Vui lòng chọn đúng môn hoặc chọn khung giờ khác.');
+            }
+            // Đường 1: đặt vào khung giờ có sẵn
+            try {
+                $this->cuocHenModel->datVaoKhungGio((int) XacThuc::id(), $maKhungGio, $chuDe);
+            } catch (DomainException $e) {
+                $loi($e->getMessage());
+            } catch (Throwable $e) {
+                error_log('Đặt lịch thất bại: ' . $e->getMessage());
+                $loi('Đã xảy ra lỗi, vui lòng thử lại.');
+            }
+        } else {
+            // Đường 2: sinh viên tự nhập ngày giờ
+            $batDau  = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioBatDau");
+            $ketThuc = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioKetThuc");
+            if (!$batDau || !$ketThuc) {
+                $loi('Ngày hoặc giờ không hợp lệ.');
+            }
+            if ($ketThuc <= $batDau) {
+                $loi('Giờ kết thúc phải sau giờ bắt đầu.');
+            }
+            if ($batDau <= new DateTime()) {
+                $loi('Thời gian hẹn phải ở tương lai.');
+            }
+
+            $bd = $batDau->format('Y-m-d H:i:s');
+            $kt = $ketThuc->format('Y-m-d H:i:s');
+            if ($this->cuocHenModel->kiemTraTrungLich($giangVienId, $bd, $kt)) {
+                $loi('Giảng viên đã có lịch hẹn trong khoảng thời gian này. Vui lòng chọn giờ khác.');
+            }
+            try {
+                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe);
+            } catch (Throwable $e) {
+                error_log('Đặt lịch thất bại: ' . $e->getMessage());
+                $loi('Đã xảy ra lỗi, vui lòng thử lại.');
+            }
         }
 
         flash('success', 'Đặt lịch hẹn tư vấn thành công! Vui lòng chờ giảng viên phê duyệt.');
@@ -140,8 +197,12 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         switch ($hanhDong) {
             case 'duyet':
                 if ($cuocHen['trang_thai'] === 'cho_duyet') {
-                    $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'da_duyet');
-                    flash('success', 'Đã phê duyệt lịch hẹn thành công.');
+                    try {
+                        $this->cuocHenModel->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt (duyệt xong chỗ mới bị trừ)
+                        flash('success', 'Đã phê duyệt lịch hẹn thành công.');
+                    } catch (DomainException $e) {
+                        flash('danger', $e->getMessage());
+                    }
                 }
                 break;
             case 'tu_choi':

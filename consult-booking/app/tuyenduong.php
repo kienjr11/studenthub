@@ -37,7 +37,9 @@ return [
     ['POST', 'giang-vien/khung-gio/them',         DieuKhienKhungGioGiangVien::class, 'them'],
     ['POST', 'giang-vien/khung-gio/sua',          DieuKhienKhungGioGiangVien::class, 'sua'],
     ['POST', 'giang-vien/khung-gio/xoa',          DieuKhienKhungGioGiangVien::class, 'xoa'],
+    ['POST', 'giang-vien/khung-gio/cap-nhat-hen', DieuKhienKhungGioGiangVien::class, 'capNhatLichHen'],   // duyệt / từ chối / hoàn thành / hủy ngay trong bảng "con mắt"
     ['GET',  'khung-gio/trong',                   DieuKhienKhungGioGiangVien::class, 'slotTrong'],        // slot còn chỗ theo ngày + giảng viên
+    ['GET',  'khung-gio/sap-toi',                 DieuKhienKhungGioGiangVien::class, 'slotSapToi'],       // mọi slot còn chỗ sắp tới của 1 giảng viên
 
     // Hồ sơ & chuyên môn
     ['GET',  'giang-vien/ho-so',    DieuKhienHoSoGiangVien::class, 'profile'],        // chế độ xem

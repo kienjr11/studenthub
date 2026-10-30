@@ -14,13 +14,16 @@ class CuocHen extends MoHinh
             $params[':trang_thai'] = $trangThai;
         }
 
+        (new KhungGioModel())->damBaoCotChuyenMon();   // đảm bảo có cột khung_gio.ma_chuyen_mon trước khi truy vấn
+
         $sql = "SELECT ch.ma_cuoc_hen, ch.ma_khung_gio, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien, ch.ngay_tao,
                        sv.ho_ten AS ten_sinh_vien, sv.email AS email_sinh_vien,
-                       kg.bat_dau, kg.ket_thuc, kg.dia_diem,
+                       kg.bat_dau, kg.ket_thuc, kg.dia_diem, cm.ten_chuyen_mon,
                        ph.diem_danh_gia, ph.nhan_xet AS nhan_xet_sinh_vien
                 FROM cuoc_hen ch
                 JOIN nguoi_dung sv ON ch.ma_sinh_vien = sv.ma_nguoi_dung
                 JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
+                LEFT JOIN chuyen_mon cm ON cm.ma_chuyen_mon = kg.ma_chuyen_mon
                 LEFT JOIN phan_hoi ph ON ch.ma_cuoc_hen = ph.ma_cuoc_hen
                 {$whereSql}
                 ORDER BY kg.bat_dau DESC
@@ -89,7 +92,7 @@ class CuocHen extends MoHinh
 
     /**
      * Giảng viên đã có khung giờ (còn hiệu lực) chồng lên khoảng [bắt đầu, kết thúc) chưa?
-     * Khung giờ chỉ tính là "bận" khi có cuộc hẹn đang cho_duyet / da_duyet / hoan_thanh.
+     * Khung giờ chỉ tính là "bận" khi có cuộc hẹn đã được duyệt (da_duyet / hoan_thanh).
      */
     public function kiemTraTrungLich(int $maGiangVien, string $batDau, string $ketThuc): bool
     {
@@ -98,7 +101,7 @@ class CuocHen extends MoHinh
                FROM khung_gio kg
                JOIN cuoc_hen ch ON ch.ma_khung_gio = kg.ma_khung_gio
               WHERE kg.ma_giang_vien = :gv
-                AND ch.trang_thai IN ('cho_duyet', 'da_duyet', 'hoan_thanh')
+                AND ch.trang_thai IN ('da_duyet', 'hoan_thanh')
                 AND kg.bat_dau < :ket_thuc AND kg.ket_thuc > :bat_dau"
         );
         $st->execute([':gv' => $maGiangVien, ':bat_dau' => $batDau, ':ket_thuc' => $ketThuc]);
@@ -111,9 +114,10 @@ class CuocHen extends MoHinh
      */
     public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe): int
     {
+        $coCot = (new KhungGioModel())->damBaoCotTuNhap();   // phải chạy trước beginTransaction (ALTER TABLE tự commit)
         $this->db->beginTransaction();
         try {
-            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc) VALUES (:gv, :bd, :kt)')
+            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc' . ($coCot ? ', la_tu_nhap' : '') . ') VALUES (:gv, :bd, :kt' . ($coCot ? ', 1' : '') . ')')
                 ->execute([':gv' => $maGiangVien, ':bd' => $batDau, ':kt' => $ketThuc]);
             $maKhungGio = (int) $this->db->lastInsertId();
 
@@ -123,6 +127,92 @@ class CuocHen extends MoHinh
 
             $this->db->commit();
             return $maCuocHen;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Sinh viên đặt vào MỘT KHUNG GIỜ CÓ SẴN của giảng viên (khung giờ do giảng viên mở ở trang "Khung giờ tư vấn").
+     * Khóa dòng khung giờ trong transaction để 2 sinh viên không cùng giành chỗ cuối.
+     * Ném DomainException (thông báo tiếng Việt, hiển thị được cho người dùng) nếu không đặt được.
+     * Trả về mã cuộc hẹn mới.
+     */
+    public function datVaoKhungGio(int $maSinhVien, int $maKhungGio, string $chuDe): int
+    {
+        $this->db->beginTransaction();
+        try {
+            $st = $this->db->prepare('SELECT bat_dau, suc_chua FROM khung_gio WHERE ma_khung_gio = :id FOR UPDATE');
+            $st->execute([':id' => $maKhungGio]);
+            $kg = $st->fetch();
+            if (!$kg) {
+                throw new DomainException('Khung giờ này không còn tồn tại.');
+            }
+            if (new DateTime($kg['bat_dau']) <= new DateTime()) {
+                throw new DomainException('Khung giờ này đã qua. Vui lòng chọn khung giờ khác.');
+            }
+
+            // Chỗ chỉ bị trừ khi giảng viên DUYỆT -> ở đây chỉ đếm lịch đã duyệt/hoàn thành để chặn khung giờ đã đủ người.
+            $st = $this->db->prepare(
+                "SELECT COALESCE(SUM(trang_thai IN ('da_duyet', 'hoan_thanh')), 0) AS da_duyet,
+                        COALESCE(SUM(ma_sinh_vien = :sv AND trang_thai IN ('cho_duyet', 'da_duyet', 'hoan_thanh')), 0) AS cua_toi
+                   FROM cuoc_hen
+                  WHERE ma_khung_gio = :id"
+            );
+            $st->execute([':id' => $maKhungGio, ':sv' => $maSinhVien]);
+            $dem = $st->fetch();
+            if ((int) $dem['cua_toi'] > 0) {
+                throw new DomainException('Bạn đã gửi yêu cầu cho khung giờ này rồi.');
+            }
+            if ((int) $dem['da_duyet'] >= (int) $kg['suc_chua']) {
+                throw new DomainException('Khung giờ này đã đủ số sinh viên. Vui lòng chọn khung giờ khác.');
+            }
+
+            $this->db->prepare("INSERT INTO cuoc_hen (ma_khung_gio, ma_sinh_vien, chu_de, trang_thai) VALUES (:kg, :sv, :cd, 'cho_duyet')")
+                ->execute([':kg' => $maKhungGio, ':sv' => $maSinhVien, ':cd' => $chuDe]);
+            $maCuocHen = (int) $this->db->lastInsertId();
+
+            $this->db->commit();
+            return $maCuocHen;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Giảng viên duyệt 1 yêu cầu: lúc này chỗ trong khung giờ mới bị trừ.
+     * Khóa dòng cuộc hẹn + khung giờ, kiểm tra còn chỗ rồi mới đổi trạng thái.
+     * Ném DomainException (thông báo tiếng Việt) nếu không duyệt được.
+     */
+    public function duyetCuocHen(int $maCuocHen): void
+    {
+        $this->db->beginTransaction();
+        try {
+            $st = $this->db->prepare(
+                'SELECT ch.ma_khung_gio, ch.trang_thai, kg.suc_chua
+                   FROM cuoc_hen ch
+                   JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio
+                  WHERE ch.ma_cuoc_hen = :id FOR UPDATE'
+            );
+            $st->execute([':id' => $maCuocHen]);
+            $ch = $st->fetch();
+            if (!$ch || $ch['trang_thai'] !== 'cho_duyet') {
+                throw new DomainException('Yêu cầu này không còn ở trạng thái chờ duyệt.');
+            }
+
+            $st = $this->db->prepare(
+                "SELECT COUNT(*) FROM cuoc_hen WHERE ma_khung_gio = :kg AND trang_thai IN ('da_duyet', 'hoan_thanh')"
+            );
+            $st->execute([':kg' => $ch['ma_khung_gio']]);
+            if ((int) $st->fetchColumn() >= (int) $ch['suc_chua']) {
+                throw new DomainException('Khung giờ này đã đủ số sinh viên được duyệt nên không thể duyệt thêm. Bạn có thể từ chối yêu cầu này.');
+            }
+
+            $this->db->prepare("UPDATE cuoc_hen SET trang_thai = 'da_duyet' WHERE ma_cuoc_hen = :id")
+                ->execute([':id' => $maCuocHen]);
+            $this->db->commit();
         } catch (Throwable $e) {
             $this->db->rollBack();
             throw $e;

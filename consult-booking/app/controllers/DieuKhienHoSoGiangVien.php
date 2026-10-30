@@ -204,9 +204,17 @@ final class DieuKhienHoSoGiangVien extends BoDieuKhien
         $pages = max(1, (int) ceil($total / self::PER_PAGE));
         $page = min(max(1, (int) ($_GET['page'] ?? 1)), $pages);
 
+        $rows = $model->search($filters, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+        // Khung giờ rảnh sắp tới của từng giảng viên (lấy dư 1 slot so với số hiển thị để biết còn "xem thêm" hay không)
+        $khungGio = new KhungGioModel();
+        foreach ($rows as &$r) {
+            $r['khung_gio'] = $khungGio->laySapToiConTrong((int) $r['ma_nguoi_dung'], 60, 7);
+        }
+        unset($r);
+
         $this->view('hoso/danh_sach', [
             'title'       => 'Tìm giảng viên',
-            'rows'        => $model->search($filters, self::PER_PAGE, ($page - 1) * self::PER_PAGE),
+            'rows'        => $rows,
             'filters'     => $filters,
             'page'        => $page,
             'pages'       => $pages,

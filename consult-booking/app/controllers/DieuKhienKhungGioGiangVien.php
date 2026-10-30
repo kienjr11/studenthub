@@ -23,16 +23,22 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
     public function index(): void
     {
         XacThuc::requireRole('giang_vien');
+        $me = XacThuc::user();
         $this->view('khuvuc/giangvien/quan_ly_khung_gio', [
-            'title'   => 'Quản lý khung giờ tư vấn',
-            'scripts' => ['js/khung-gio.js'],
+            'title'      => 'Quản lý khung giờ tư vấn',
+            'scripts'    => ['js/khung-gio.js'],
+            'chuyenMon'  => $this->khungGio->layChuyenMonCuaGiangVien((int) $me['ma_nguoi_dung']),
         ]);
     }
 
     public function danhSach(): void
     {
         $maGv = $this->maGiangVienJson();
-        $ngay = $this->ngayHopLe((string) ($_GET['ngay'] ?? ''));
+        // Không truyền ?ngay= -> trả TẤT CẢ khung giờ của giảng viên; có ?ngay= -> chỉ ngày đó.
+        if (($_GET['ngay'] ?? '') === '') {
+            $this->json(['success' => true, 'data' => $this->khungGio->layTatCaTheoGiangVien($maGv)]);
+        }
+        $ngay = $this->ngayHopLe((string) $_GET['ngay']);
         $this->json(['success' => true, 'data' => $this->khungGio->layTheoGiangVienVaNgay($maGv, $ngay)]);
     }
 
@@ -41,8 +47,9 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         $maGv = $this->maGiangVienJson();
         [$bd, $kt, $dd] = $this->doiTuongHopLe($maGv, 0);
         $sucChua = $this->sucChuaHopLe(1);
+        $maMon   = $this->chuyenMonHopLe($maGv);
 
-        $id = $this->khungGio->them($maGv, $bd, $kt, $dd, $sucChua);
+        $id = $this->khungGio->them($maGv, $bd, $kt, $dd, $sucChua, $maMon);
         $this->json(['success' => true, 'message' => 'Thêm khung giờ thành công.', 'ma_khung_gio' => $id]);
     }
 
@@ -65,10 +72,14 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         if ($daDangKy > 0) {
             // Đã có sinh viên đăng ký: GIỮ NGUYÊN giờ, chỉ cho đổi địa điểm và số lượng tối đa.
             $dd = mb_substr($this->input('dia_diem'), 0, 150);
-            $this->khungGio->capNhat($id, $maGv, (string) $slot['bat_dau'], (string) $slot['ket_thuc'], $dd === '' ? null : $dd, $sucChua);
+            // Môn cũng giữ nguyên (sinh viên đã đăng ký theo môn đó).
+            $this->khungGio->damBaoCotChuyenMon();
+            $monCu = isset($slot['ma_chuyen_mon']) ? (int) $slot['ma_chuyen_mon'] : null;
+            $this->khungGio->capNhat($id, $maGv, (string) $slot['bat_dau'], (string) $slot['ket_thuc'], $dd === '' ? null : $dd, $sucChua, $monCu);
         } else {
             [$bd, $kt, $dd] = $this->doiTuongHopLe($maGv, $id);
-            $this->khungGio->capNhat($id, $maGv, $bd, $kt, $dd, $sucChua);
+            $maMon = $this->chuyenMonHopLe($maGv);
+            $this->khungGio->capNhat($id, $maGv, $bd, $kt, $dd, $sucChua, $maMon);
         }
         $this->json(['success' => true, 'message' => 'Cập nhật khung giờ thành công.']);
     }
@@ -111,6 +122,55 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         ]);
     }
 
+    /**
+     * POST giang-vien/khung-gio/cap-nhat-hen — duyệt / từ chối / hoàn thành / hủy 1 cuộc hẹn ngay trong bảng "con mắt".
+     * Cùng quy tắc với trang "Quản lý lịch hẹn tư vấn"; chỉ giảng viên SỞ HỮU khung giờ mới thao tác được.
+     */
+    public function capNhatLichHen(): void
+    {
+        $maGv      = $this->maGiangVienJson();
+        $maCuocHen = (int) ($_POST['ma_cuoc_hen'] ?? 0);
+        $hanhDong  = $this->input('hanh_dong');
+        $lyDoHuy   = mb_substr($this->input('ly_do_huy'), 0, 500);
+
+        $cuocHen = new CuocHen();
+        $hen     = $cuocHen->timTheoIdVaGiangVien($maCuocHen, $maGv);
+        if ($hen === null) {
+            $this->json(['success' => false, 'message' => 'Cuộc hẹn không tồn tại hoặc bạn không có quyền thao tác.'], 404);
+        }
+        $tt = (string) $hen['trang_thai'];
+        $saiTrangThai = fn() => $this->json(['success' => false, 'message' => 'Trạng thái cuộc hẹn đã thay đổi, vui lòng tải lại danh sách.'], 409);
+
+        switch ($hanhDong) {
+            case 'duyet':
+                if ($tt !== 'cho_duyet') { $saiTrangThai(); }
+                try {
+                    $cuocHen->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt
+                } catch (DomainException $e) {
+                    $this->json(['success' => false, 'message' => $e->getMessage()], 409);
+                }
+                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.']);
+            case 'tu_choi':
+                if ($tt !== 'cho_duyet') { $saiTrangThai(); }
+                $cuocHen->capNhatTrangThai($maCuocHen, 'tu_choi');
+                $this->json(['success' => true, 'message' => 'Đã từ chối lịch hẹn.']);
+            case 'hoan_thanh':
+                if ($tt !== 'da_duyet') { $saiTrangThai(); }
+                $cuocHen->capNhatTrangThai($maCuocHen, 'hoan_thanh');
+                $this->json(['success' => true, 'message' => 'Đã đánh dấu hoàn thành buổi tư vấn.']);
+            case 'da_huy':
+                if ($tt !== 'da_duyet') { $saiTrangThai(); }
+                if ($lyDoHuy === '') {
+                    $this->json(['success' => false, 'message' => 'Vui lòng nhập lý do hủy lịch hẹn.'], 422);
+                }
+                $cuocHen->capNhatTrangThai($maCuocHen, 'da_huy');
+                $cuocHen->capNhatGhiChuGiangVien($maCuocHen, 'Lý do hủy lịch hẹn: ' . $lyDoHuy);
+                $this->json(['success' => true, 'message' => 'Đã hủy lịch hẹn và ghi nhận lý do thành công.']);
+            default:
+                $this->json(['success' => false, 'message' => 'Hành động không hợp lệ.'], 422);
+        }
+    }
+
     /** GET ?r=khung-gio/trong&ma_giang_vien=4&ngay=2027-02-04 — sinh viên hoặc giảng viên đã đăng nhập đều gọi được. */
     public function slotTrong(): void
     {
@@ -123,6 +183,19 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         }
         $ngay = $this->ngayHopLe((string) ($_GET['ngay'] ?? ''));
         $this->json(['success' => true, 'data' => $this->khungGio->layTheoGiangVienVaNgay($maGv, $ngay, true)]);
+    }
+
+    /** GET ?r=khung-gio/sap-toi&ma_giang_vien=4 — mọi khung giờ còn chỗ sắp tới của giảng viên (nút "Lịch rảnh" ở trang Tìm giảng viên). */
+    public function slotSapToi(): void
+    {
+        if (!XacThuc::check()) {
+            $this->json(['success' => false, 'message' => 'Vui lòng đăng nhập.'], 401);
+        }
+        $maGv = (int) ($_GET['ma_giang_vien'] ?? 0);
+        if ($maGv <= 0) {
+            $this->json(['success' => false, 'message' => 'Thiếu mã giảng viên.'], 422);
+        }
+        $this->json(['success' => true, 'data' => $this->khungGio->laySapToiConTrong($maGv)]);
     }
 
     // ----- hàm phụ -----
@@ -138,6 +211,27 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             $this->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này.'], 403);
         }
         return (int) $me['ma_nguoi_dung'];
+    }
+
+    /**
+     * Môn của khung giờ: phải nằm trong các môn giảng viên đang dạy.
+     * Giảng viên chưa khai báo môn nào thì cho để trống (null); đã có môn thì bắt buộc chọn.
+     */
+    private function chuyenMonHopLe(int $maGv): ?int
+    {
+        $ds    = array_map(fn($r) => (int) $r['ma_chuyen_mon'], $this->khungGio->layChuyenMonCuaGiangVien($maGv));
+        $chon  = $this->input('ma_chuyen_mon');
+        if ($ds === []) {
+            return null;
+        }
+        $v = filter_var($chon, FILTER_VALIDATE_INT);
+        if ($chon === '' || $v === false) {
+            $this->json(['success' => false, 'message' => 'Vui lòng chọn môn tư vấn.'], 422);
+        }
+        if (!in_array($v, $ds, true)) {
+            $this->json(['success' => false, 'message' => 'Môn đã chọn không nằm trong danh sách môn bạn dạy.'], 422);
+        }
+        return $v;
     }
 
     private function ngayHopLe(string $ngay): string
