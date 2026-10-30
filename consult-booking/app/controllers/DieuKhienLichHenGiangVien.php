@@ -11,54 +11,6 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
     }
 
     /**
-     * Hiển thị bảng điều khiển / trang chủ của Giảng viên (bao gồm thống kê cuộc hẹn)
-     */
-    public function dashboard(): void
-    {
-        if (method_exists('XacThuc', 'requireRole')) {
-            XacThuc::requireRole('giang_vien');
-        } elseif (method_exists('XacThuc', 'yeuCauVaiTro')) {
-            XacThuc::yeuCauVaiTro('giang_vien');
-        }
-
-        $user = XacThuc::user();
-        if (!is_array($user)) {
-            $user = [];
-        }
-        $user['ho_ten'] = $user['ho_ten'] ?? 'Giảng viên';
-        $user['email'] = $user['email'] ?? '';
-        $maGiangVien = (int) ($user['ma_nguoi_dung'] ?? 0);
-
-        // Lấy thông tin hồ sơ và chuyên môn của giảng viên
-        $hoSoModel = new HoSoGiangVien();
-        $profile = $hoSoModel->layHoSoVaChuyenMon($maGiangVien) ?? [
-            'ten_don_vi' => 'Chưa gán đơn vị',
-            'chuyen_mon' => []
-        ];
-
-        // Lấy số liệu thống kê chi tiết cho các tiles
-        $stats = $this->cuocHenModel->thongKeChiTietChoGiangVien($maGiangVien);
-       
-        // Lấy danh sách cuộc hẹn sắp tới
-        $upcoming = $this->cuocHenModel->layCuocHenSapToiChoGiangVien($maGiangVien, 5);
-
-        // Tính % hoàn thiện hồ sơ
-        $completeness = [
-            'percent' => !empty($profile['chuyen_mon']) ? 100 : 50,
-            'missing' => empty($profile['chuyen_mon']) ? ['Lĩnh vực chuyên môn'] : []
-        ];
-
-        echo GiaoDien::render('khuvuc/giangvien/bang_dieu_khien', [
-            'tieu_de'      => 'Bảng điều khiển Giảng viên',
-            'me'           => $user,
-            'profile'      => $profile,
-            'completeness' => $completeness,
-            'stats'        => $stats,
-            'upcoming'     => $upcoming
-        ]);
-    }
-
-    /**
      * Hiển thị giao diện Đặt lịch hẹn dành cho Sinh viên
      */
     public function hienThiFormDatLich(): void

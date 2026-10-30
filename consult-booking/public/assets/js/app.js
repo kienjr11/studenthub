@@ -119,7 +119,12 @@
     var capNhatMon = function () {
       var opt = selGv.options[selGv.selectedIndex];
       var raw = opt ? opt.getAttribute("data-chuyenmon") || "" : "";
-      var ds = raw.split(/[,;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+      var ds = raw
+        .split(/[,;]+/)
+        .map(function (x) {
+          return x.trim();
+        })
+        .filter(Boolean);
       selMon.innerHTML = "";
       var first = document.createElement("option");
       first.value = "";
@@ -151,17 +156,28 @@
       }
       var ten = opt.getAttribute("data-ten") || "";
       var tu = ten.trim().split(/\s+/);
-      xemTruoc.querySelector('[data-o="chu-cai"]').textContent = (tu[tu.length - 1] || "?").charAt(0).toUpperCase();
+      xemTruoc.querySelector('[data-o="chu-cai"]').textContent = (
+        tu[tu.length - 1] || "?"
+      )
+        .charAt(0)
+        .toUpperCase();
       xemTruoc.querySelector('[data-o="ten"]').textContent = ten;
-      xemTruoc.querySelector('[data-o="khoa"]').textContent = opt.getAttribute("data-khoa") || "Chưa gán đơn vị";
+      xemTruoc.querySelector('[data-o="khoa"]').textContent =
+        opt.getAttribute("data-khoa") || "Chưa gán đơn vị";
       var khungMon = xemTruoc.querySelector('[data-o="mon"]');
       khungMon.textContent = "";
-      (opt.getAttribute("data-chuyenmon") || "").split(/[,;]+/).map(function (x) { return x.trim(); }).filter(Boolean).forEach(function (mon) {
-        var the = document.createElement("span");
-        the.className = "pill";
-        the.textContent = mon;
-        khungMon.appendChild(the);
-      });
+      (opt.getAttribute("data-chuyenmon") || "")
+        .split(/[,;]+/)
+        .map(function (x) {
+          return x.trim();
+        })
+        .filter(Boolean)
+        .forEach(function (mon) {
+          var the = document.createElement("span");
+          the.className = "pill";
+          the.textContent = mon;
+          khungMon.appendChild(the);
+        });
       xemTruoc.classList.remove("d-none");
     };
     selGv.addEventListener("change", veXemTruoc);
@@ -172,88 +188,174 @@
   // <input type="time"> hiển thị SA/CH theo hệ điều hành và không ép được -> thay bằng 2 ô Giờ (00–23) / Phút (00–59).
   // Mỗi ô vừa gõ số trực tiếp được, vừa bấm để chọn từ danh sách gợi ý (datalist).
   // Giá trị gửi lên server vẫn là "HH:MM" qua một input ẩn mang đúng name cũ.
-  Array.prototype.forEach.call(document.querySelectorAll('input[type="time"][data-gio24]'), function (input) {
-    function p2(n) { return (n < 10 ? "0" : "") + n; }
-
-    var goc = input.id || input.name;
-    function taoDanhSach(id, max, buoc) {
-      var dl = document.createElement("datalist");
-      dl.id = id;
-      for (var i = 0; i <= max; i += buoc) {
-        var o = document.createElement("option");
-        o.value = p2(i);
-        dl.appendChild(o);
+  Array.prototype.forEach.call(
+    document.querySelectorAll('input[type="time"][data-gio24]'),
+    function (input) {
+      function p2(n) {
+        return (n < 10 ? "0" : "") + n;
       }
-      return dl;
-    }
-    function taoO(nhan, dsId) {
-      var e = document.createElement("input");
-      e.type = "text";
-      e.className = "form-control text-center";
-      e.inputMode = "numeric";
-      e.maxLength = 2;
-      e.placeholder = "--";
-      e.autocomplete = "off";
-      e.required = input.required;
-      e.setAttribute("list", dsId);
-      e.setAttribute("aria-label", nhan);
-      return e;
-    }
 
-    var dsH = taoDanhSach(goc + "_ds_gio", 23, 1);
-    var dsM = taoDanhSach(goc + "_ds_phut", 59, 5);
-    var h = taoO("Giờ", dsH.id);
-    var m = taoO("Phút", dsM.id);
-    h.id = input.id;                                       // <label for> trỏ vào ô Giờ
-
-    var an = document.createElement("input");
-    an.type = "hidden";
-    an.name = input.name;
-
-    var sep = document.createElement("span");
-    sep.textContent = ":";
-    var wrap = document.createElement("div");
-    wrap.className = "d-flex align-items-center gap-2";
-    [h, sep, m, an, dsH, dsM].forEach(function (x) { wrap.appendChild(x); });
-
-    function dongBo() {
-      var ok = h.value !== "" && m.value !== "" && +h.value <= 23 && +m.value <= 59;
-      an.value = ok ? p2(+h.value) + ":" + p2(+m.value) : "";
-    }
-
-    // Chuẩn hóa một ô: "7" -> "07"; vượt giới hạn thì báo lỗi ngay trên ô
-    function chuanHoa(e, max, ten) {
-      if (e.value === "") { e.setCustomValidity(""); return; }
-      var n = +e.value;
-      if (n > max) { e.setCustomValidity(ten + " phải từ 00 đến " + p2(max) + "."); return; }
-      e.value = p2(n);
-      e.setCustomValidity("");
-    }
-
-    function ganSuKien(e, max, ten, ke, soDau) {
-      e.addEventListener("input", function () {
-        e.value = e.value.replace(/\D/g, "");               // chỉ giữ chữ số
-        // Đủ 2 số, hoặc số đầu lớn đến mức không thể thành số 2 chữ số hợp lệ -> chuẩn hóa và nhảy sang ô kế
-        if (e.value.length === 2 || (e.value.length === 1 && +e.value > soDau)) {
-          chuanHoa(e, max, ten);
-          if (ke && e.validity.valid) { ke.focus(); ke.select(); }
+      var goc = input.id || input.name;
+      function taoDanhSach(id, max, buoc) {
+        var dl = document.createElement("datalist");
+        dl.id = id;
+        for (var i = 0; i <= max; i += buoc) {
+          var o = document.createElement("option");
+          o.value = p2(i);
+          dl.appendChild(o);
         }
-        dongBo();
+        return dl;
+      }
+      function taoO(nhan, dsId) {
+        var e = document.createElement("input");
+        e.type = "text";
+        e.className = "form-control text-center";
+        e.inputMode = "numeric";
+        e.maxLength = 2;
+        e.placeholder = "--";
+        e.autocomplete = "off";
+        e.required = input.required;
+        e.setAttribute("list", dsId);
+        e.setAttribute("aria-label", nhan);
+        return e;
+      }
+
+      var dsH = taoDanhSach(goc + "_ds_gio", 23, 1);
+      var dsM = taoDanhSach(goc + "_ds_phut", 59, 5);
+      var h = taoO("Giờ", dsH.id);
+      var m = taoO("Phút", dsM.id);
+      h.id = input.id; // <label for> trỏ vào ô Giờ
+
+      var an = document.createElement("input");
+      an.type = "hidden";
+      an.name = input.name;
+
+      var sep = document.createElement("span");
+      sep.textContent = ":";
+      var wrap = document.createElement("div");
+      wrap.className = "d-flex align-items-center gap-2";
+      [h, sep, m, an, dsH, dsM].forEach(function (x) {
+        wrap.appendChild(x);
       });
-      e.addEventListener("change", function () {
-        chuanHoa(e, max, ten);
-        if (e === h && h.value !== "" && h.validity.valid && m.value === "") m.value = "00";  // chọn giờ xong là có giá trị đầy đủ
+
+      function dongBo() {
+        var ok =
+          h.value !== "" && m.value !== "" && +h.value <= 23 && +m.value <= 59;
+        an.value = ok ? p2(+h.value) + ":" + p2(+m.value) : "";
+      }
+
+      // Chuẩn hóa một ô: "7" -> "07"; vượt giới hạn thì báo lỗi ngay trên ô
+      function chuanHoa(e, max, ten) {
+        if (e.value === "") {
+          e.setCustomValidity("");
+          return;
+        }
+        var n = +e.value;
+        if (n > max) {
+          e.setCustomValidity(ten + " phải từ 00 đến " + p2(max) + ".");
+          return;
+        }
+        e.value = p2(n);
+        e.setCustomValidity("");
+      }
+
+      function ganSuKien(e, max, ten, ke, soDau) {
+        e.addEventListener("input", function () {
+          e.value = e.value.replace(/\D/g, ""); // chỉ giữ chữ số
+          // Đủ 2 số, hoặc số đầu lớn đến mức không thể thành số 2 chữ số hợp lệ -> chuẩn hóa và nhảy sang ô kế
+          if (
+            e.value.length === 2 ||
+            (e.value.length === 1 && +e.value > soDau)
+          ) {
+            chuanHoa(e, max, ten);
+            if (ke && e.validity.valid) {
+              ke.focus();
+              ke.select();
+            }
+          }
+          dongBo();
+        });
+        e.addEventListener("change", function () {
+          chuanHoa(e, max, ten);
+          if (e === h && h.value !== "" && h.validity.valid && m.value === "")
+            m.value = "00"; // chọn giờ xong là có giá trị đầy đủ
+          dongBo();
+        });
+        e.addEventListener("blur", function () {
+          chuanHoa(e, max, ten);
+          dongBo();
+        });
+        e.addEventListener("focus", function () {
+          e.select();
+        });
+      }
+      ganSuKien(h, 23, "Giờ", m, 2);
+      ganSuKien(m, 59, "Phút", null, 5);
+
+      var v = /^(\d{2}):(\d{2})/.exec(input.value || ""); // nạp lại giá trị cũ khi form báo lỗi
+      if (v) {
+        h.value = v[1];
+        m.value = v[2];
         dongBo();
+      }
+
+      input.replaceWith(wrap);
+    },
+  );
+
+  // Hồ sơ giảng viên: xem trước ảnh đại diện + chặn file sai loại / quá nặng ngay trên trình duyệt
+  // (server vẫn kiểm tra lại). Dùng data: URL vì CSP không cho blob:.
+  var avatarInput = document.querySelector("[data-avatar-input]");
+  if (avatarInput) {
+    var preview = document.getElementById("avatar-preview");
+    var avatarErr = document.getElementById("avatar-error");
+    var removeBox = document.querySelector("[data-avatar-remove]");
+    var original = preview.innerHTML;
+    var maxBytes =
+      parseInt(avatarInput.getAttribute("data-max-bytes"), 10) || 2097152;
+    avatarInput.addEventListener("change", function () {
+      var f = avatarInput.files && avatarInput.files[0];
+      avatarErr.textContent = "";
+      if (!f) {
+        preview.innerHTML = original;
+        return;
+      }
+      if (["image/jpeg", "image/png", "image/webp"].indexOf(f.type) === -1) {
+        avatarErr.textContent = "Chỉ nhận ảnh JPG, PNG hoặc WebP.";
+        avatarInput.value = "";
+        preview.innerHTML = original;
+        return;
+      }
+      if (f.size > maxBytes) {
+        avatarErr.textContent =
+          "Ảnh quá lớn, tối đa " + Math.round(maxBytes / 1048576) + " MB.";
+        avatarInput.value = "";
+        preview.innerHTML = original;
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        preview.innerHTML =
+          '<span class="avatar avatar-hero avatar-giang_vien has-img"><img alt="Xem trước ảnh đại diện"></span>';
+        preview.querySelector("img").src = reader.result;
+      };
+      reader.readAsDataURL(f);
+      if (removeBox) {
+        removeBox.checked = false;
+      }
+    });
+    if (removeBox) {
+      removeBox.addEventListener("change", function () {
+        if (removeBox.checked) {
+          avatarInput.value = "";
+          preview.innerHTML =
+            '<span class="avatar avatar-hero avatar-giang_vien" aria-hidden="true">' +
+            (preview.getAttribute("data-initial") || "?") +
+            "</span>";
+        } else {
+          preview.innerHTML = original;
+        }
       });
-      e.addEventListener("blur", function () { chuanHoa(e, max, ten); dongBo(); });
-      e.addEventListener("focus", function () { e.select(); });
     }
-    ganSuKien(h, 23, "Giờ", m, 2);
-    ganSuKien(m, 59, "Phút", null, 5);
-
-    var v = /^(\d{2}):(\d{2})/.exec(input.value || "");     // nạp lại giá trị cũ khi form báo lỗi
-    if (v) { h.value = v[1]; m.value = v[2]; dongBo(); }
-
-    input.replaceWith(wrap);
-  });
+  }
 })();

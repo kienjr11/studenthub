@@ -16,7 +16,7 @@ final class HoSoGiangVien extends MoHinh
     public function find(int $id, bool $onlyActive = false): ?array
     {
         $sql = "SELECT nd.ma_nguoi_dung, nd.ho_ten, nd.email, nd.ma_don_vi, dv.ten_don_vi,
-                       hs.hoc_ham, hs.hoc_vi, hs.so_dien_thoai, hs.phong_lam_viec, hs.gioi_thieu
+                       hs.hoc_ham, hs.hoc_vi, hs.so_dien_thoai, hs.phong_lam_viec, hs.gioi_thieu, hs.anh_dai_dien
                 FROM nguoi_dung nd
                 LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
                 LEFT JOIN ho_so_giang_vien hs ON hs.ma_giang_vien = nd.ma_nguoi_dung
@@ -76,6 +76,13 @@ final class HoSoGiangVien extends MoHinh
         }
     }
 
+    /** Gán (hoặc xóa, khi $tenFile = null) ảnh đại diện. Tạo dòng hồ sơ nếu giảng viên chưa có. */
+    public function datAnhDaiDien(int $id, ?string $tenFile): void
+    {
+        $this->db->prepare('INSERT INTO ho_so_giang_vien (ma_giang_vien, anh_dai_dien) VALUES (:id, :anh)
+            ON DUPLICATE KEY UPDATE anh_dai_dien = VALUES(anh_dai_dien)')->execute(['id' => $id, 'anh' => $tenFile]);
+    }
+
     // ---- Danh sách giảng viên cho sinh viên tìm kiếm ----
 
     private function where(array $f, array &$p): string
@@ -108,7 +115,7 @@ final class HoSoGiangVien extends MoHinh
     public function search(array $filters, int $limit, int $offset): array
     {
         $p = [];
-        $sql = "SELECT nd.ma_nguoi_dung, nd.ho_ten, dv.ten_don_vi, hs.hoc_ham, hs.hoc_vi, hs.phong_lam_viec,
+        $sql = "SELECT nd.ma_nguoi_dung, nd.ho_ten, dv.ten_don_vi, hs.hoc_ham, hs.hoc_vi, hs.phong_lam_viec, hs.anh_dai_dien,
                        (SELECT GROUP_CONCAT(cm.ten_chuyen_mon ORDER BY cm.ten_chuyen_mon SEPARATOR '||')
                           FROM giang_vien_chuyen_mon g JOIN chuyen_mon cm ON cm.ma_chuyen_mon = g.ma_chuyen_mon
                          WHERE g.ma_giang_vien = nd.ma_nguoi_dung) AS chuyen_mon_ds
@@ -153,6 +160,7 @@ final class HoSoGiangVien extends MoHinh
             'Số điện thoại'         => !empty($profile['so_dien_thoai']),
             'Phòng làm việc'        => !empty($profile['phong_lam_viec']),
             'Giới thiệu bản thân'   => !empty($profile['gioi_thieu']),
+            'Ảnh đại diện'          => !empty($profile['anh_dai_dien']),
             'Lĩnh vực tư vấn'       => !empty($profile['chuyen_mon']),
         ];
         $missing = array_keys(array_filter($checks, static fn (bool $ok) => !$ok));

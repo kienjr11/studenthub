@@ -101,6 +101,53 @@ function initial(string $name): string
     return mb_strtoupper(mb_substr($last, 0, 1)) ?: '?';
 }
 
+/** URL ảnh đại diện giảng viên, hoặc null nếu chưa có. */
+function anh_dai_dien_url(?string $tenFile): ?string
+{
+    return ($tenFile !== null && $tenFile !== '' && preg_match('/^[A-Za-z0-9_.\-]+$/', $tenFile))
+        ? base_path() . '/uploads/avatars/' . $tenFile
+        : null;
+}
+/**
+ * Tương thích với code cũ gọi avatar(...). Trả về chuỗi HTML.
+ * Dùng được các kiểu gọi: avatar('Nguyễn Văn A'), avatar('Nguyễn Văn A', 'giang_vien'),
+ * avatar('Nguyễn Văn A', 'giang_vien', 'avatar-lg'), avatar($rowGiangVien, 'avatar-lg').
+ * Truyền cả dòng giảng viên (có khóa ho_ten, anh_dai_dien) thì sẽ hiện ảnh nếu có.
+ */
+function avatar(array|string $nguoi, string ...$tuyChon): string
+{
+    $vaiTro = 'giang_vien';
+    $kichCo = '';
+    foreach ($tuyChon as $t) {
+        if (in_array($t, ['sinh_vien', 'giang_vien', 'quan_tri'], true)) {
+            $vaiTro = $t;
+        } elseif (in_array($t, ['sm', 'lg', 'xl'], true)) {
+            $kichCo = 'avatar-' . $t;
+        } elseif (str_starts_with($t, 'avatar-')) {
+            $kichCo = $t;
+        }
+    }
+
+    $hang = is_array($nguoi) ? $nguoi : ['ho_ten' => $nguoi];
+    $hang['ho_ten'] = (string) ($hang['ho_ten'] ?? '');
+
+    if ($vaiTro === 'giang_vien') {
+        return lecturer_avatar($hang, $kichCo);
+    }
+    return '<span class="' . e(trim('avatar avatar-' . $vaiTro . ' ' . $kichCo)) . '" aria-hidden="true">'
+        . e(initial($hang['ho_ten'])) . '</span>';
+}
+/** Avatar giảng viên: ảnh nếu có, không thì chữ cái đầu. $size: '' | 'avatar-lg' | 'avatar-xl'. Cần khóa ho_ten, anh_dai_dien trong $row. */
+function lecturer_avatar(array $row, string $size = ''): string
+{
+    $cls = trim('avatar avatar-giang_vien ' . $size);
+    $src = anh_dai_dien_url($row['anh_dai_dien'] ?? null);
+    if ($src !== null) {
+        return '<img class="' . e($cls) . ' avatar-anh" src="' . e($src) . '" alt="Ảnh của ' . e($row['ho_ten']) . '">';
+    }
+    return '<span class="' . e($cls) . '" aria-hidden="true">' . e(initial($row['ho_ten'])) . '</span>';
+}
+
 /** Tên hiển thị kèm học hàm, học vị: "PGS. TS. Trần Thu Hà". Cần các khóa ho_ten, hoc_ham, hoc_vi trong $row. */
 function lecturer_title(array $row): string
 {
