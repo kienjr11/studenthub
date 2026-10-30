@@ -16,8 +16,7 @@ return [
     // Khu vực theo vai trò
     ['GET',  'dashboard/index',    DieuKhienKhuVuc::class, 'index'],
     ['GET',  'dashboard/student',  DieuKhienKhuVuc::class, 'student'],
-    // Cập nhật route dashboard giảng viên trỏ trực tiếp đến DieuKhienLichHenGiangVien để hiển thị thống kê
-    ['GET',  'dashboard/lecturer', DieuKhienLichHenGiangVien::class, 'dashboard'],
+    ['GET',  'dashboard/lecturer', DieuKhienKhuVuc::class, 'lecturer'],
 
     // Quản trị
     ['GET',  'admin/dashboard',    DieuKhienQuanTri::class,     'dashboard'],
@@ -43,7 +42,8 @@ return [
     ['GET',  'khung-gio/trong',                DieuKhienKhungGioGiangVien::class, 'slotTrong'],        // slot còn chỗ theo ngày + giảng viên
 
     // Hồ sơ & chuyên môn
-    ['GET',  'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'profile'],
+    ['GET',  'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'profile'],        // chế độ xem
+    ['GET',  'giang-vien/ho-so/sua', DieuKhienHoSoGiangVien::class, 'editProfile'],    // form sửa (nút "Chỉnh sửa")
     ['POST', 'giang-vien/ho-so',     DieuKhienHoSoGiangVien::class, 'saveProfile'],
     ['GET',  'giang-vien/danh-sach', DieuKhienHoSoGiangVien::class, 'directory'],
     ['GET',  'giang-vien/chi-tiet',  DieuKhienHoSoGiangVien::class, 'detail'],

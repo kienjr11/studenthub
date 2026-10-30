@@ -5,10 +5,25 @@ declare(strict_types=1);
 final class DieuKhienHoSoGiangVien extends BoDieuKhien
 {
     private const PER_PAGE = 9;
+    private const ANH_TOI_DA = 2 * 1024 * 1024;   // 2 MB
+    private const ANH_CANH = 480;                   // ảnh được thu nhỏ về tối đa 480 px mỗi cạnh
 
     // ---- Giảng viên tự quản lý hồ sơ ----
 
+    /** Chế độ XEM hồ sơ của chính mình, có nút "Chỉnh sửa". */
     public function profile(): void
+    {
+        XacThuc::requireRole('giang_vien');
+        $profile = (new HoSoGiangVien())->find((int) XacThuc::id());
+        $this->view('hoso/ho_so', [
+            'title'        => 'Hồ sơ của tôi',
+            'profile'      => $profile,
+            'completeness' => HoSoGiangVien::completeness($profile),
+        ]);
+    }
+
+    /** Form SỬA hồ sơ (mở từ nút "Chỉnh sửa"). */
+    public function editProfile(): void
     {
         XacThuc::requireRole('giang_vien');
         $profile = (new HoSoGiangVien())->find((int) XacThuc::id());
@@ -50,6 +65,15 @@ final class DieuKhienHoSoGiangVien extends BoDieuKhien
             $v->add('chuyen_mon', 'Hãy chọn ít nhất một lĩnh vực tư vấn.');
         }
 
+        // Ảnh đại diện (không bắt buộc): kiểm tra trước, chỉ ghi file khi mọi dữ liệu khác đã hợp lệ.
+        $anhMoi = $_FILES['anh_dai_dien'] ?? null;
+        $coAnhMoi = is_array($anhMoi) && ($anhMoi['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        $loiAnh = $coAnhMoi ? $this->kiemTraAnh($anhMoi) : null;
+        if ($loiAnh !== null) {
+            $v->add('anh_dai_dien', $loiAnh);
+        }
+        $xoaAnh = $this->input('xoa_anh') === '1';
+
         if ($v->fails()) {
             http_response_code(422);
             $this->renderForm($model->find($id), $v->errors(), [
@@ -69,20 +93,94 @@ final class DieuKhienHoSoGiangVien extends BoDieuKhien
             'phong_lam_viec' => $v->value('phong_lam_viec') ?: null,
             'gioi_thieu'     => $v->value('gioi_thieu') ?: null,
         ], $specIds);
+
+        // Xử lý ảnh sau khi lưu hồ sơ: ảnh mới thay ảnh cũ; hoặc xóa ảnh nếu tick "Xóa ảnh hiện tại".
+        $anhCu = $model->find($id)['anh_dai_dien'] ?? null;
+        if ($coAnhMoi) {
+            $tenMoi = $this->luuAnh($anhMoi, $id);
+            if ($tenMoi === null) {
+                flash('warning', 'Đã lưu hồ sơ nhưng không lưu được ảnh. Vui lòng thử lại với ảnh khác.');
+                redirect('giang-vien/ho-so');
+            }
+            $model->datAnhDaiDien($id, $tenMoi);
+            $this->xoaFileAnh($anhCu);
+        } elseif ($xoaAnh && $anhCu) {
+            $model->datAnhDaiDien($id, null);
+            $this->xoaFileAnh($anhCu);
+        }
         flash('success', 'Đã cập nhật hồ sơ của bạn.');
         redirect('giang-vien/ho-so');
     }
 
     private function renderForm(array $profile, array $errors, array $old): void
     {
-        $this->view('hoso/ho_so', [
-            'title'       => 'Hồ sơ giảng viên',
+        $this->view('hoso/ho_so_sua', [
+            'title'       => 'Chỉnh sửa hồ sơ',
+            'scripts'     => ['js/ho-so.js'],
             'profile'     => $profile,
             'errors'      => $errors,
             'old'         => $old,
             'departments' => (new DanhMuc('departments'))->all(),
             'specialties' => (new DanhMuc('specialties'))->all(),
         ]);
+    }
+
+    // ---- Ảnh đại diện ----
+
+    /** Trả về thông báo lỗi tiếng Việt, hoặc null nếu file hợp lệ (JPG/PNG/WebP, tối đa 2 MB, đúng là ảnh). */
+    private function kiemTraAnh(array $f): ?string
+    {
+        switch ($f['error'] ?? UPLOAD_ERR_NO_FILE) {
+            case UPLOAD_ERR_OK:
+                break;
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'Ảnh quá lớn, vui lòng chọn ảnh tối đa 2 MB.';
+            default:
+                return 'Không tải được ảnh lên, vui lòng thử lại.';
+        }
+        if (!is_uploaded_file($f['tmp_name']) || $f['size'] > self::ANH_TOI_DA) {
+            return 'Ảnh quá lớn hoặc không hợp lệ (tối đa 2 MB).';
+        }
+        // Kiểm tra theo NỘI DUNG file, không tin đuôi file hay Content-Type do trình duyệt gửi.
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true) || @getimagesize($f['tmp_name']) === false) {
+            return 'Chỉ chấp nhận ảnh định dạng JPG, PNG hoặc WebP.';
+        }
+        return null;
+    }
+
+    /** Ghi ảnh vào public/uploads/avatars. Dùng GD để cắt vuông, thu nhỏ và lưu lại thành JPEG (loại bỏ mọi dữ liệu lạ trong file). */
+    private function luuAnh(array $f, int $id): ?string
+    {
+        $dir = ROOT_PATH . '/public/uploads/avatars';
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            return null;
+        }
+        $ten = 'gv' . $id . '_' . bin2hex(random_bytes(6)) . '.jpg';
+        $dich = $dir . '/' . $ten;
+
+        $src = function_exists('imagecreatefromstring') ? @imagecreatefromstring((string) file_get_contents($f['tmp_name'])) : false;
+        if ($src === false) {
+            return null;   // không đọc được ảnh (hoặc máy chưa bật extension gd)
+        }
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $canh = min($w, $h);                                   // cắt vuông ở giữa
+        $out = imagecreatetruecolor(self::ANH_CANH, self::ANH_CANH);
+        imagefill($out, 0, 0, imagecolorallocate($out, 255, 255, 255));   // nền trắng cho ảnh PNG trong suốt
+        imagecopyresampled($out, $src, 0, 0, intdiv($w - $canh, 2), intdiv($h - $canh, 2), self::ANH_CANH, self::ANH_CANH, $canh, $canh);
+        $ok = imagejpeg($out, $dich, 88);
+        imagedestroy($src);
+        imagedestroy($out);
+        return $ok ? $ten : null;
+    }
+
+    private function xoaFileAnh(?string $ten): void
+    {
+        if ($ten !== null && preg_match('/^[A-Za-z0-9_.\-]+$/', $ten)) {
+            @unlink(ROOT_PATH . '/public/uploads/avatars/' . $ten);
+        }
     }
 
     // ---- Sinh viên (và mọi người dùng đã đăng nhập) tìm giảng viên ----

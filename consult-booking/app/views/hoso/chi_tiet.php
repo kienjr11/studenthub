@@ -2,7 +2,7 @@
 <div class="container py-4" style="max-width: 860px">
     <a class="small" href="<?= e(url('giang-vien/danh-sach')) ?>">&larr; Quay lại danh sách</a>
     <div class="d-flex align-items-center gap-3 my-3">
-        <span class="avatar avatar-lg avatar-giang_vien" aria-hidden="true"><?= e(initial($profile['ho_ten'])) ?></span>
+        <?= lecturer_avatar($profile, 'avatar-lg') ?>
         <div>
             <h1 class="h3 mb-0"><?= e(lecturer_title($profile)) ?></h1>
             <div class="text-muted"><?= e($profile['ten_don_vi'] ?? 'Chưa gán đơn vị') ?></div>

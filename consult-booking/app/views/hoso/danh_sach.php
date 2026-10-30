@@ -39,7 +39,7 @@ $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filte
             <div class="col-md-6 col-lg-4">
                 <div class="role-block d-flex flex-column">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="avatar avatar-giang_vien" aria-hidden="true"><?= e(initial($r['ho_ten'])) ?></span>
+                        <?= lecturer_avatar($r) ?>
                         <div>
                             <div class="fw-semibold"><?= e(lecturer_title($r)) ?></div>
                             <div class="small text-muted"><?= e($r['ten_don_vi'] ?? 'Chưa gán đơn vị') ?></div>

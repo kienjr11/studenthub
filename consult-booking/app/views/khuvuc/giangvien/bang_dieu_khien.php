@@ -3,18 +3,18 @@
 $tiles = [
     ['Chờ duyệt', $stats['cho_duyet'], 'giang-vien/lich-hen', ['trang_thai' => 'cho_duyet'], $stats['cho_duyet'] > 0 ? 'text-warning' : ''],
     ['Lịch hẹn hôm nay', $stats['hom_nay'], 'giang-vien/lich-hen', ['trang_thai' => 'da_duyet'], ''],
-    ['Khung giờ sắp tới', $stats['slot_sap_toi'], 'giang-vien/lich-hen', [], ''],
+    ['Khung giờ sắp tới', $stats['slot_sap_toi'], 'giang-vien/khung-gio', [], ''],
     ['Đã hoàn thành', $stats['hoan_thanh'], 'giang-vien/lich-hen', ['trang_thai' => 'hoan_thanh'], ''],
 ];
 ?>
 <div class="container py-4">
     <div class="d-flex align-items-center gap-3 mb-4">
-        <span class="avatar avatar-lg avatar-giang_vien" aria-hidden="true"><?= e(initial($me['ho_ten'])) ?></span>
+        <?= lecturer_avatar($profile + ['ho_ten' => $me['ho_ten']], 'avatar-lg') ?>
         <div class="flex-grow-1">
             <h1 class="h3 mb-0">Xin chào, <?= e(lecturer_title($profile)) ?></h1>
             <p class="text-muted mb-0"><?= e($profile['ten_don_vi'] ?? 'Chưa gán đơn vị') ?></p>
         </div>
-        <a class="btn btn-outline-primary d-none d-md-inline-block" href="<?= e(url('giang-vien/ho-so')) ?>">Chỉnh sửa hồ sơ</a>
+        <a class="btn btn-outline-primary d-none d-md-inline-block" href="<?= e(url('giang-vien/ho-so')) ?>">Xem hồ sơ</a>
     </div>
 
     <?php if ($completeness['percent'] < 100): ?>
