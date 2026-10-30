@@ -28,7 +28,6 @@ $asideText = 'Đăng nhập để xem khung giờ còn trống, theo dõi yêu c
                 </div>
                 <button class="btn btn-primary w-100" type="submit">Đăng nhập</button>
             </form>
-            <p class="mt-3 mb-0 text-center">Chưa có tài khoản? <a href="<?= e(url('auth/register')) ?>">Đăng ký</a></p>
         </div>
     </div>
 </div>
