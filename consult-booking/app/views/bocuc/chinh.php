@@ -85,7 +85,6 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                     </form>
                 <?php else: ?>
                     <a class="btn btn-sm btn-outline-light" href="<?= e(url('auth/login')) ?>">Đăng nhập</a>
-                    <a class="btn btn-sm btn-light" href="<?= e(url('auth/register')) ?>">Đăng ký</a>
                 <?php endif; ?>
             </div>
         </div>
