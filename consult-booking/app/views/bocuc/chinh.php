@@ -36,7 +36,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                 <?php if ($me): ?>
                     <li class="nav-item"><a class="nav-link<?= $active('dashboard/') ?>" href="<?= e(url('dashboard/index')) ?>">Khu vực của tôi</a></li>
                 <?php endif; ?>
-                <?php if ($me): ?>
+                <?php if ($me && ($me['vai_tro'] ?? '') !== 'giang_vien'): ?>
                     <li class="nav-item"><a class="nav-link<?= $route === 'giang-vien/danh-sach' || $route === 'giang-vien/chi-tiet' ? ' active' : '' ?>" href="<?= e(url('giang-vien/danh-sach')) ?>">Tìm giảng viên</a></li>
                 <?php endif; ?>
 
