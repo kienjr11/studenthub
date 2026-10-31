@@ -75,7 +75,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                 <td><?= e($item['ten_chuyen_mon'] ?? '') !== '' ? e($item['ten_chuyen_mon']) : '—' ?></td>
                                 <td>
                                     <i class="bi bi-clock text-secondary"></i> <?= date('H:i - d/m/Y', strtotime($item['bat_dau'])) ?><br>
-                                    <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= lien_ket_dia_diem($item['dia_diem'] ?? null, 'Trực tuyến / Chưa có') ?></small>
+                                    <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= lien_ket_dia_diem_theo_trang_thai($item['dia_diem'] ?? null, (string) $item['trang_thai'], 'Trực tuyến / Chưa có', true) ?></small>
                                 </td>
                                 <td>
                                     <span class="d-inline-block text-truncate" style="max-width: 250px;" title="<?= e($item['chu_de']) ?>">

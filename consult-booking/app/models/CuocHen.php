@@ -159,13 +159,13 @@ class CuocHen extends MoHinh
         return (int) $st->fetchColumn() > 0;
     }
 
-    public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe): int
+    public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe, ?string $diaDiem = null): int
     {
         $coCot = (new KhungGioModel())->damBaoCotTuNhap();   
         $this->db->beginTransaction();
         try {
-            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc' . ($coCot ? ', la_tu_nhap' : '') . ') VALUES (:gv, :bd, :kt' . ($coCot ? ', 1' : '') . ')')
-                ->execute([':gv' => $maGiangVien, ':bd' => $batDau, ':kt' => $ketThuc]);
+            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc, dia_diem' . ($coCot ? ', la_tu_nhap' : '') . ') VALUES (:gv, :bd, :kt, :dd' . ($coCot ? ', 1' : '') . ')')
+                ->execute([':gv' => $maGiangVien, ':bd' => $batDau, ':kt' => $ketThuc, ':dd' => $diaDiem]);
             $maKhungGio = (int) $this->db->lastInsertId();
 
             $this->db->prepare("INSERT INTO cuoc_hen (ma_khung_gio, ma_sinh_vien, chu_de, trang_thai) VALUES (:kg, :sv, :cd, 'cho_duyet')")

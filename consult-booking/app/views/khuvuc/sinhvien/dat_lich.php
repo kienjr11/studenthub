@@ -96,6 +96,12 @@ $coGiangVien = !empty($danhSachGiangVien);
                             <input type="time" data-gio24 id="gio_ket_thuc" name="gio_ket_thuc" class="form-control" value="<?= e($cu['gio_ket_thuc'] ?? '') ?>">
                         </div>
                     </div>
+
+                    <div class="mt-3">
+                        <label for="dia_diem" class="form-label">Địa điểm <span class="bat-buoc" id="dia_diem_sao" aria-hidden="true">*</span></label>
+                        <input type="text" id="dia_diem" name="dia_diem" class="form-control" maxlength="150" placeholder="Ví dụ: P.306 nhà B, văn phòng khoa..." value="<?= e($cu['dia_diem'] ?? '') ?>">
+                        <div class="form-text" id="dia_diem_ghi_chu">Chọn khung giờ có sẵn: địa điểm do giảng viên đặt (link họp online chỉ hiện sau khi giảng viên duyệt). Tự chọn ngày giờ: hãy nhập nơi bạn muốn gặp.</div>
+                    </div>
                 </div>
 
                 <!-- Bước 3: chủ đề và gửi -->
@@ -122,6 +128,7 @@ $coGiangVien = !empty($danhSachGiangVien);
                     <li>Số chỗ của khung giờ chỉ giảm sau khi giảng viên duyệt yêu cầu của bạn.</li>
                     <li>Thời gian hẹn phải ở tương lai, và giờ kết thúc phải sau giờ bắt đầu.</li>
                     <li>Nếu giảng viên đã có lịch hẹn trùng khoảng giờ đó, hệ thống sẽ báo để bạn chọn giờ khác.</li>
+                    <li>Link họp online (nếu có) chỉ bấm được ở trang lịch hẹn sau khi giảng viên duyệt; nếu bị từ chối, link sẽ mờ đi và không truy cập được.</li>
                     <li>Sau khi gửi, yêu cầu ở trạng thái <span class="badge text-bg-<?= e($mauChoDuyet) ?>"><?= e($nhanChoDuyet) ?></span> cho đến khi giảng viên duyệt hoặc từ chối.</li>
                 </ul>
                 <a class="btn btn-outline-primary btn-sm" href="<?= e(url('sinh-vien/phan-hoi')) ?>">Xem lịch hẹn của tôi</a>

@@ -99,6 +99,9 @@ class KhungGioModel extends MoHinh
             $r['so_dang_ky']  = (int) $r['so_dang_ky'];
             $r['con_lai']     = max(0, $r['suc_chua'] - $r['so_dang_ky']);
             $r['da_day']      = $r['so_dang_ky'] >= $r['suc_chua'];
+            if ($chiConTrong) {   // phía sinh viên: chưa được duyệt thì chưa lộ link online
+                $r['dia_diem'] = an_link_dia_diem($r['dia_diem']);
+            }
         }
         return $rows;
     }
@@ -201,6 +204,7 @@ class KhungGioModel extends MoHinh
             $r['suc_chua']   = (int) $r['suc_chua'];
             $r['so_dang_ky'] = (int) $r['so_dang_ky'];
             $r['con_lai']    = max(0, $r['suc_chua'] - $r['so_dang_ky']);
+            $r['dia_diem']   = an_link_dia_diem($r['dia_diem']);   // chưa được duyệt thì chưa lộ link online
         }
         return $rows;
     }

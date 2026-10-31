@@ -61,11 +61,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $gioKetThuc  = $this->input('gio_ket_thuc');
         $chuDe       = mb_substr($this->input('chu_de'), 0, 255);   // cột chu_de là VARCHAR(255)
         $monHoc      = $this->input('mon_hoc');                    // tên môn sinh viên chọn trên form
+        $diaDiem     = trim($this->input('dia_diem'));             // chỉ dùng khi sinh viên tự nhập ngày giờ (đường 2)
 
-        $loi = function (string $msg) use ($giangVienId, $maKhungGio, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe): never {
+        $loi = function (string $msg) use ($giangVienId, $maKhungGio, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe, $diaDiem): never {
             $_SESSION['_dat_lich_cu'] = [
                 'giang_vien_id' => $giangVienId, 'ma_khung_gio' => $maKhungGio, 'ngay_hen' => $ngayHen,
                 'gio_bat_dau' => $gioBatDau, 'gio_ket_thuc' => $gioKetThuc, 'chu_de' => $chuDe,
+                'dia_diem' => $maKhungGio > 0 ? '' : $diaDiem,
             ];
             flash('danger', $msg);
             redirect('sinh-vien/dat-lich');
@@ -113,7 +115,16 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 $loi('Đã xảy ra lỗi, vui lòng thử lại.');
             }
         } else {
-            // Đường 2: sinh viên tự nhập ngày giờ
+            // Đường 2: sinh viên tự nhập ngày giờ -> phải nhập địa điểm (khung giờ có sẵn thì địa điểm do giảng viên đặt)
+            if ($diaDiem === '') {
+                $loi('Vui lòng nhập địa điểm bạn muốn gặp giảng viên.');
+            }
+            if (mb_strlen($diaDiem) > 150) {   // cột dia_diem là VARCHAR(150)
+                $loi('Địa điểm tối đa 150 ký tự.');
+            }
+            if (preg_match('~(?:https?://|www\.)~i', $diaDiem)) {
+                $loi('Ô địa điểm chỉ nhập tên phòng / nơi gặp. Link họp online do giảng viên cung cấp và chỉ hiện sau khi giảng viên duyệt.');
+            }
             $batDau  = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioBatDau");
             $ketThuc = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioKetThuc");
             if (!$batDau || !$ketThuc) {
@@ -132,7 +143,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 $loi('Giảng viên đã có lịch hẹn trong khoảng thời gian này. Vui lòng chọn giờ khác.');
             }
             try {
-                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe);
+                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe, $diaDiem);
             } catch (Throwable $e) {
                 error_log('Đặt lịch thất bại: ' . $e->getMessage());
                 $loi('Đã xảy ra lỗi, vui lòng thử lại.');

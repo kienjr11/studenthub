@@ -4,6 +4,8 @@ $me = XacThuc::user();
 $flashes = pull_flashes();
 $route = (string) ($_GET['r'] ?? 'home/index');
 $active = static fn (string $prefix): string => str_starts_with($route, $prefix) ? ' active' : '';
+// "Khu vực của tôi": các trang dashboard/* và bảng điều khiển quản trị (admin/dashboard)
+$isMyArea = str_starts_with($route, 'dashboard/') || $route === 'admin/dashboard';
 $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warning', 'info' => 'info'];
 ?>
 <!doctype html>
@@ -34,7 +36,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link<?= $active('home/') ?>" href="<?= e(url('home/index')) ?>">Trang chủ</a></li>
                 <?php if ($me): ?>
-                    <li class="nav-item"><a class="nav-link<?= $active('dashboard/') ?>" href="<?= e(url('dashboard/index')) ?>">Khu vực của tôi</a></li>
+                    <li class="nav-item"><a class="nav-link<?= $isMyArea ? ' active' : '' ?>" href="<?= e(url('dashboard/index')) ?>">Khu vực của tôi</a></li>
                 <?php endif; ?>
                 <?php if ($me && ($me['vai_tro'] ?? '') !== 'giang_vien'): ?>
                     <li class="nav-item"><a class="nav-link<?= $route === 'giang-vien/danh-sach' || $route === 'giang-vien/chi-tiet' ? ' active' : '' ?>" href="<?= e(url('giang-vien/danh-sach')) ?>">Tìm giảng viên</a></li>
@@ -66,7 +68,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                 <!-- Menu dành riêng cho Quản trị viên -->
                 <?php if ($me && $me['vai_tro'] === 'quan_tri'): ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle<?= $active('admin/') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Quản trị</a>
+                        <a class="nav-link dropdown-toggle<?= str_starts_with($route, 'admin/') && $route !== 'admin/dashboard' ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Quản trị</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="<?= e(url('admin/users')) ?>">Tài khoản người dùng</a></li>
                             <li><a class="dropdown-item" href="<?= e(url('admin/catalog', ['type' => 'departments'])) ?>">Danh mục đơn vị</a></li>
