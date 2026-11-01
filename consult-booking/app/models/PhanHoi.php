@@ -4,7 +4,7 @@ declare(strict_types=1);
 class PhanHoi extends MoHinh
 {
     /** Trạng thái cuộc hẹn được phép đánh giá (phải khớp với điều kiện hiển thị nút trong view danh_gia.php). */
-    public const TRANG_THAI_DUOC_DANH_GIA = ['da_duyet', 'hoan_thanh'];
+    public const TRANG_THAI_DUOC_DANH_GIA = ['hoan_thanh'];
 
     /**
      * Danh sách cuộc hẹn của một sinh viên, kèm thông tin giảng viên, khung giờ và đánh giá (nếu có).
