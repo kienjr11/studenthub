@@ -98,12 +98,47 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                 <td class="text-end">
                                     <!-- Nút duyệt / từ chối khi đang chờ duyệt -->
                                     <?php if ($item['trang_thai'] === 'cho_duyet'): ?>
-                                        <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
-                                            <input type="hidden" name="hanh_dong" value="duyet">
-                                            <button type="submit" class="btn btn-sm btn-success" title="Phê duyệt cuộc hẹn">Duyệt</button>
-                                        </form>
+                                        <?php if (trim((string) ($item['dia_diem'] ?? '')) === ''): ?>
+                                            <!-- Lịch chưa có địa điểm (sinh viên tự chọn giờ): bấm Duyệt -> nhập địa điểm rồi mới duyệt -->
+                                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalDuyet<?= $item['ma_cuoc_hen'] ?>" title="Phê duyệt cuộc hẹn">Duyệt</button>
+
+                                            <div class="modal fade text-start" id="modalDuyet<?= $item['ma_cuoc_hen'] ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="modal-content">
+                                                        <?= csrf_field() ?>
+                                                        <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
+                                                        <input type="hidden" name="hanh_dong" value="duyet">
+
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Phê duyệt lịch hẹn</h5>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        </div>
+
+                                                        <div class="modal-body">
+                                                            <p class="text-muted small mb-3">
+                                                                <?= e($item['ten_sinh_vien']) ?> tự chọn giờ <?= date('H:i', strtotime($item['bat_dau'])) ?>–<?= date('H:i d/m/Y', strtotime($item['ket_thuc'])) ?>, chưa có địa điểm gặp.
+                                                            </p>
+                                                            <label class="form-label fw-semibold" for="diaDiemDuyet<?= $item['ma_cuoc_hen'] ?>">Địa điểm gặp <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" id="diaDiemDuyet<?= $item['ma_cuoc_hen'] ?>" name="dia_diem" maxlength="150" required
+                                                                   placeholder="Ví dụ: P.306 nhà B, văn phòng khoa, link họp online...">
+                                                            <div class="form-text">Sinh viên sẽ xem được địa điểm này trong lịch hẹn của họ.</div>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                            <button type="submit" class="btn btn-success btn-sm">Xác nhận duyệt</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
+                                                <input type="hidden" name="hanh_dong" value="duyet">
+                                                <button type="submit" class="btn btn-sm btn-success" title="Phê duyệt cuộc hẹn">Duyệt</button>
+                                            </form>
+                                        <?php endif; ?>
 
                                         <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
                                             <?= csrf_field() ?>
@@ -119,7 +154,9 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
                                             <input type="hidden" name="hanh_dong" value="hoan_thanh">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Đánh dấu đã hoàn thành tư vấn">Hoàn thành</button>
+                                            <?php $chuaDenNgay = date('Y-m-d') < date('Y-m-d', strtotime($item['bat_dau'])); ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" <?= $chuaDenNgay ? 'disabled' : '' ?>
+                                                    title="<?= $chuaDenNgay ? 'Chỉ hoàn thành được từ ngày ' . date('d/m/Y', strtotime($item['bat_dau'])) : 'Đánh dấu đã hoàn thành tư vấn' ?>">Hoàn thành</button>
                                         </form>
 
                                         <!-- Nút mở modal hủy lịch hẹn -->

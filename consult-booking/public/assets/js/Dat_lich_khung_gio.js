@@ -13,33 +13,6 @@
   var controller = null;
   var daChonBanDau = hidden.value;   // khung giờ được chọn sẵn (từ nút "Lịch rảnh" hoặc sau khi form báo lỗi)
 
-  var oDiaDiem = document.getElementById("dia_diem");
-  var oSao = document.getElementById("dia_diem_sao");
-  var ddTuNhap = oDiaDiem ? oDiaDiem.value : "";   // địa điểm sinh viên tự gõ (giữ lại khi chuyển qua lại với khung giờ có sẵn)
-
-  // Ô địa điểm: chọn khung giờ có sẵn -> hiện địa điểm giảng viên đặt (chỉ đọc; link online đã bị server ẩn);
-  // tự nhập ngày giờ -> sinh viên tự nhập (bắt buộc).
-  function capNhatODiaDiem() {
-    if (!oDiaDiem) return;
-    var nut = hidden.value ? khoi.querySelector('.nut-khung-gio[data-id="' + hidden.value + '"]') : null;
-    if (nut) {
-      oDiaDiem.readOnly = true;
-      oDiaDiem.required = false;
-      oDiaDiem.value = nut.getAttribute("data-dd") || "Giảng viên chưa cập nhật địa điểm";
-    } else {
-      oDiaDiem.readOnly = false;
-      oDiaDiem.required = true;
-      oDiaDiem.value = ddTuNhap;
-    }
-    if (oSao) oSao.classList.toggle("d-none", !!nut);
-  }
-
-  if (oDiaDiem) {
-    oDiaDiem.addEventListener("input", function () {
-      if (!oDiaDiem.readOnly) ddTuNhap = oDiaDiem.value;
-    });
-  }
-
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -74,7 +47,6 @@
 
   // Sinh viên chọn môn khác với môn của khung giờ -> báo lỗi và khóa nút gửi
   function kiemTraMon() {
-    capNhatODiaDiem();
     if (!selMon) return;
     var mon = monCuaKhung();
     var sai = !!(mon && selMon.value && selMon.value !== mon);
@@ -201,7 +173,6 @@
       chon(khoi.querySelector('.nut-khung-gio[data-id="' + hidden.value + '"]'));
     } else {
       hidden.value = "";   // khung giờ cũ không còn (đã đầy / đã qua) -> chuyển sang đặt theo ngày giờ đang hiển thị
-      capNhatODiaDiem();
     }
   }
 
@@ -210,7 +181,6 @@
     if (controller) controller.abort();
     if (!gv) {
       hidden.value = "";
-      capNhatODiaDiem();
       thongBao("Hãy chọn giảng viên để xem các khung giờ rảnh.");
       return;
     }
@@ -250,6 +220,5 @@
   });
 
   hidden.value = daChonBanDau;
-  capNhatODiaDiem();
   nap();
 })();

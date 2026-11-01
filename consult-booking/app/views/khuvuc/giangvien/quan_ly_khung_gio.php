@@ -5,7 +5,9 @@
      data-url-them="<?= e(url('giang-vien/khung-gio/them')) ?>"
      data-url-sua="<?= e(url('giang-vien/khung-gio/sua')) ?>"
      data-url-xoa="<?= e(url('giang-vien/khung-gio/xoa')) ?>"
-     data-url-cap-nhat-hen="<?= e(url('giang-vien/khung-gio/cap-nhat-hen')) ?>">
+     data-url-cap-nhat-hen="<?= e(url('giang-vien/khung-gio/cap-nhat-hen')) ?>"
+     data-url-duyet-tat-ca="<?= e(url('giang-vien/khung-gio/duyet-tat-ca')) ?>"
+     data-url-hoan-thanh-tat-ca="<?= e(url('giang-vien/khung-gio/hoan-thanh-tat-ca')) ?>">
 
     <h2 class="mb-4">Quản lý khung giờ tư vấn</h2>
 
@@ -120,7 +122,11 @@
                 </div>
                 <div class="modal-footer justify-content-between">
                     <span class="small text-secondary" id="modalSinhVienDem"></span>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-success" id="nutDuyetTatCa" disabled>Duyệt tất cả</button>
+                        <button type="button" class="btn btn-outline-primary" id="nutHoanThanhTatCa" disabled>Hoàn thành tất cả</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -156,7 +156,11 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
                 $this->json(['success' => true, 'message' => 'Đã từ chối lịch hẹn.']);
             case 'hoan_thanh':
                 if ($tt !== 'da_duyet') { $saiTrangThai(); }
-                $cuocHen->capNhatTrangThai($maCuocHen, 'hoan_thanh');
+                try {
+                    $cuocHen->hoanThanhCuocHen($maCuocHen);   // chỉ cho hoàn thành khi đã đến ngày tư vấn
+                } catch (DomainException $e) {
+                    $this->json(['success' => false, 'message' => $e->getMessage()], 409);
+                }
                 $this->json(['success' => true, 'message' => 'Đã đánh dấu hoàn thành buổi tư vấn.']);
             case 'da_huy':
                 if ($tt !== 'da_duyet') { $saiTrangThai(); }
@@ -169,6 +173,93 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             default:
                 $this->json(['success' => false, 'message' => 'Hành động không hợp lệ.'], 422);
         }
+    }
+
+    /**
+     * POST giang-vien/khung-gio/duyet-tat-ca — duyệt tất cả yêu cầu ĐANG CHỜ của một khung giờ (nút "Duyệt tất cả").
+     * Mỗi yêu cầu vẫn đi qua duyetCuocHen() nên giữ nguyên các kiểm tra (còn chỗ, không trùng giờ);
+     * yêu cầu nào không duyệt được thì bỏ qua và báo lý do, các yêu cầu còn lại vẫn được duyệt.
+     */
+    public function duyetTatCa(): void
+    {
+        $maGv = $this->maGiangVienJson();
+        $id   = (int) ($_POST['ma_khung_gio'] ?? 0);
+
+        if ($this->khungGio->timTheoId($id, $maGv) === null) {
+            $this->json(['success' => false, 'message' => 'Khung giờ không tồn tại hoặc không thuộc về bạn.'], 404);
+        }
+
+        $choDuyet = array_values(array_filter(
+            $this->khungGio->layDanhSachDangKy($id),
+            fn($r) => $r['trang_thai'] === 'cho_duyet'
+        ));
+        if ($choDuyet === []) {
+            $this->json(['success' => false, 'message' => 'Không có yêu cầu nào đang chờ duyệt.'], 409);
+        }
+
+        $cuocHen = new CuocHen();
+        $soDuyet = 0;
+        $loi     = [];
+        foreach ($choDuyet as $r) {
+            try {
+                $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
+                $soDuyet++;
+            } catch (DomainException $e) {
+                $loi[] = $r['ho_ten'] . ': ' . $e->getMessage();
+            }
+        }
+
+        if ($loi === []) {
+            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.', 'so_duyet' => $soDuyet, 'so_loi' => 0]);
+        }
+        $this->json([
+            'success'  => $soDuyet > 0,
+            'message'  => ($soDuyet > 0 ? 'Đã duyệt ' . $soDuyet . ' yêu cầu. ' : 'Không duyệt được yêu cầu nào. ')
+                        . count($loi) . ' yêu cầu chưa duyệt được — ' . implode(' | ', $loi),
+            'so_duyet' => $soDuyet,
+            'so_loi'   => count($loi),
+        ], $soDuyet > 0 ? 200 : 409);
+    }
+
+    /**
+     * POST giang-vien/khung-gio/hoan-thanh-tat-ca — đánh dấu HOÀN THÀNH tất cả cuộc hẹn ĐÃ DUYỆT của một khung giờ.
+     * Chỉ giảng viên sở hữu khung giờ mới thao tác được; các cuộc hẹn ở trạng thái khác không bị đụng tới.
+     */
+    public function hoanThanhTatCa(): void
+    {
+        $maGv = $this->maGiangVienJson();
+        $id   = (int) ($_POST['ma_khung_gio'] ?? 0);
+
+        if ($this->khungGio->timTheoId($id, $maGv) === null) {
+            $this->json(['success' => false, 'message' => 'Khung giờ không tồn tại hoặc không thuộc về bạn.'], 404);
+        }
+
+        $cuocHen = new CuocHen();
+        // Chưa đến ngày tư vấn thì chưa cho hoàn thành (cả khung giờ cùng một ngày)
+        $slot = $this->khungGio->timTheoId($id, $maGv);
+        if (!$cuocHen->daDenNgayTuVan((string) $slot['bat_dau'])) {
+            $this->json([
+                'success' => false,
+                'message' => 'Chưa đến ngày tư vấn (' . date('d/m/Y', strtotime($slot['bat_dau'])) . ') nên chưa thể đánh dấu hoàn thành.',
+            ], 409);
+        }
+
+        $daDuyet = array_values(array_filter(
+            $this->khungGio->layDanhSachDangKy($id),
+            fn($r) => $r['trang_thai'] === 'da_duyet'
+        ));
+        if ($daDuyet === []) {
+            $this->json(['success' => false, 'message' => 'Không có cuộc hẹn nào đang ở trạng thái đã duyệt.'], 409);
+        }
+
+        foreach ($daDuyet as $r) {
+            $cuocHen->hoanThanhCuocHen((int) $r['ma_cuoc_hen']);
+        }
+        $this->json([
+            'success'      => true,
+            'message'      => 'Đã đánh dấu hoàn thành ' . count($daDuyet) . ' buổi tư vấn.',
+            'so_hoan_thanh' => count($daDuyet),
+        ]);
     }
 
     /** GET ?r=khung-gio/trong&ma_giang_vien=4&ngay=2027-02-04 — sinh viên hoặc giảng viên đã đăng nhập đều gọi được. */

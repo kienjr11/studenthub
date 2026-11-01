@@ -61,13 +61,11 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $gioKetThuc  = $this->input('gio_ket_thuc');
         $chuDe       = mb_substr($this->input('chu_de'), 0, 255);   // cột chu_de là VARCHAR(255)
         $monHoc      = $this->input('mon_hoc');                    // tên môn sinh viên chọn trên form
-        $diaDiem     = trim($this->input('dia_diem'));             // chỉ dùng khi sinh viên tự nhập ngày giờ (đường 2)
 
-        $loi = function (string $msg) use ($giangVienId, $maKhungGio, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe, $diaDiem): never {
+        $loi = function (string $msg) use ($giangVienId, $maKhungGio, $ngayHen, $gioBatDau, $gioKetThuc, $chuDe): never {
             $_SESSION['_dat_lich_cu'] = [
                 'giang_vien_id' => $giangVienId, 'ma_khung_gio' => $maKhungGio, 'ngay_hen' => $ngayHen,
                 'gio_bat_dau' => $gioBatDau, 'gio_ket_thuc' => $gioKetThuc, 'chu_de' => $chuDe,
-                'dia_diem' => $maKhungGio > 0 ? '' : $diaDiem,
             ];
             flash('danger', $msg);
             redirect('sinh-vien/dat-lich');
@@ -115,16 +113,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 $loi('Đã xảy ra lỗi, vui lòng thử lại.');
             }
         } else {
-            // Đường 2: sinh viên tự nhập ngày giờ -> phải nhập địa điểm (khung giờ có sẵn thì địa điểm do giảng viên đặt)
-            if ($diaDiem === '') {
-                $loi('Vui lòng nhập địa điểm bạn muốn gặp giảng viên.');
-            }
-            if (mb_strlen($diaDiem) > 150) {   // cột dia_diem là VARCHAR(150)
-                $loi('Địa điểm tối đa 150 ký tự.');
-            }
-            if (preg_match('~(?:https?://|www\.)~i', $diaDiem)) {
-                $loi('Ô địa điểm chỉ nhập tên phòng / nơi gặp. Link họp online do giảng viên cung cấp và chỉ hiện sau khi giảng viên duyệt.');
-            }
+            // Đường 2: sinh viên tự nhập ngày giờ. Địa điểm KHÔNG do sinh viên nhập: giảng viên sẽ cập nhật khi duyệt.
             $batDau  = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioBatDau");
             $ketThuc = DateTime::createFromFormat('Y-m-d H:i', "$ngayHen $gioKetThuc");
             if (!$batDau || !$ketThuc) {
@@ -139,11 +128,11 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
             $bd = $batDau->format('Y-m-d H:i:s');
             $kt = $ketThuc->format('Y-m-d H:i:s');
-            if ($this->cuocHenModel->kiemTraTrungLich($giangVienId, $bd, $kt)) {
-                $loi('Giảng viên đã có lịch hẹn trong khoảng thời gian này. Vui lòng chọn giờ khác.');
-            }
+            // Trùng giờ với lịch của giảng viên được kiểm tra trong taoCuocHen() (trong transaction, an toàn khi đặt đồng thời)
             try {
-                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe, $diaDiem);
+                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe);
+            } catch (DomainException $e) {
+                $loi($e->getMessage());   // vd: sinh viên đã có lịch hẹn khác trùng khung giờ này
             } catch (Throwable $e) {
                 error_log('Đặt lịch thất bại: ' . $e->getMessage());
                 $loi('Đã xảy ra lỗi, vui lòng thử lại.');
@@ -210,8 +199,19 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         switch ($hanhDong) {
             case 'duyet':
                 if ($cuocHen['trang_thai'] === 'cho_duyet') {
+                    // Khung giờ chưa có địa điểm (lịch sinh viên tự chọn giờ) -> giảng viên phải nhập địa điểm khi duyệt
+                    $diaDiem = trim((string) ($_POST['dia_diem'] ?? ''));
+                    $chuaCoDiaDiem = trim((string) ($cuocHen['dia_diem'] ?? '')) === '';
+                    if ($chuaCoDiaDiem && $diaDiem === '') {
+                        flash('danger', 'Lịch này do sinh viên tự chọn giờ nên chưa có địa điểm. Vui lòng nhập địa điểm gặp (hoặc link họp online) khi duyệt.');
+                        break;
+                    }
+                    if (mb_strlen($diaDiem) > 150) {   // cột dia_diem là VARCHAR(150)
+                        flash('danger', 'Địa điểm tối đa 150 ký tự.');
+                        break;
+                    }
                     try {
-                        $this->cuocHenModel->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt (duyệt xong chỗ mới bị trừ)
+                        $this->cuocHenModel->duyetCuocHen($maCuocHen, $chuaCoDiaDiem ? $diaDiem : null);   // kiểm tra còn chỗ rồi mới duyệt (duyệt xong chỗ mới bị trừ)
                         flash('success', 'Đã phê duyệt lịch hẹn thành công.');
                     } catch (DomainException $e) {
                         flash('danger', $e->getMessage());
@@ -226,8 +226,12 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 break;
             case 'hoan_thanh':
                 if ($cuocHen['trang_thai'] === 'da_duyet') {
-                    $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'hoan_thanh');
-                    flash('success', 'Đã đánh dấu hoàn thành buổi tư vấn.');
+                    try {
+                        $this->cuocHenModel->hoanThanhCuocHen($maCuocHen);   // chỉ cho hoàn thành khi đã đến ngày tư vấn
+                        flash('success', 'Đã đánh dấu hoàn thành buổi tư vấn.');
+                    } catch (DomainException $e) {
+                        flash('danger', $e->getMessage());
+                    }
                 }
                 break;
             case 'da_huy':

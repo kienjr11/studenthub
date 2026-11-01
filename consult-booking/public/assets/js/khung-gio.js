@@ -12,6 +12,8 @@
   var URL_SUA = app.dataset.urlSua;
   var URL_XOA = app.dataset.urlXoa;
   var URL_CN_HEN = app.dataset.urlCapNhatHen;
+  var URL_DUYET_TC = app.dataset.urlDuyetTatCa;
+  var URL_HOAN_THANH_TC = app.dataset.urlHoanThanhTatCa;
  
   var form = document.getElementById("formKhungGio");
   var tbody = document.getElementById("bangSlot");
@@ -361,6 +363,18 @@
   var svDem = document.getElementById("modalSinhVienDem");
   var svBao = document.getElementById("modalSinhVienThongBao");
   var slotDangXem = null;   // khung giờ đang mở trong bảng "con mắt" (để tải lại sau khi duyệt / từ chối...)
+  var nutDuyetTC = document.getElementById("nutDuyetTatCa");
+  var soChoDuyet = 0;       // số yêu cầu đang chờ duyệt của khung giờ đang mở
+  var nutHoanThanhTC = document.getElementById("nutHoanThanhTatCa");
+  var soDaDuyet = 0;        // số cuộc hẹn đã duyệt (chưa hoàn thành) của khung giờ đang mở
+  var slotNgay = "";        // ngày (YYYY-MM-DD) của khung giờ đang mở
+
+  // Hôm nay (giờ máy người dùng) < ngày của khung giờ -> chưa đến ngày tư vấn. Server vẫn kiểm tra lại.
+  function chuaDenNgay() {
+    var d = new Date();
+    var homNay = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    return !!slotNgay && homNay < slotNgay;
+  }
 
   function baoModal(ok, msg) {
     svBao.textContent = msg;
@@ -375,12 +389,17 @@
       b.type = "button";
       b.addEventListener("click", function () { thucHienHen(r, hanhDong, b); });
       td.appendChild(b);
+      return b;
     }
     if (r.trang_thai === "cho_duyet") {
       nut("Duyệt", "btn-success", "duyet");
       nut("Từ chối", "btn-outline-danger", "tu_choi");
     } else if (r.trang_thai === "da_duyet") {
-      nut("Hoàn thành", "btn-outline-primary", "hoan_thanh");
+      var nutHT = nut("Hoàn thành", "btn-outline-primary", "hoan_thanh");
+      if (chuaDenNgay()) {   // chưa đến ngày tư vấn -> chưa cho hoàn thành
+        nutHT.disabled = true;
+        nutHT.title = "Chỉ hoàn thành được từ ngày " + slotNgay.slice(8, 10) + "/" + slotNgay.slice(5, 7) + "/" + slotNgay.slice(0, 4);
+      }
       nut("Hủy", "btn-outline-danger", "da_huy");
     } else if (r.trang_thai === "hoan_thanh") {
       if (r.diem_danh_gia) {
@@ -440,9 +459,21 @@
  
   function veSinhVien(res) {
     var s = res.slot;
+    slotNgay = String(s.bat_dau).slice(0, 10);
     svPhu.replaceChildren(document.createTextNode(hienThi(s.bat_dau) + " – " + hienThi(s.ket_thuc).slice(-5) + (s.dia_diem ? " · " : "")));
     if (s.dia_diem) svPhu.appendChild(gan(document.createElement("span"), s.dia_diem));
     svDem.textContent = "Đã đăng ký: " + res.so_dang_ky + " / " + s.suc_chua + " sinh viên";
+
+    // Nút "Duyệt tất cả": chỉ bật khi còn yêu cầu đang chờ duyệt
+    soChoDuyet = res.data.filter(function (r) { return r.trang_thai === "cho_duyet"; }).length;
+    nutDuyetTC.disabled = soChoDuyet === 0;
+    nutDuyetTC.textContent = soChoDuyet ? "Duyệt tất cả (" + soChoDuyet + ")" : "Duyệt tất cả";
+
+    // Nút "Hoàn thành tất cả": chỉ bật khi còn cuộc hẹn đã duyệt
+    soDaDuyet = res.data.filter(function (r) { return r.trang_thai === "da_duyet"; }).length;
+    nutHoanThanhTC.disabled = soDaDuyet === 0 || chuaDenNgay();
+    nutHoanThanhTC.title = chuaDenNgay() ? "Chỉ hoàn thành được từ ngày " + slotNgay.slice(8, 10) + "/" + slotNgay.slice(5, 7) + "/" + slotNgay.slice(0, 4) : "";
+
     bangSV.replaceChildren();
  
     if (!res.data.length) {
@@ -480,6 +511,34 @@
     }).catch(function () { bao(false, "Lỗi kết nối máy chủ."); });
   }
  
+  nutDuyetTC.addEventListener("click", function () {
+    if (!slotDangXem || !soChoDuyet) return;
+    if (!window.confirm("Duyệt tất cả " + soChoDuyet + " yêu cầu đang chờ của khung giờ này?")) return;
+    nutDuyetTC.disabled = true;
+    goi(URL_DUYET_TC, new URLSearchParams({ ma_khung_gio: slotDangXem.ma_khung_gio }))
+      .then(function (res) {
+        return taiLaiSinhVien(slotDangXem).then(function () {
+          baoModal(!!res.success, res.message || "");
+          taiDanhSach();   // cập nhật số sinh viên / trạng thái ở bảng chính
+        });
+      })
+      .catch(function () { baoModal(false, "Lỗi kết nối máy chủ."); nutDuyetTC.disabled = false; });
+  });
+
+  nutHoanThanhTC.addEventListener("click", function () {
+    if (!slotDangXem || !soDaDuyet) return;
+    if (!window.confirm("Đánh dấu hoàn thành buổi tư vấn cho " + soDaDuyet + " sinh viên đã duyệt?")) return;
+    nutHoanThanhTC.disabled = true;
+    goi(URL_HOAN_THANH_TC, new URLSearchParams({ ma_khung_gio: slotDangXem.ma_khung_gio }))
+      .then(function (res) {
+        return taiLaiSinhVien(slotDangXem).then(function () {
+          baoModal(!!res.success, res.message || "");
+          taiDanhSach();   // cập nhật trạng thái ở bảng chính
+        });
+      })
+      .catch(function () { baoModal(false, "Lỗi kết nối máy chủ."); nutHoanThanhTC.disabled = false; });
+  });
+
   // ---------- Form ----------
   function datLaiForm() {
     khoaGio(false);

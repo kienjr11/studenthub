@@ -38,6 +38,8 @@ return [
     ['POST', 'giang-vien/khung-gio/them',         DieuKhienKhungGioGiangVien::class, 'them'],
     ['POST', 'giang-vien/khung-gio/sua',          DieuKhienKhungGioGiangVien::class, 'sua'],
     ['POST', 'giang-vien/khung-gio/xoa',          DieuKhienKhungGioGiangVien::class, 'xoa'],
+    ['POST', 'giang-vien/khung-gio/duyet-tat-ca', DieuKhienKhungGioGiangVien::class, 'duyetTatCa'],       // nút "Duyệt tất cả" trong bảng "con mắt"
+    ['POST', 'giang-vien/khung-gio/hoan-thanh-tat-ca', DieuKhienKhungGioGiangVien::class, 'hoanThanhTatCa'], // nút "Hoàn thành tất cả" trong bảng "con mắt"
     ['POST', 'giang-vien/khung-gio/cap-nhat-hen', DieuKhienKhungGioGiangVien::class, 'capNhatLichHen'],
     ['GET',  'khung-gio/trong',                   DieuKhienKhungGioGiangVien::class, 'slotTrong'],
     ['GET',  'khung-gio/sap-toi',                 DieuKhienKhungGioGiangVien::class, 'slotSapToi'],

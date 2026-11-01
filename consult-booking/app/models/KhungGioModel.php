@@ -4,13 +4,18 @@ declare(strict_types=1);
 /** Khung giờ tư vấn (slot) do giảng viên mở. Bảng: khung_gio. Mỗi slot nhận tối đa `suc_chua` sinh viên. */
 class KhungGioModel extends MoHinh
 {
-    /** Chỉ cuộc hẹn ĐÃ ĐƯỢC GIẢNG VIÊN DUYỆT (hoặc đã hoàn thành) mới chiếm 1 chỗ; yêu cầu đang chờ duyệt chưa làm đổi số chỗ. */
-    private const TRANG_THAI_CHIEM = "'da_duyet','hoan_thanh'";
-
-    /** Biểu thức SQL đếm số sinh viên đang chiếm chỗ của slot `kg`. */
+    /**
+     * Biểu thức SQL đếm số chỗ ĐÃ DÙNG của slot `kg` = số cuộc hẹn đã được giảng viên duyệt (đã duyệt / hoàn thành).
+     * Yêu cầu đang CHỜ DUYỆT chưa trừ chỗ; chỗ chỉ giảm khi giảng viên bấm duyệt.
+     */
     private const DEM_DANG_KY = "(SELECT COUNT(*) FROM cuoc_hen ch
                                    WHERE ch.ma_khung_gio = kg.ma_khung_gio
-                                     AND ch.trang_thai IN (" . self::TRANG_THAI_CHIEM . "))";
+                                     AND ch.trang_thai IN ('da_duyet', 'hoan_thanh'))";
+
+    /** Số yêu cầu đang chờ duyệt của slot `kg` (chỉ để hiển thị cho giảng viên, không trừ chỗ). */
+    private const DEM_CHO_DUYET = "(SELECT COUNT(*) FROM cuoc_hen ch2
+                                     WHERE ch2.ma_khung_gio = kg.ma_khung_gio
+                                       AND ch2.trang_thai = 'cho_duyet')";
 
     private static bool $daCoCotChuyenMon = false;
 
@@ -78,7 +83,8 @@ class KhungGioModel extends MoHinh
         $this->damBaoCotChuyenMon();
         $sql = "SELECT kg.ma_khung_gio, kg.ma_giang_vien, kg.bat_dau, kg.ket_thuc, kg.dia_diem, kg.suc_chua,
                        kg.ma_chuyen_mon, cm.ten_chuyen_mon,
-                       " . self::DEM_DANG_KY . " AS so_dang_ky
+                       " . self::DEM_DANG_KY . " AS so_dang_ky,
+                       " . self::DEM_CHO_DUYET . " AS so_cho_duyet
                   FROM khung_gio kg
                   LEFT JOIN chuyen_mon cm ON cm.ma_chuyen_mon = kg.ma_chuyen_mon
                  WHERE kg.ma_giang_vien = :gv
@@ -97,6 +103,7 @@ class KhungGioModel extends MoHinh
         foreach ($rows as &$r) {
             $r['suc_chua']    = (int) $r['suc_chua'];
             $r['so_dang_ky']  = (int) $r['so_dang_ky'];
+            $r['so_cho_duyet'] = (int) $r['so_cho_duyet'];
             $r['con_lai']     = max(0, $r['suc_chua'] - $r['so_dang_ky']);
             $r['da_day']      = $r['so_dang_ky'] >= $r['suc_chua'];
             if ($chiConTrong) {   // phía sinh viên: chưa được duyệt thì chưa lộ link online
@@ -117,7 +124,8 @@ class KhungGioModel extends MoHinh
 
         $sql = "SELECT kg.ma_khung_gio, kg.ma_giang_vien, kg.bat_dau, kg.ket_thuc, kg.dia_diem, kg.suc_chua,
                        kg.ma_chuyen_mon, cm.ten_chuyen_mon,
-                       " . self::DEM_DANG_KY . " AS so_dang_ky
+                       " . self::DEM_DANG_KY . " AS so_dang_ky,
+                       " . self::DEM_CHO_DUYET . " AS so_cho_duyet
                   FROM khung_gio kg
                   LEFT JOIN chuyen_mon cm ON cm.ma_chuyen_mon = kg.ma_chuyen_mon
                  WHERE kg.ma_giang_vien = :gv
@@ -133,6 +141,7 @@ class KhungGioModel extends MoHinh
         foreach ($rows as &$r) {
             $r['suc_chua']   = (int) $r['suc_chua'];
             $r['so_dang_ky'] = (int) $r['so_dang_ky'];
+            $r['so_cho_duyet'] = (int) $r['so_cho_duyet'];
             $r['con_lai']    = max(0, $r['suc_chua'] - $r['so_dang_ky']);
             $r['da_day']     = $r['so_dang_ky'] >= $r['suc_chua'];
         }
@@ -184,7 +193,8 @@ class KhungGioModel extends MoHinh
 
         $sql = "SELECT kg.ma_khung_gio, kg.bat_dau, kg.ket_thuc, kg.dia_diem, kg.suc_chua,
                        kg.ma_chuyen_mon, cm.ten_chuyen_mon,
-                       " . self::DEM_DANG_KY . " AS so_dang_ky
+                       " . self::DEM_DANG_KY . " AS so_dang_ky,
+                       " . self::DEM_CHO_DUYET . " AS so_cho_duyet
                   FROM khung_gio kg
                   LEFT JOIN chuyen_mon cm ON cm.ma_chuyen_mon = kg.ma_chuyen_mon
                  WHERE kg.ma_giang_vien = :gv
@@ -203,6 +213,7 @@ class KhungGioModel extends MoHinh
         foreach ($rows as &$r) {
             $r['suc_chua']   = (int) $r['suc_chua'];
             $r['so_dang_ky'] = (int) $r['so_dang_ky'];
+            $r['so_cho_duyet'] = (int) $r['so_cho_duyet'];
             $r['con_lai']    = max(0, $r['suc_chua'] - $r['so_dang_ky']);
             $r['dia_diem']   = an_link_dia_diem($r['dia_diem']);   // chưa được duyệt thì chưa lộ link online
         }
@@ -228,11 +239,21 @@ class KhungGioModel extends MoHinh
         return (int) $st->fetchColumn() > 0;
     }
 
-    /** Số sinh viên đang chiếm chỗ (chờ duyệt / đã duyệt / hoàn thành). */
+    /** Số sinh viên đã được DUYỆT (đã duyệt / hoàn thành) = số chỗ đã dùng thật sự. */
+    public function demDaDuyet(int $maKhungGio): int
+    {
+        $st = $this->db->prepare(
+            "SELECT COUNT(*) FROM cuoc_hen WHERE ma_khung_gio = :id AND trang_thai IN ('da_duyet', 'hoan_thanh')"
+        );
+        $st->execute([':id' => $maKhungGio]);
+        return (int) $st->fetchColumn();
+    }
+
+    /** Số yêu cầu còn hiệu lực (chờ duyệt / đã duyệt / hoàn thành). Dùng để khóa sửa giờ / xóa slot, KHÔNG dùng để tính chỗ trống. */
     public function demDangKy(int $maKhungGio): int
     {
         $st = $this->db->prepare(
-            'SELECT COUNT(*) FROM cuoc_hen WHERE ma_khung_gio = :id AND trang_thai IN (' . self::TRANG_THAI_CHIEM . ')'
+            'SELECT COUNT(*) FROM cuoc_hen WHERE khung_gio_hieu_luc = :id'
         );
         $st->execute([':id' => $maKhungGio]);
         return (int) $st->fetchColumn();

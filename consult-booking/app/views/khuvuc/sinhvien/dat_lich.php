@@ -96,12 +96,6 @@ $coGiangVien = !empty($danhSachGiangVien);
                             <input type="time" data-gio24 id="gio_ket_thuc" name="gio_ket_thuc" class="form-control" value="<?= e($cu['gio_ket_thuc'] ?? '') ?>">
                         </div>
                     </div>
-
-                    <div class="mt-3">
-                        <label for="dia_diem" class="form-label">Địa điểm <span class="bat-buoc" id="dia_diem_sao" aria-hidden="true">*</span></label>
-                        <input type="text" id="dia_diem" name="dia_diem" class="form-control" maxlength="150" placeholder="Ví dụ: P.306 nhà B, văn phòng khoa..." value="<?= e($cu['dia_diem'] ?? '') ?>">
-                        <div class="form-text" id="dia_diem_ghi_chu">Chọn khung giờ có sẵn: địa điểm do giảng viên đặt (link họp online chỉ hiện sau khi giảng viên duyệt). Tự chọn ngày giờ: hãy nhập nơi bạn muốn gặp.</div>
-                    </div>
                 </div>
 
                 <!-- Bước 3: chủ đề và gửi -->
