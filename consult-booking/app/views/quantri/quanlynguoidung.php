@@ -7,7 +7,11 @@ $pageUrl = static fn (int $p): string => url('admin/users', array_filter($filter
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h1 class="h3 mb-0 page-title">Quản lý tài khoản</h1>
-        <span class="text-muted"><?= e($total) ?> tài khoản</span>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted"><?= e($total) ?> tài khoản</span>
+            <a class="btn btn-primary btn-sm" href="<?= e(url('admin/user-create')) ?>">+ Thêm tài khoản</a>
+            <a class="btn btn-outline-primary btn-sm" href="<?= e(url('admin/user-import')) ?>">Nhập từ file CSV</a>
+        </div>
     </div>
 
     <form method="get" action="<?= e(url()) ?>" class="row g-2 mb-3">

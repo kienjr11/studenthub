@@ -19,6 +19,13 @@ return [
     // Quản trị
     ['GET',  'admin/dashboard',    DieuKhienQuanTri::class,     'dashboard'],
     ['GET',  'admin/users',        DieuKhienQuanTri::class,     'users'],
+    ['GET',  'admin/user-create',  DieuKhienQuanTri::class,     'createForm'],   // form thêm tài khoản
+    ['POST', 'admin/user-store',   DieuKhienQuanTri::class,     'store'],        // lưu tài khoản mới
+    ['GET',  'admin/user-import',          DieuKhienQuanTri::class, 'importForm'],      // form nhập hàng loạt từ CSV
+    ['POST', 'admin/user-import',          DieuKhienQuanTri::class, 'import'],          // xử lý file CSV
+    ['GET',  'admin/user-import-result',   DieuKhienQuanTri::class, 'importResult'],    // kết quả + mật khẩu tạm
+    ['GET',  'admin/user-import-download', DieuKhienQuanTri::class, 'importDownload'],  // tải CSV danh sách tài khoản + mật khẩu tạm
+    ['GET',  'admin/user-import-template', DieuKhienQuanTri::class, 'importTemplate'],  // tải file CSV mẫu
     ['POST', 'admin/user-status',  DieuKhienQuanTri::class,     'updateStatus'],
     ['POST', 'admin/user-role',    DieuKhienQuanTri::class,     'updateRole'],
     ['GET',  'admin/catalog',      DieuKhienDanhMuc::class,   'index'],
