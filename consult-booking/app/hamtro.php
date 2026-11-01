@@ -26,10 +26,13 @@ function e(mixed $value): string
 }
 
 /**
- * In địa điểm ra HTML: đoạn nào là link (http://, https://, www.) thì thành thẻ <a> bấm được (mở tab mới),
- * phần còn lại vẫn được mã hóa an toàn. Rỗng thì in $fallback.
+ * In địa điểm ra HTML. Đoạn nào là link (http://, https://, www.) được xử lý theo $che_do:
+ *  - 'bam' : thẻ <a> bấm được (mở tab mới);
+ *  - 'cho' : ẩn link, hiện nhãn "link sẽ hiện sau khi giảng viên duyệt" (cuộc hẹn đang chờ duyệt);
+ *  - 'mo'  : link bị vô hiệu — hiện mờ, gạch ngang, KHÔNG bấm được và KHÔNG lộ đường dẫn (cuộc hẹn bị từ chối / hủy).
+ * Phần chữ thường (tên phòng...) luôn hiện bình thường và được mã hóa an toàn. Rỗng thì in $fallback.
  */
-function lien_ket_dia_diem(?string $text, string $fallback = ''): string
+function lien_ket_dia_diem(?string $text, string $fallback = '', string $che_do = 'bam', string $ly_do_mo = 'Link không còn truy cập được'): string
 {
     $text = trim((string) $text);
     if ($text === '') {
@@ -47,10 +50,49 @@ function lien_ket_dia_diem(?string $text, string $fallback = ''): string
             $duoi = $m[0];
             $p    = substr($p, 0, -strlen($duoi));
         }
-        $href = stripos($p, 'www.') === 0 ? 'https://' . $p : $p;
-        $out .= '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer">' . e($p) . '</a>' . e($duoi);
+        if ($che_do === 'cho') {
+            $out .= '<span class="link-cho-duyet text-muted"><i class="bi bi-lock"></i> Link online sẽ hiện sau khi giảng viên duyệt</span>';
+        } elseif ($che_do === 'mo') {
+            $out .= '<span class="link-vo-hieu text-muted" aria-disabled="true" title="' . e($ly_do_mo) . '"><i class="bi bi-link-45deg"></i> Link họp online</span>';
+        } else {
+            $href = stripos($p, 'www.') === 0 ? 'https://' . $p : $p;
+            $out .= '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer">' . e($p) . '</a>';
+        }
+        $out .= e($duoi);
     }
     return $out;
+}
+
+/**
+ * Địa điểm của 1 cuộc hẹn, tùy trạng thái:
+ *  - đã duyệt / hoàn thành : link bấm được;
+ *  - chờ duyệt             : sinh viên chưa thấy link (giảng viên chủ khung giờ thì vẫn bấm được);
+ *  - bị từ chối / đã hủy   : link mờ đi, không bấm được (cả sinh viên lẫn giảng viên).
+ */
+function lien_ket_dia_diem_theo_trang_thai(?string $text, string $trang_thai, string $fallback = '', bool $la_giang_vien = false): string
+{
+    if ($trang_thai === 'tu_choi' || $trang_thai === 'da_huy') {
+        $ly_do = $trang_thai === 'tu_choi'
+            ? 'Giảng viên đã từ chối cuộc hẹn — không thể truy cập link'
+            : 'Cuộc hẹn đã hủy — không thể truy cập link';
+        return lien_ket_dia_diem($text, $fallback, 'mo', $ly_do);
+    }
+    if ($trang_thai === 'cho_duyet' && !$la_giang_vien) {
+        return lien_ket_dia_diem($text, $fallback, 'cho');
+    }
+    return lien_ket_dia_diem($text, $fallback, 'bam');
+}
+
+/**
+ * Thay link trong địa điểm bằng nhãn trung tính (trả về chuỗi thường, người gọi tự e()).
+ * Dùng cho dữ liệu khung giờ hiển thị TRƯỚC khi đặt lịch, để sinh viên không lấy được link khi chưa được duyệt.
+ */
+function an_link_dia_diem(?string $text): ?string
+{
+    if ($text === null || trim($text) === '') {
+        return $text;
+    }
+    return trim((string) preg_replace('~(?:https?://|www\.)[^\s<>"\']+~iu', 'Link online (hiện sau khi được duyệt)', $text));
 }
 
 /** Thư mục gốc của public/ tính từ URL (chạy được cả ở gốc domain lẫn thư mục con như /consult-booking/public). */

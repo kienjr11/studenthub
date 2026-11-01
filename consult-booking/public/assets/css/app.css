@@ -891,3 +891,15 @@ a.nav-user:hover {
     padding: 1.25rem;
   }
 }
+
+/* Link họp online theo trạng thái cuộc hẹn */
+.link-vo-hieu {
+  opacity: 0.5;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  user-select: none;
+}
+.link-cho-duyet {
+  font-style: italic;
+}
+ 
