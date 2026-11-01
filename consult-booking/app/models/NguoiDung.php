@@ -7,6 +7,9 @@ final class NguoiDung extends MoHinh
     private const COT_CONG_KHAI = 'nd.ma_nguoi_dung, nd.ho_ten, nd.email, nd.vai_tro, nd.trang_thai, nd.ma_don_vi,
         nd.so_lan_dang_nhap_sai, nd.khoa_den, nd.dang_nhap_lan_cuoi, nd.ngay_tao, dv.ten_don_vi';
 
+    /** Thêm ảnh đại diện (chỉ giảng viên có hồ sơ). Dùng kèm LEFT JOIN ho_so_giang_vien hs ở danh sách quản trị. */
+    private const COT_ANH = ', hs.anh_dai_dien';
+
     /** Không trả mat_khau_bam để tránh vô tình đưa ra view. */
     public function find(int $id): ?array
     {
@@ -152,7 +155,9 @@ final class NguoiDung extends MoHinh
     public function search(array $filters, int $limit, int $offset): array
     {
         $p = [];
-        $sql = 'SELECT ' . self::COT_CONG_KHAI . ' FROM nguoi_dung nd LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
+        $sql = 'SELECT ' . self::COT_CONG_KHAI . self::COT_ANH . ' FROM nguoi_dung nd
+                LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
+                LEFT JOIN ho_so_giang_vien hs ON hs.ma_giang_vien = nd.ma_nguoi_dung
                 WHERE ' . $this->where($filters, $p) . ' ORDER BY nd.ma_nguoi_dung DESC LIMIT :lim OFFSET :off';
         $st = $this->db->prepare($sql);
         foreach ($p as $k => $v) {
@@ -200,7 +205,9 @@ final class NguoiDung extends MoHinh
 
     public function pendingLecturers(int $limit): array
     {
-        $st = $this->db->prepare("SELECT " . self::COT_CONG_KHAI . " FROM nguoi_dung nd LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
+        $st = $this->db->prepare("SELECT " . self::COT_CONG_KHAI . self::COT_ANH . " FROM nguoi_dung nd
+            LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
+            LEFT JOIN ho_so_giang_vien hs ON hs.ma_giang_vien = nd.ma_nguoi_dung
             WHERE nd.vai_tro = 'giang_vien' AND nd.trang_thai = 'cho_duyet' ORDER BY nd.ngay_tao ASC LIMIT :lim");
         $st->bindValue(':lim', $limit, PDO::PARAM_INT);
         $st->execute();

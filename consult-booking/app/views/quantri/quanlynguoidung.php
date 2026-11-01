@@ -44,7 +44,7 @@ $pageUrl = static fn (int $p): string => url('admin/users', array_filter($filter
                 $tempLock = $u['khoa_den'] && strtotime($u['khoa_den']) > time();
             ?>
                 <tr>
-                    <td><div class="d-flex align-items-center gap-2"><span class="avatar avatar-<?= e($u['vai_tro']) ?>" aria-hidden="true"><?= e(initial($u['ho_ten'])) ?></span><div><div class="fw-semibold"><?= e($u['ho_ten']) ?></div><div class="small text-muted"><?= e($u['email']) ?></div></div></div></td>
+                    <td><div class="d-flex align-items-center gap-2"><?= avatar($u, $u['vai_tro']) ?><div><div class="fw-semibold"><?= e($u['ho_ten']) ?></div><div class="small text-muted"><?= e($u['email']) ?></div></div></div></td>
                     <td><?= e($u['ten_don_vi'] ?? '—') ?></td>
                     <td><?= e(role_label($u['vai_tro'])) ?></td>
                     <td>

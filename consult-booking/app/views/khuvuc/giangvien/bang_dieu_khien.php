@@ -37,19 +37,6 @@ $tiles = [
         <a class="btn btn-outline-primary d-none d-md-inline-block" href="<?= e(url('giang-vien/ho-so')) ?>">Xem hồ sơ</a>
     </div>
 
-    <!-- Thanh tiến độ hoàn thiện hồ sơ -->
-    <?php if (($completeness['percent'] ?? 100) < 100): ?>
-        <div class="role-block role-lecturer mb-4">
-            <div class="d-flex justify-content-between mb-1">
-                <strong>Hồ sơ đã hoàn thiện <?= e($completeness['percent']) ?>%</strong>
-                <a href="<?= e(url('giang-vien/ho-so')) ?>">Bổ sung ngay</a>
-            </div>
-            <div class="progress mb-2" role="progressbar" aria-valuenow="<?= e($completeness['percent']) ?>" aria-valuemin="0" aria-valuemax="100" style="height: .5rem">
-                <div class="progress-bar" style="width: <?= e($completeness['percent']) ?>%"></div>
-            </div>
-            <span class="small text-muted">Còn thiếu: <?= e(implode(', ', $completeness['missing'] ?? [])) ?>.</span>
-        </div>
-    <?php endif; ?>
 
     <!-- 3 thẻ thống kê (Tiles) chia đều 3 cột -->
     <div class="row g-3 mb-4">

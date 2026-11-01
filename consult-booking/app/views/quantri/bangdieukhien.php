@@ -75,7 +75,7 @@
                     <?php foreach ($pending as $u): ?>
                         <li class="list-group-item d-flex justify-content-between align-items-center gap-3">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="avatar avatar-giang_vien" aria-hidden="true"><?= e(initial($u['ho_ten'] ?? 'GV')) ?></span>
+                                <?= lecturer_avatar($u + ['ho_ten' => $u['ho_ten'] ?? 'GV']) ?>
                                 <div>
                                     <div class="fw-semibold"><?= e($u['ho_ten'] ?? 'Chưa cập nhật tên') ?></div>
                                     <div class="small text-muted"><?= e($u['email'] ?? '') ?> – <?= e($u['ten_don_vi'] ?? 'Chưa chọn đơn vị') ?></div>

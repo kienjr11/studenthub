@@ -3,7 +3,7 @@
 $nguoiXem = XacThuc::user();
 $pageUrl = static fn (int $p): string => url('giang-vien/danh-sach', array_filter($filters + ['page' => $p > 1 ? $p : 0], static fn ($v) => $v !== '' && $v !== 0));
 ?>
-<div class="container py-4">">
+<div class="container py-4">
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h1 class="h3 mb-0 page-title">Tìm giảng viên</h1>
         <span class="text-muted"><?= e($total) ?> giảng viên</span>
