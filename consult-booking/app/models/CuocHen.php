@@ -278,8 +278,9 @@ class CuocHen extends MoHinh
         return (int) $st->fetchColumn() > 0;
     }
 
-    public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe, ?string $diaDiem = null): int
+    public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe, ?string $diaDiem = null, ?int $maChuyenMon = null): int
     {
+        (new KhungGioModel())->damBaoCotChuyenMon();   // phải chạy TRƯỚC beginTransaction (ALTER TABLE tự commit)
         $coCot = (new KhungGioModel())->damBaoCotTuNhap();   
         $this->db->beginTransaction();
         try {
@@ -300,8 +301,9 @@ class CuocHen extends MoHinh
                     date('d/m/Y', strtotime($trungGv['bat_dau']))
                 ));
             }
-            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc, dia_diem' . ($coCot ? ', la_tu_nhap' : '') . ') VALUES (:gv, :bd, :kt, :dd' . ($coCot ? ', 1' : '') . ')')
-                ->execute([':gv' => $maGiangVien, ':bd' => $batDau, ':kt' => $ketThuc, ':dd' => $diaDiem]);
+            // Khung giờ riêng của lịch sinh viên tự chọn giờ: lưu luôn môn sinh viên đã chọn
+            $this->db->prepare('INSERT INTO khung_gio (ma_giang_vien, bat_dau, ket_thuc, dia_diem, ma_chuyen_mon' . ($coCot ? ', la_tu_nhap' : '') . ') VALUES (:gv, :bd, :kt, :dd, :cm' . ($coCot ? ', 1' : '') . ')')
+                ->execute([':gv' => $maGiangVien, ':bd' => $batDau, ':kt' => $ketThuc, ':dd' => $diaDiem, ':cm' => $maChuyenMon]);
             $maKhungGio = (int) $this->db->lastInsertId();
 
             $this->db->prepare("INSERT INTO cuoc_hen (ma_khung_gio, ma_sinh_vien, chu_de, trang_thai) VALUES (:kg, :sv, :cd, 'cho_duyet')")

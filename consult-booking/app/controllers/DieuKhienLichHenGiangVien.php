@@ -126,11 +126,29 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 $loi('Thời gian hẹn phải ở tương lai.');
             }
 
+            // Môn tư vấn: phải là một trong các môn giảng viên đang dạy; giảng viên chưa khai báo môn nào thì để trống.
+            $maMon = null;
+            $dsMon = (new KhungGioModel())->layChuyenMonCuaGiangVien($giangVienId);
+            if ($dsMon !== []) {
+                if ($monHoc === '') {
+                    $loi('Vui lòng chọn môn tư vấn.');
+                }
+                foreach ($dsMon as $m) {
+                    if ($m['ten_chuyen_mon'] === $monHoc) {
+                        $maMon = (int) $m['ma_chuyen_mon'];
+                        break;
+                    }
+                }
+                if ($maMon === null) {
+                    $loi('Môn đã chọn không nằm trong danh sách môn của giảng viên.');
+                }
+            }
+
             $bd = $batDau->format('Y-m-d H:i:s');
             $kt = $ketThuc->format('Y-m-d H:i:s');
             // Trùng giờ với lịch của giảng viên được kiểm tra trong taoCuocHen() (trong transaction, an toàn khi đặt đồng thời)
             try {
-                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe);
+                $this->cuocHenModel->taoCuocHen((int) XacThuc::id(), $giangVienId, $bd, $kt, $chuDe, null, $maMon);
             } catch (DomainException $e) {
                 $loi($e->getMessage());   // vd: sinh viên đã có lịch hẹn khác trùng khung giờ này
             } catch (Throwable $e) {
