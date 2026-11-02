@@ -160,6 +160,10 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                                     title="<?= $chuaKetThuc ? 'Chỉ hoàn thành được sau ' . date('H:i d/m/Y', strtotime($item['ket_thuc'])) : 'Đánh dấu đã hoàn thành tư vấn' ?>">Hoàn thành</button>
                                         </form>
 
+                                        <?php $daBatDau = time() >= strtotime($item['bat_dau']); ?>
+                                        <?php if ($daBatDau): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Buổi hẹn đã bắt đầu nên không thể hủy">Hủy</button>
+                                        <?php else: ?>
                                         <!-- Nút mở modal hủy lịch hẹn -->
                                         <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalHuy<?= $item['ma_cuoc_hen'] ?>" title="Hủy cuộc hẹn">
                                             Hủy
@@ -193,6 +197,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                                 </form>
                                             </div>
                                         </div>
+                                    <?php endif; ?>   <?php /* hết điều kiện hủy trước giờ bắt đầu */ ?>
                                     <?php endif; ?>
 
                                     <!-- Nút xem đánh giá khi trạng thái là hoàn thành -->

@@ -167,7 +167,9 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
                 if ($lyDoHuy === '') {
                     $this->json(['success' => false, 'message' => 'Vui lòng nhập lý do hủy lịch hẹn.'], 422);
                 }
-                if (!$cuocHen->huyBoiGiangVien($maCuocHen, $lyDoHuy)) { $saiTrangThai(); }
+                if (!$cuocHen->huyBoiGiangVien($maCuocHen, $lyDoHuy)) {
+                    $this->json(['success' => false, 'message' => 'Không thể hủy: buổi hẹn đã bắt đầu hoặc trạng thái cuộc hẹn đã thay đổi, vui lòng tải lại danh sách.'], 409);
+                }
                 $this->json(['success' => true, 'message' => 'Đã hủy lịch hẹn và ghi nhận lý do thành công.']);
             default:
                 $this->json(['success' => false, 'message' => 'Hành động không hợp lệ.'], 422);

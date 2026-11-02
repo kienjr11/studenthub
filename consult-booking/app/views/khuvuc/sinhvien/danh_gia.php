@@ -7,6 +7,7 @@ $maCuocHen = $item['ma_cuoc_hen'] ?? 0;
 $trangThai = $item['trang_thai'] ?? '';
 $diemCu = $item['diem_danh_gia'] ?? 5;
 $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
+$daBatDau = isset($item['bat_dau']) && time() >= strtotime((string) $item['bat_dau']);   // buổi hẹn đã bắt đầu -> không hủy được nữa
 ?>
 
 <?php if ($trangThai === 'hoan_thanh'): ?>
@@ -60,7 +61,7 @@ $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
         </div>
     </div>
 
-<?php elseif (in_array($trangThai, ['cho_duyet', 'da_duyet'])): ?>
+<?php elseif (in_array($trangThai, ['cho_duyet', 'da_duyet']) && !$daBatDau): ?>
     <!-- LỊCH CHƯA HOÀN THÀNH (Chờ duyệt / Đã duyệt): NÚT HỦY LỊCH, BẮT BUỘC NHẬP LÝ DO -->
     <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalHuy<?= $maCuocHen ?>">
         Hủy lịch
@@ -91,6 +92,10 @@ $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
             </form>
         </div>
     </div>
+
+<?php elseif ($trangThai === 'da_duyet'): ?>
+    <!-- ĐÃ DUYỆT NHƯNG BUỔI HẸN ĐÃ BẮT ĐẦU: không hủy được, chờ hoàn thành rồi mới đánh giá -->
+    <button type="button" class="btn btn-sm btn-secondary" disabled title="Buổi hẹn đã bắt đầu nên không thể hủy. Bạn sẽ đánh giá được sau khi buổi tư vấn hoàn thành.">Đã đến giờ hẹn</button>
 
 <?php elseif ($trangThai === 'da_huy'): ?>
     <!-- LỊCH ĐÃ HỦY: DÙNG BTN NÊN KÍCH THƯỚC Ô SẼ RỘNG VÀ ĐỒNG BỘ VỚI CÁC NÚT KHÁC -->

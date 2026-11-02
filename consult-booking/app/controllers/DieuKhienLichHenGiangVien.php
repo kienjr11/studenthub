@@ -246,7 +246,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                     if ($this->cuocHenModel->huyBoiGiangVien($maCuocHen, $lyDoHuy)) {
                         flash('success', 'Đã hủy lịch hẹn. Sinh viên sẽ xem được lý do hủy.');
                     } else {
-                        flash('warning', 'Không thể hủy: trạng thái cuộc hẹn đã thay đổi.');
+                        flash('warning', 'Không thể hủy: buổi hẹn đã bắt đầu hoặc trạng thái cuộc hẹn đã thay đổi.');
                     }
                 }
                 break;
@@ -308,7 +308,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 if ($ketQua) {
                     flash('success', 'Hủy lịch hẹn thành công. Giảng viên sẽ xem được lý do hủy của bạn.');
                 } else {
-                    flash('danger', 'Không thể hủy lịch hẹn (lịch đã hoàn thành, đã hủy / bị từ chối hoặc không hợp lệ).');
+                    flash('danger', 'Không thể hủy lịch hẹn (lịch đã hoàn thành, đã hủy / bị từ chối, buổi hẹn đã bắt đầu hoặc không hợp lệ).');
                 }
             } else {
                 flash('danger', 'Dữ liệu không hợp lệ.');
