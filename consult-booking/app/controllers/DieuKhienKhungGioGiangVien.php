@@ -145,11 +145,12 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             case 'duyet':
                 if ($tt !== 'cho_duyet') { $saiTrangThai(); }
                 try {
-                    $cuocHen->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt
+                    $soTuHuy = $cuocHen->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt
                 } catch (DomainException $e) {
                     $this->json(['success' => false, 'message' => $e->getMessage()], 409);
                 }
-                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.']);
+                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.'
+                    . ($soTuHuy > 0 ? " Khung giờ đã đủ người nên $soTuHuy yêu cầu đang chờ còn lại đã tự động chuyển thành đã hủy." : '')]);
             case 'tu_choi':
                 if ($tt !== 'cho_duyet') { $saiTrangThai(); }
                 $cuocHen->capNhatTrangThai($maCuocHen, 'tu_choi');
@@ -200,18 +201,22 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
 
         $cuocHen = new CuocHen();
         $soDuyet = 0;
+        $soTuHuy = 0;
         $loi     = [];
+        // Duyệt từ người đăng ký sớm nhất xuống (layDanhSachDangKy đã sắp theo thứ tự đăng ký); đủ chỗ thì phần còn lại tự hủy.
         foreach ($choDuyet as $r) {
             try {
-                $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
+                $soTuHuy += $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
                 $soDuyet++;
             } catch (DomainException $e) {
+                if ($soTuHuy > 0) { break; }   // phần còn lại đã bị hệ thống tự hủy vì đủ chỗ, không phải lỗi
                 $loi[] = $r['ho_ten'] . ': ' . $e->getMessage();
             }
         }
+        $ghiTuHuy = $soTuHuy > 0 ? " $soTuHuy yêu cầu còn lại đã tự động chuyển thành đã hủy vì khung giờ đủ người." : '';
 
         if ($loi === []) {
-            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.', 'so_duyet' => $soDuyet, 'so_loi' => 0]);
+            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.' . $ghiTuHuy, 'so_duyet' => $soDuyet, 'so_tu_huy' => $soTuHuy, 'so_loi' => 0]);
         }
         $this->json([
             'success'  => $soDuyet > 0,
