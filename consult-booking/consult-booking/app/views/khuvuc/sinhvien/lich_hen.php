@@ -73,7 +73,10 @@ $nhanTrangThai = [
                                 <small class="text-muted"><?= lien_ket_dia_diem_theo_trang_thai($item['dia_diem'] ?? null, (string) $item['trang_thai'], 'Trực tuyến / Chưa có') ?></small>
                             </td>
                             <td><?= e($item['chu_de']) ?></td>
-                            <td><span class="badge bg-<?= e($mau) ?>"><?= e($nhan) ?></span></td>
+                            <td>
+                                <span class="badge bg-<?= e($mau) ?>"><?= e($nhan) ?></span>
+                                <?= ly_do_huy_html($item) ?>
+                            </td>
                             <td>
                                 <?php if (!empty($item['diem_danh_gia'])): ?>
                                     <span class="text-warning" aria-label="<?= (int) $item['diem_danh_gia'] ?> trên 5 sao"><?= str_repeat('★', (int) $item['diem_danh_gia']) . str_repeat('☆', 5 - (int) $item['diem_danh_gia']) ?></span>

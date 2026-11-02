@@ -61,14 +61,36 @@ $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
     </div>
 
 <?php elseif (in_array($trangThai, ['cho_duyet', 'da_duyet'])): ?>
-    <!-- LỊCH CHƯA HOÀN THÀNH (Chờ duyệt / Đã duyệt): HIỂN THỊ NÚT HỦY LỊCH -->
-    <form method="POST" action="<?= url('sinh-vien/huy-lich') ?>" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?');">
-        <?= csrf_field() ?>
-        <input type="hidden" name="ma_cuoc_hen" value="<?= $maCuocHen ?>">
-        <button type="submit" class="btn btn-sm btn-outline-danger">
-            Hủy lịch
-        </button>
-    </form>
+    <!-- LỊCH CHƯA HOÀN THÀNH (Chờ duyệt / Đã duyệt): NÚT HỦY LỊCH, BẮT BUỘC NHẬP LÝ DO -->
+    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalHuy<?= $maCuocHen ?>">
+        Hủy lịch
+    </button>
+
+    <div class="modal fade text-start" id="modalHuy<?= $maCuocHen ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="<?= url('sinh-vien/huy-lich') ?>" class="modal-content">
+                <?= csrf_field() ?>
+                <input type="hidden" name="ma_cuoc_hen" value="<?= $maCuocHen ?>">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Hủy lịch hẹn</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="text-muted small">Vui lòng cho giảng viên biết lý do hủy:</p>
+                    <label class="form-label fw-semibold" for="lyDoHuy<?= $maCuocHen ?>">Lý do hủy lịch hẹn <span class="text-danger">*</span></label>
+                    <textarea id="lyDoHuy<?= $maCuocHen ?>" name="ly_do_huy" class="form-control" rows="3" maxlength="500" required
+                              placeholder="Ví dụ: Em bị trùng lịch học, em đã giải quyết được vấn đề..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Xác nhận hủy lịch</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 <?php elseif ($trangThai === 'da_huy'): ?>
     <!-- LỊCH ĐÃ HỦY: DÙNG BTN NÊN KÍCH THƯỚC Ô SẼ RỘNG VÀ ĐỒNG BỘ VỚI CÁC NÚT KHÁC -->

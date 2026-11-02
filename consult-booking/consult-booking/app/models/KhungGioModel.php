@@ -77,6 +77,7 @@ class KhungGioModel extends MoHinh
      */
     public function layTheoGiangVienVaNgay(int $maGiangVien, string $ngay, bool $chiConTrong = false): array
     {
+        (new CuocHen())->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $dau  = $ngay . ' 00:00:00';
         $cuoi = (new DateTime($ngay))->modify('+1 day')->format('Y-m-d') . ' 00:00:00';
 
@@ -119,6 +120,7 @@ class KhungGioModel extends MoHinh
      */
     public function layTatCaTheoGiangVien(int $maGiangVien, int $toiDa = 500): array
     {
+        (new CuocHen())->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $this->damBaoCotChuyenMon();
         $locTuNhap = $this->damBaoCotTuNhap() ? 'AND kg.la_tu_nhap = 0' : '';   // bỏ khung giờ sinh viên tự nhập khi đặt lịch
 
@@ -262,8 +264,9 @@ class KhungGioModel extends MoHinh
     /** Danh sách sinh viên đã đăng ký slot (mọi trạng thái, mới nhất cuối) để giảng viên xem. */
     public function layDanhSachDangKy(int $maKhungGio): array
     {
+        (new CuocHen())->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $st = $this->db->prepare(
-            'SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ngay_tao,
+            'SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien, ch.ly_do_huy, ch.huy_boi, ch.ngay_tao,
                     sv.ho_ten, sv.email,
                     ph.diem_danh_gia, ph.nhan_xet
                FROM cuoc_hen ch

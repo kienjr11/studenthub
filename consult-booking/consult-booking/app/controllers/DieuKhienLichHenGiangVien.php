@@ -216,6 +216,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                     } catch (DomainException $e) {
                         flash('danger', $e->getMessage());
                     }
+                } else {
+                    flash('warning', 'Yêu cầu này không còn ở trạng thái chờ duyệt (có thể đã quá giờ hẹn nên bị tự động từ chối).');
                 }
                 break;
             case 'tu_choi':
@@ -227,7 +229,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             case 'hoan_thanh':
                 if ($cuocHen['trang_thai'] === 'da_duyet') {
                     try {
-                        $this->cuocHenModel->hoanThanhCuocHen($maCuocHen);   // chỉ cho hoàn thành khi đã đến ngày tư vấn
+                        $this->cuocHenModel->hoanThanhCuocHen($maCuocHen);   // chỉ cho hoàn thành khi buổi tư vấn đã kết thúc
                         flash('success', 'Đã đánh dấu hoàn thành buổi tư vấn.');
                     } catch (DomainException $e) {
                         flash('danger', $e->getMessage());
@@ -236,15 +238,16 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                 break;
             case 'da_huy':
                 if ($cuocHen['trang_thai'] === 'da_duyet') {
-                    // Cập nhật trạng thái thành 'da_huy'
-                    $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'da_huy');
-                   
-                    // Nếu có nhập lý do hủy, lưu vào ghi chú của giảng viên để bên Sinh viên có thể đọc được
-                    if (!empty($lyDoHuy)) {
-                        $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, "Lý do hủy lịch hẹn: " . $lyDoHuy);
+                    $lyDoHuy = mb_substr($lyDoHuy, 0, 500);   // cột ly_do_huy là VARCHAR(500)
+                    if ($lyDoHuy === '') {
+                        flash('danger', 'Vui lòng nhập lý do hủy lịch hẹn để sinh viên nắm thông tin.');
+                        break;
                     }
-                   
-                    flash('success', 'Đã hủy lịch hẹn và ghi nhận lý do thành công.');
+                    if ($this->cuocHenModel->huyBoiGiangVien($maCuocHen, $lyDoHuy)) {
+                        flash('success', 'Đã hủy lịch hẹn. Sinh viên sẽ xem được lý do hủy.');
+                    } else {
+                        flash('warning', 'Không thể hủy: trạng thái cuộc hẹn đã thay đổi.');
+                    }
                 }
                 break;
             default:
@@ -295,13 +298,17 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             $maCuocHen = (int) ($_POST['ma_cuoc_hen'] ?? 0);
             $maSinhVien = (int) XacThuc::id();
 
-            if ($maCuocHen > 0 && $maSinhVien > 0) {
-                $ketQua = $this->cuocHenModel->huyLichBoiSinhVien($maCuocHen, $maSinhVien);
+            $lyDo = mb_substr($this->input('ly_do_huy'), 0, 500);   // cột ly_do_huy là VARCHAR(500)
+
+            if ($maCuocHen > 0 && $maSinhVien > 0 && $lyDo === '') {
+                flash('danger', 'Vui lòng nhập lý do hủy lịch hẹn.');
+            } elseif ($maCuocHen > 0 && $maSinhVien > 0) {
+                $ketQua = $this->cuocHenModel->huyLichBoiSinhVien($maCuocHen, $maSinhVien, $lyDo);
 
                 if ($ketQua) {
-                    flash('success', 'Hủy lịch hẹn thành công.');
+                    flash('success', 'Hủy lịch hẹn thành công. Giảng viên sẽ xem được lý do hủy của bạn.');
                 } else {
-                    flash('danger', 'Không thể hủy lịch hẹn (Lịch đã hoàn thành hoặc không hợp lệ).');
+                    flash('danger', 'Không thể hủy lịch hẹn (lịch đã hoàn thành, đã hủy / bị từ chối hoặc không hợp lệ).');
                 }
             } else {
                 flash('danger', 'Dữ liệu không hợp lệ.');

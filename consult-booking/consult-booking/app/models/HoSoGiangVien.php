@@ -170,6 +170,7 @@ final class HoSoGiangVien extends MoHinh
     /** Số liệu cho các ô thống kê trên dashboard. Dùng giờ của PHP (đã set múi giờ) để khớp với dữ liệu đã lưu. */
     public function stats(int $id): array
     {
+        (new CuocHen())->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $now = date('Y-m-d H:i:s');
         $today = date('Y-m-d');
         $join = 'FROM cuoc_hen ch JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio';

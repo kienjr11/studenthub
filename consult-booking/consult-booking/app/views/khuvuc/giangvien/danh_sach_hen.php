@@ -94,6 +94,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                     <?php else: ?>
                                         <span class="badge bg-secondary">Đã hủy</span>
                                     <?php endif; ?>
+                                    <?= ly_do_huy_html($item) ?>
                                 </td>
                                 <td class="text-end">
                                     <!-- Nút duyệt / từ chối khi đang chờ duyệt -->
@@ -154,9 +155,9 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
                                             <input type="hidden" name="hanh_dong" value="hoan_thanh">
-                                            <?php $chuaDenNgay = date('Y-m-d') < date('Y-m-d', strtotime($item['bat_dau'])); ?>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary" <?= $chuaDenNgay ? 'disabled' : '' ?>
-                                                    title="<?= $chuaDenNgay ? 'Chỉ hoàn thành được từ ngày ' . date('d/m/Y', strtotime($item['bat_dau'])) : 'Đánh dấu đã hoàn thành tư vấn' ?>">Hoàn thành</button>
+                                            <?php $chuaKetThuc = time() < strtotime($item['ket_thuc']); ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" <?= $chuaKetThuc ? 'disabled' : '' ?>
+                                                    title="<?= $chuaKetThuc ? 'Chỉ hoàn thành được sau ' . date('H:i d/m/Y', strtotime($item['ket_thuc'])) : 'Đánh dấu đã hoàn thành tư vấn' ?>">Hoàn thành</button>
                                         </form>
 
                                         <!-- Nút mở modal hủy lịch hẹn -->

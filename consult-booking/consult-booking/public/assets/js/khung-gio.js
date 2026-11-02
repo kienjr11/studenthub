@@ -367,13 +367,16 @@
   var soChoDuyet = 0;       // số yêu cầu đang chờ duyệt của khung giờ đang mở
   var nutHoanThanhTC = document.getElementById("nutHoanThanhTatCa");
   var soDaDuyet = 0;        // số cuộc hẹn đã duyệt (chưa hoàn thành) của khung giờ đang mở
-  var slotNgay = "";        // ngày (YYYY-MM-DD) của khung giờ đang mở
+  var slotKetThuc = "";     // giờ kết thúc "YYYY-MM-DD HH:MM" của khung giờ đang mở
 
-  // Hôm nay (giờ máy người dùng) < ngày của khung giờ -> chưa đến ngày tư vấn. Server vẫn kiểm tra lại.
-  function chuaDenNgay() {
-    var d = new Date();
-    var homNay = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
-    return !!slotNgay && homNay < slotNgay;
+  // Giờ máy chủ < giờ kết thúc của khung giờ -> buổi tư vấn chưa kết thúc. Server vẫn kiểm tra lại.
+  function chuaKetThuc() {
+    var b = bayGio();
+    return !!slotKetThuc && (strNgay(b) + " " + strGio(b)) < slotKetThuc;
+  }
+
+  function nhanKetThuc() {
+    return slotKetThuc.slice(11, 16) + " " + slotKetThuc.slice(8, 10) + "/" + slotKetThuc.slice(5, 7) + "/" + slotKetThuc.slice(0, 4);
   }
 
   function baoModal(ok, msg) {
@@ -396,9 +399,9 @@
       nut("Từ chối", "btn-outline-danger", "tu_choi");
     } else if (r.trang_thai === "da_duyet") {
       var nutHT = nut("Hoàn thành", "btn-outline-primary", "hoan_thanh");
-      if (chuaDenNgay()) {   // chưa đến ngày tư vấn -> chưa cho hoàn thành
+      if (chuaKetThuc()) {   // buổi tư vấn chưa kết thúc -> chưa cho hoàn thành
         nutHT.disabled = true;
-        nutHT.title = "Chỉ hoàn thành được từ ngày " + slotNgay.slice(8, 10) + "/" + slotNgay.slice(5, 7) + "/" + slotNgay.slice(0, 4);
+        nutHT.title = "Chỉ hoàn thành được sau " + nhanKetThuc();
       }
       nut("Hủy", "btn-outline-danger", "da_huy");
     } else if (r.trang_thai === "hoan_thanh") {
@@ -459,7 +462,7 @@
  
   function veSinhVien(res) {
     var s = res.slot;
-    slotNgay = String(s.bat_dau).slice(0, 10);
+    slotKetThuc = String(s.ket_thuc).slice(0, 16).replace("T", " ");
     svPhu.replaceChildren(document.createTextNode(hienThi(s.bat_dau) + " – " + hienThi(s.ket_thuc).slice(-5) + (s.dia_diem ? " · " : "")));
     if (s.dia_diem) svPhu.appendChild(gan(document.createElement("span"), s.dia_diem));
     svDem.textContent = "Đã đăng ký: " + res.so_dang_ky + " / " + s.suc_chua + " sinh viên";
@@ -471,8 +474,8 @@
 
     // Nút "Hoàn thành tất cả": chỉ bật khi còn cuộc hẹn đã duyệt
     soDaDuyet = res.data.filter(function (r) { return r.trang_thai === "da_duyet"; }).length;
-    nutHoanThanhTC.disabled = soDaDuyet === 0 || chuaDenNgay();
-    nutHoanThanhTC.title = chuaDenNgay() ? "Chỉ hoàn thành được từ ngày " + slotNgay.slice(8, 10) + "/" + slotNgay.slice(5, 7) + "/" + slotNgay.slice(0, 4) : "";
+    nutHoanThanhTC.disabled = soDaDuyet === 0 || chuaKetThuc();
+    nutHoanThanhTC.title = chuaKetThuc() ? "Chỉ hoàn thành được sau " + nhanKetThuc() : "";
 
     bangSV.replaceChildren();
  
@@ -494,6 +497,17 @@
       var td = o("td");
       var tt = NHAN_TT[r.trang_thai] || [r.trang_thai, "secondary"];
       td.appendChild(o("span", tt[0], "badge text-bg-" + tt[1]));
+      if (r.trang_thai === "da_huy" || r.trang_thai === "tu_choi") {   // cho giảng viên xem lý do hủy / từ chối
+        var lyDo = String(r.ly_do_huy || "").trim();
+        if (!lyDo && r.trang_thai === "da_huy") {   // dữ liệu cũ: lý do hủy nằm trong ghi chú của giảng viên
+          lyDo = String(r.ghi_chu_giang_vien || "").replace(/^Lý do hủy lịch hẹn:\s*/, "").trim();
+        }
+        if (lyDo || r.trang_thai === "da_huy") {
+          var ai = { sinh_vien: "Sinh viên", giang_vien: "Giảng viên", he_thong: "Hệ thống" }[r.huy_boi] || "";
+          td.appendChild(document.createElement("br"));
+          td.appendChild(o("small", (r.trang_thai === "da_huy" ? "Lý do hủy" : "Lý do từ chối") + (ai ? " (" + ai + ")" : "") + ": " + (lyDo || "Chưa ghi nhận lý do."), "text-muted"));
+        }
+      }
       tr.appendChild(td);
       tr.appendChild(o("td", hienThi(r.ngay_tao), "text-nowrap"));
       tr.appendChild(cotThaoTac(r));

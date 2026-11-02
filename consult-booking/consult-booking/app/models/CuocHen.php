@@ -5,6 +5,7 @@ class CuocHen extends MoHinh
 {
     public function layDanhSachChoGiangVien(int $maGiangVien, ?string $trangThai = null, int $trang = 1, int $gioiHan = 10, ?string $ngay = null): array
     {
+        $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $offset = ($trang - 1) * $gioiHan;
         $params = [':ma_gv' => $maGiangVien];
         $whereSql = "WHERE kg.ma_giang_vien = :ma_gv";
@@ -22,7 +23,7 @@ class CuocHen extends MoHinh
 
         (new KhungGioModel())->damBaoCotChuyenMon();   // đảm bảo có cột khung_gio.ma_chuyen_mon trước khi truy vấn
 
-        $sql = "SELECT ch.ma_cuoc_hen, ch.ma_khung_gio, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien, ch.ngay_tao,
+        $sql = "SELECT ch.ma_cuoc_hen, ch.ma_khung_gio, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien, ch.ly_do_huy, ch.huy_boi, ch.ngay_tao,
                        sv.ho_ten AS ten_sinh_vien, sv.email AS email_sinh_vien,
                        kg.bat_dau, kg.ket_thuc, kg.dia_diem, cm.ten_chuyen_mon,
                        ph.diem_danh_gia, ph.nhan_xet AS nhan_xet_sinh_vien
@@ -65,6 +66,7 @@ class CuocHen extends MoHinh
      */
     public function layDanhSachChoAdmin(?string $trangThai = null, int $trang = 1, int $gioiHan = 15): array
     {
+        $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $offset = ($trang - 1) * $gioiHan;
         $params = [];
         $whereSql = "WHERE 1=1";
@@ -74,7 +76,7 @@ class CuocHen extends MoHinh
             $params[':trang_thai'] = $trangThai;
         }
 
-        $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ngay_tao,
+        $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien, ch.ly_do_huy, ch.huy_boi, ch.ngay_tao,
                        sv.ho_ten AS ten_sinh_vien, sv.email AS email_sinh_vien,
                        gv.ho_ten AS ten_giang_vien, gv.email AS email_giang_vien,
                        kg.bat_dau, kg.ket_thuc, kg.dia_diem
@@ -111,6 +113,7 @@ class CuocHen extends MoHinh
 
     public function timTheoIdVaGiangVien(int $maCuocHen, int $maGiangVien): ?array
     {
+        $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $sql = "SELECT ch.*, kg.ma_giang_vien, kg.bat_dau, kg.ket_thuc, kg.dia_diem,
                        sv.ho_ten AS ten_sinh_vien, sv.email AS email_sinh_vien
                 FROM cuoc_hen ch
@@ -125,20 +128,85 @@ class CuocHen extends MoHinh
         return $res ?: null;
     }
 
-    /** Đã đến ngày diễn ra buổi tư vấn chưa (so theo NGÀY của giờ bắt đầu, không so giờ). */
-    public function daDenNgayTuVan(string $batDau): bool
+    /** Buổi tư vấn đã KẾT THÚC chưa (giờ hiện tại >= giờ kết thúc của khung giờ). */
+    public function daQuaGioTuVan(string $ketThuc): bool
     {
-        return date('Y-m-d') >= date('Y-m-d', strtotime($batDau));
+        return time() >= strtotime($ketThuc);
+    }
+
+    private static ?bool $coCotLyDoHuy = null;
+
+    /**
+     * Đảm bảo bảng cuoc_hen có cột ly_do_huy (lý do hủy / từ chối) và huy_boi (ai hủy: sinh viên / giảng viên / hệ thống).
+     * Tự thêm cột nếu CSDL cũ chưa có. Không gọi trong transaction (ALTER TABLE tự commit).
+     */
+    public function damBaoCotLyDoHuy(): bool
+    {
+        if (self::$coCotLyDoHuy !== null) {
+            return self::$coCotLyDoHuy;
+        }
+        try {
+            if (!$this->db->query("SHOW COLUMNS FROM cuoc_hen LIKE 'ly_do_huy'")->fetch()) {
+                $this->db->exec(
+                    "ALTER TABLE cuoc_hen
+                       ADD COLUMN ly_do_huy VARCHAR(500) NULL DEFAULT NULL AFTER ghi_chu_giang_vien,
+                       ADD COLUMN huy_boi ENUM('sinh_vien','giang_vien','he_thong') NULL DEFAULT NULL AFTER ly_do_huy"
+                );
+            }
+            self::$coCotLyDoHuy = true;
+        } catch (Throwable $e) {
+            error_log('Không thêm được cột cuoc_hen.ly_do_huy: ' . $e->getMessage());
+            self::$coCotLyDoHuy = false;
+        }
+        return self::$coCotLyDoHuy;
+    }
+
+    private static bool $daChayTuDongTuChoi = false;
+
+    /**
+     * Tự động TỪ CHỐI mọi yêu cầu còn ở trạng thái CHỜ DUYỆT mà giờ bắt đầu của khung giờ đã qua
+     * (giảng viên không duyệt kịp). Chạy theo kiểu "lười": được gọi trước khi đọc/ghi dữ liệu lịch hẹn,
+     * mỗi request chỉ chạy một lần (trừ khi $batBuoc = true). Trạng thái 'tu_choi' làm cột
+     * khung_gio_hieu_luc về NULL nên khung giờ tự được giải phóng. Trả về số yêu cầu bị hủy.
+     */
+    public function tuDongTuChoiQuaHan(bool $batBuoc = false): int
+    {
+        $coCot = $this->damBaoCotLyDoHuy();   // luôn đảm bảo cột lý do hủy có mặt trước các truy vấn khác
+        if (self::$daChayTuDongTuChoi && !$batBuoc) {
+            return 0;
+        }
+        self::$daChayTuDongTuChoi = true;
+        if (!$coCot) {
+            return 0;
+        }
+        try {
+            $st = $this->db->prepare(
+                "UPDATE cuoc_hen ch
+                   JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio
+                    SET ch.trang_thai = 'tu_choi',
+                        ch.ly_do_huy = :ly_do,
+                        ch.huy_boi = 'he_thong'
+                  WHERE ch.trang_thai = 'cho_duyet' AND kg.bat_dau <= :now"
+            );
+            $st->execute([
+                ':ly_do' => 'Giảng viên chưa duyệt yêu cầu trước giờ hẹn nên hệ thống tự động từ chối.',
+                ':now'   => date('Y-m-d H:i:s'),
+            ]);
+            return $st->rowCount();
+        } catch (Throwable $e) {
+            error_log('Tự động từ chối lịch quá hạn thất bại: ' . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
-     * Đánh dấu HOÀN THÀNH một cuộc hẹn đã duyệt. Chỉ cho phép khi đã đến ngày tư vấn:
-     * chưa đến ngày thì ném DomainException (không thể hoàn thành buổi tư vấn chưa diễn ra).
+     * Đánh dấu HOÀN THÀNH một cuộc hẹn đã duyệt. Chỉ cho phép khi buổi tư vấn đã KẾT THÚC (qua giờ kết thúc):
+     * chưa qua giờ thì ném DomainException (không thể hoàn thành buổi tư vấn chưa diễn ra xong).
      */
     public function hoanThanhCuocHen(int $maCuocHen): void
     {
         $st = $this->db->prepare(
-            'SELECT ch.trang_thai, kg.bat_dau
+            'SELECT ch.trang_thai, kg.bat_dau, kg.ket_thuc
                FROM cuoc_hen ch
                JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio
               WHERE ch.ma_cuoc_hen = :id'
@@ -151,9 +219,9 @@ class CuocHen extends MoHinh
         if ($ch['trang_thai'] !== 'da_duyet') {
             throw new DomainException('Chỉ hoàn thành được cuộc hẹn đang ở trạng thái đã duyệt.');
         }
-        if (!$this->daDenNgayTuVan((string) $ch['bat_dau'])) {
+        if (!$this->daQuaGioTuVan((string) $ch['ket_thuc'])) {
             throw new DomainException(
-                'Chưa đến ngày tư vấn (' . date('d/m/Y', strtotime($ch['bat_dau'])) . ') nên chưa thể đánh dấu hoàn thành.'
+                'Buổi tư vấn chưa kết thúc (kết thúc lúc ' . date('H:i d/m/Y', strtotime($ch['ket_thuc'])) . ') nên chưa thể đánh dấu hoàn thành.'
             );
         }
         $this->capNhatTrangThai($maCuocHen, 'hoan_thanh');
@@ -380,6 +448,7 @@ class CuocHen extends MoHinh
      */
     public function duyetCuocHen(int $maCuocHen, ?string $diaDiem = null): void
     {
+        $this->tuDongTuChoiQuaHan(true);   // yêu cầu đã qua giờ hẹn bị từ chối trước, không thể duyệt nữa
         $this->db->beginTransaction();
         try {
             $st = $this->db->prepare(
@@ -391,7 +460,7 @@ class CuocHen extends MoHinh
             $st->execute([':id' => $maCuocHen]);
             $ch = $st->fetch();
             if (!$ch || $ch['trang_thai'] !== 'cho_duyet') {
-                throw new DomainException('Yêu cầu này không còn ở trạng thái chờ duyệt.');
+                throw new DomainException('Yêu cầu này không còn ở trạng thái chờ duyệt (có thể đã quá giờ hẹn nên bị tự động từ chối).');
             }
 
             $st = $this->db->prepare(
@@ -440,6 +509,7 @@ class CuocHen extends MoHinh
 
     public function thongKeTongQuanAdmin(): array
     {
+        $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $sql = "SELECT 
                     COUNT(*) as tong_so,
                     SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
@@ -457,6 +527,7 @@ class CuocHen extends MoHinh
 
     public function thongKeChoGiangVien(int $maGiangVien): array
     {
+        $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $sql = "SELECT 
                     COUNT(*) as tong_so,
                     SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
@@ -477,22 +548,33 @@ class CuocHen extends MoHinh
         ];
     }
 
-    public function huyLichBoiSinhVien(int $maCuocHen, int $maSinhVien): bool
+    /**
+     * Sinh viên hủy lịch của CHÍNH MÌNH (chỉ khi đang chờ duyệt / đã duyệt). Lý do là bắt buộc và được lưu lại
+     * để giảng viên / admin xem. Chỉ ghi khi trạng thái hiện tại còn cho phép hủy (không ghi đè hoàn thành / từ chối / đã hủy).
+     */
+    public function huyLichBoiSinhVien(int $maCuocHen, int $maSinhVien, string $lyDo): bool
     {
-        $sqlSelect = "SELECT trang_thai FROM cuoc_hen WHERE ma_cuoc_hen = :ma_cuoc_hen AND ma_sinh_vien = :ma_sv";
-        $stmtSelect = $this->db->prepare($sqlSelect);
-        $stmtSelect->execute([
-            ':ma_cuoc_hen' => $maCuocHen,
-            ':ma_sv'       => $maSinhVien
-        ]);
-        $cuocHen = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+        $this->damBaoCotLyDoHuy();
+        $st = $this->db->prepare(
+            "UPDATE cuoc_hen SET trang_thai = 'da_huy', ly_do_huy = :ly_do, huy_boi = 'sinh_vien'
+              WHERE ma_cuoc_hen = :id AND ma_sinh_vien = :sv AND trang_thai IN ('cho_duyet', 'da_duyet')"
+        );
+        $st->execute([':ly_do' => $lyDo, ':id' => $maCuocHen, ':sv' => $maSinhVien]);
+        return $st->rowCount() > 0;
+    }
 
-        if (!$cuocHen || $cuocHen['trang_thai'] === 'hoan_thanh') {
-            return false;
-        }
-
-        $sqlUpdate = "UPDATE cuoc_hen SET trang_thai = 'da_huy' WHERE ma_cuoc_hen = :ma_cuoc_hen";
-        $stmtUpdate = $this->db->prepare($sqlUpdate);
-        return $stmtUpdate->execute([':ma_cuoc_hen' => $maCuocHen]);
+    /**
+     * Giảng viên hủy một cuộc hẹn ĐÃ DUYỆT, kèm lý do (sinh viên và admin xem được).
+     * Quyền sở hữu cuộc hẹn do controller kiểm tra trước (timTheoIdVaGiangVien).
+     */
+    public function huyBoiGiangVien(int $maCuocHen, string $lyDo): bool
+    {
+        $this->damBaoCotLyDoHuy();
+        $st = $this->db->prepare(
+            "UPDATE cuoc_hen SET trang_thai = 'da_huy', ly_do_huy = :ly_do, huy_boi = 'giang_vien'
+              WHERE ma_cuoc_hen = :id AND trang_thai = 'da_duyet'"
+        );
+        $st->execute([':ly_do' => $lyDo, ':id' => $maCuocHen]);
+        return $st->rowCount() > 0;
     }
 }

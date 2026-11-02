@@ -118,6 +118,8 @@ Cùng cấu trúc với `don_vi`: `ma_chuyen_mon` (PK), `ten_chuyen_mon` (UNIQUE
 | chu_de | Chủ đề cần tư vấn (dữ liệu người dùng nhập, luôn được mã hóa khi in ra) |
 | trang_thai | `cho_duyet` chờ duyệt, `da_duyet` đã duyệt, `tu_choi` bị từ chối, `da_huy` đã hủy, `hoan_thanh` hoàn thành |
 | ghi_chu_giang_vien | Ghi chú/kết quả của giảng viên |
+| ly_do_huy | Lý do hủy lịch (do sinh viên / giảng viên nhập, bắt buộc) hoặc lý do hệ thống tự động từ chối khi quá giờ hẹn mà giảng viên chưa duyệt; hiển thị cho sinh viên, giảng viên và admin |
+| huy_boi | Ai thực hiện: `sinh_vien`, `giang_vien` hoặc `he_thong` (tự động) |
 | khung_gio_hieu_luc | Cột **tự sinh** (STORED): bằng `ma_khung_gio` khi trạng thái là cho_duyet/da_duyet/hoan_thanh, ngược lại là NULL |
 
 ### `phan_hoi` – đánh giá sau buổi hẹn

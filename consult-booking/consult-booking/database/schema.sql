@@ -153,6 +153,8 @@ CREATE TABLE IF NOT EXISTS `cuoc_hen` (
   `chu_de` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `trang_thai` enum('cho_duyet','da_duyet','tu_choi','da_huy','hoan_thanh') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cho_duyet',
   `ghi_chu_giang_vien` text COLLATE utf8mb4_unicode_ci,
+  `ly_do_huy` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `huy_boi` enum('sinh_vien','giang_vien','he_thong') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `khung_gio_hieu_luc` int unsigned GENERATED ALWAYS AS (if((`trang_thai` in (_utf8mb4'cho_duyet',_utf8mb4'da_duyet',_utf8mb4'hoan_thanh')),`ma_khung_gio`,NULL)) STORED,
   `ngay_tao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `ngay_cap_nhat` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

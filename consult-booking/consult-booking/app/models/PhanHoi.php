@@ -12,6 +12,7 @@ class PhanHoi extends MoHinh
      */
     public function layDanhSachChoSinhVien(int $maSinhVien, ?string $trangThai = null): array
     {
+        (new CuocHen())->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
         $params = [':ma_sv' => $maSinhVien];
         $where = 'WHERE ch.ma_sinh_vien = :ma_sv';
 
@@ -22,7 +23,7 @@ class PhanHoi extends MoHinh
 
         (new KhungGioModel())->damBaoCotChuyenMon();   // đảm bảo có cột khung_gio.ma_chuyen_mon trước khi truy vấn
 
-        $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien,
+        $sql = "SELECT ch.ma_cuoc_hen, ch.chu_de, ch.trang_thai, ch.ghi_chu_giang_vien, ch.ly_do_huy, ch.huy_boi,
                        gv.ho_ten AS ten_giang_vien,
                        kg.bat_dau, kg.ket_thuc, kg.dia_diem, cm.ten_chuyen_mon,
                        ph.diem_danh_gia, ph.nhan_xet AS nhan_xet_sinh_vien

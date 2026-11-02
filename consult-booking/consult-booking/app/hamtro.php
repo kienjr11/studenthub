@@ -226,3 +226,33 @@ function lecturer_title(array $row): string
     );
     return ($prefix !== '' ? $prefix . ' ' : '') . $row['ho_ten'];
 }
+
+/**
+ * HTML hiển thị LÝ DO HỦY / TỪ CHỐI của một cuộc hẹn (rỗng nếu cuộc hẹn không bị hủy / từ chối).
+ * $r cần có: trang_thai, và (nếu có) ly_do_huy, huy_boi, ghi_chu_giang_vien.
+ * Dữ liệu cũ (trước khi có cột ly_do_huy): lý do hủy của giảng viên nằm trong ghi_chu_giang_vien.
+ */
+function ly_do_huy_html(array $r): string
+{
+    $tt = (string) ($r['trang_thai'] ?? '');
+    if ($tt !== 'da_huy' && $tt !== 'tu_choi') {
+        return '';
+    }
+    $lyDo = trim((string) ($r['ly_do_huy'] ?? ''));
+    $ai   = (string) ($r['huy_boi'] ?? '');
+    if ($lyDo === '' && $tt === 'da_huy') {
+        $cu = trim((string) ($r['ghi_chu_giang_vien'] ?? ''));
+        if ($cu !== '') {
+            $lyDo = trim((string) preg_replace('/^Lý do hủy lịch hẹn:\s*/u', '', $cu));
+            $ai   = $ai !== '' ? $ai : 'giang_vien';
+        }
+    }
+    if ($lyDo === '' && $tt === 'tu_choi') {
+        return '';   // từ chối thủ công không bắt buộc nhập lý do
+    }
+    $nhanTieuDe = $tt === 'da_huy' ? 'Lý do hủy' : 'Lý do từ chối';
+    $nguoi = ['sinh_vien' => 'Sinh viên', 'giang_vien' => 'Giảng viên', 'he_thong' => 'Hệ thống'][$ai] ?? '';
+    $noiDung = $lyDo !== '' ? nl2br(e($lyDo)) : '<em>Chưa ghi nhận lý do.</em>';
+    return '<div class="small text-muted mt-1"><strong>' . e($nhanTieuDe) . '</strong>'
+        . ($nguoi !== '' ? ' (' . e($nguoi) . ')' : '') . ': ' . $noiDung . '</div>';
+}

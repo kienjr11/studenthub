@@ -157,7 +157,7 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             case 'hoan_thanh':
                 if ($tt !== 'da_duyet') { $saiTrangThai(); }
                 try {
-                    $cuocHen->hoanThanhCuocHen($maCuocHen);   // chỉ cho hoàn thành khi đã đến ngày tư vấn
+                    $cuocHen->hoanThanhCuocHen($maCuocHen);   // chỉ cho hoàn thành khi buổi tư vấn đã kết thúc
                 } catch (DomainException $e) {
                     $this->json(['success' => false, 'message' => $e->getMessage()], 409);
                 }
@@ -167,8 +167,7 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
                 if ($lyDoHuy === '') {
                     $this->json(['success' => false, 'message' => 'Vui lòng nhập lý do hủy lịch hẹn.'], 422);
                 }
-                $cuocHen->capNhatTrangThai($maCuocHen, 'da_huy');
-                $cuocHen->capNhatGhiChuGiangVien($maCuocHen, 'Lý do hủy lịch hẹn: ' . $lyDoHuy);
+                if (!$cuocHen->huyBoiGiangVien($maCuocHen, $lyDoHuy)) { $saiTrangThai(); }
                 $this->json(['success' => true, 'message' => 'Đã hủy lịch hẹn và ghi nhận lý do thành công.']);
             default:
                 $this->json(['success' => false, 'message' => 'Hành động không hợp lệ.'], 422);
@@ -235,12 +234,12 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         }
 
         $cuocHen = new CuocHen();
-        // Chưa đến ngày tư vấn thì chưa cho hoàn thành (cả khung giờ cùng một ngày)
+        // Chưa qua giờ kết thúc của khung giờ thì chưa cho hoàn thành
         $slot = $this->khungGio->timTheoId($id, $maGv);
-        if (!$cuocHen->daDenNgayTuVan((string) $slot['bat_dau'])) {
+        if (!$cuocHen->daQuaGioTuVan((string) $slot['ket_thuc'])) {
             $this->json([
                 'success' => false,
-                'message' => 'Chưa đến ngày tư vấn (' . date('d/m/Y', strtotime($slot['bat_dau'])) . ') nên chưa thể đánh dấu hoàn thành.',
+                'message' => 'Buổi tư vấn chưa kết thúc (kết thúc lúc ' . date('H:i d/m/Y', strtotime($slot['ket_thuc'])) . ') nên chưa thể đánh dấu hoàn thành.',
             ], 409);
         }
 

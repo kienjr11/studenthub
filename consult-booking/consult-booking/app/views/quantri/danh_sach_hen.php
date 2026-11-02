@@ -70,6 +70,7 @@
                                             $st = $badges[$item['trang_thai']] ?? ['light', $item['trang_thai']];
                                         ?>
                                         <span class="badge bg-<?= $st[0] ?>"><?= $st[1] ?></span>
+                                        <?= ly_do_huy_html($item) ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
