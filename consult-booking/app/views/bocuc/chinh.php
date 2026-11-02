@@ -20,6 +20,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="<?= e(asset('css/app.css')) ?>" rel="stylesheet">
 </head>
 <body class="d-flex flex-column min-vh-100">

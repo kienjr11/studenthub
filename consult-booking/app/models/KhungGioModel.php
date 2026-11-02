@@ -82,13 +82,14 @@ class KhungGioModel extends MoHinh
         $cuoi = (new DateTime($ngay))->modify('+1 day')->format('Y-m-d') . ' 00:00:00';
 
         $this->damBaoCotChuyenMon();
+        $locTuNhap = $this->damBaoCotTuNhap() ? 'AND kg.la_tu_nhap = 0' : '';   // ẩn khung giờ sinh viên tự nhập / đã lưu trữ
         $sql = "SELECT kg.ma_khung_gio, kg.ma_giang_vien, kg.bat_dau, kg.ket_thuc, kg.dia_diem, kg.suc_chua,
                        kg.ma_chuyen_mon, cm.ten_chuyen_mon,
                        " . self::DEM_DANG_KY . " AS so_dang_ky,
                        " . self::DEM_CHO_DUYET . " AS so_cho_duyet
                   FROM khung_gio kg
                   LEFT JOIN chuyen_mon cm ON cm.ma_chuyen_mon = kg.ma_chuyen_mon
-                 WHERE kg.ma_giang_vien = :gv
+                 WHERE kg.ma_giang_vien = :gv $locTuNhap
                    AND kg.bat_dau >= :dau AND kg.bat_dau < :cuoi";
         $params = [':gv' => $maGiangVien, ':dau' => $dau, ':cuoi' => $cuoi];
 
@@ -232,10 +233,14 @@ class KhungGioModel extends MoHinh
     /** Slot mới có chồng lên slot khác của chính giảng viên đó không? ($boQua = id đang sửa) */
     public function biTrung(int $maGiangVien, string $batDau, string $ketThuc, int $boQua = 0): bool
     {
+        // Khung giờ ẩn (sinh viên tự nhập / lưu trữ) chỉ tính là chồng giờ khi còn cuộc hẹn hiệu lực gắn vào nó
+        $loc = $this->damBaoCotTuNhap()
+            ? 'AND (la_tu_nhap = 0 OR EXISTS (SELECT 1 FROM cuoc_hen ch WHERE ch.khung_gio_hieu_luc = khung_gio.ma_khung_gio))'
+            : '';
         $st = $this->db->prepare(
-            'SELECT COUNT(*) FROM khung_gio
+            "SELECT COUNT(*) FROM khung_gio
               WHERE ma_giang_vien = :gv AND ma_khung_gio <> :bo
-                AND bat_dau < :kt AND ket_thuc > :bd'
+                AND bat_dau < :kt AND ket_thuc > :bd $loc"
         );
         $st->execute([':gv' => $maGiangVien, ':bo' => $boQua, ':bd' => $batDau, ':kt' => $ketThuc]);
         return (int) $st->fetchColumn() > 0;

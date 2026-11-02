@@ -13,7 +13,7 @@ Repo này gồm **khung dự án** và **module Hệ thống chung & Xác thực
 - Tài khoản của tôi (mọi vai trò): sửa họ tên, giảng viên chọn lĩnh vực tư vấn, đổi mật khẩu (phải nhập lại mật khẩu hiện tại; đổi xong các thiết bị khác bị đăng xuất).
 - Hồ sơ & chuyên môn của giảng viên: tự sửa họ tên, đơn vị, học hàm, học vị, số điện thoại, phòng làm việc, giới thiệu và lĩnh vực tư vấn; có bảng điều khiển (mức đầy đủ của hồ sơ, thống kê, lịch hẹn sắp tới).
 - Tìm giảng viên (mọi người dùng đã đăng nhập): tìm theo tên, lọc theo đơn vị / lĩnh vực, phân trang, xem trang chi tiết.
-- Đặt lịch và phản hồi: sinh viên chọn giảng viên và giờ hẹn (chặn giờ trong quá khứ và trùng lịch), xem lịch hẹn của mình và đánh giá sau khi cuộc hẹn được duyệt / hoàn thành; giảng viên duyệt, từ chối, hoàn thành và ghi chú phản hồi.
+- Đặt lịch và phản hồi: sinh viên chọn giảng viên và giờ hẹn (chặn giờ trong quá khứ và trùng lịch), xem lịch hẹn của mình và đánh giá sau khi cuộc hẹn đã hoàn thành; giảng viên duyệt, từ chối, hoàn thành và ghi chú phản hồi.
 - Admin Dashboard:
   - Số liệu tổng quan và danh sách giảng viên chờ duyệt.
   - Quản lý tài khoản: tìm kiếm, lọc theo vai trò/trạng thái, phân trang, khóa / mở khóa / phê duyệt, đổi vai trò và đơn vị.
@@ -29,9 +29,9 @@ Repo này gồm **khung dự án** và **module Hệ thống chung & Xác thực
 
 1. Tạo CSDL và dữ liệu mẫu (xóa và tạo lại các bảng, chỉ dùng cho dev/demo):
    ```bash
-   mysql -u root -p < database/dat_lich_tu_van.sql
+   mysql -u root -p < database/schema.sql
    ```
-   Hoặc dùng phpMyAdmin: Import → chọn `database/dat_lich_tu_van.sql`.
+   Hoặc dùng phpMyAdmin: Import → chọn `database/schema.sql`.
 2. Tạo file cấu hình riêng (file này đã nằm trong `.gitignore`, không bị đẩy lên repo):
    ```bash
    cp app/config/cauhinh.mau.php app/config/cauhinh.local.php
@@ -68,7 +68,7 @@ app/
   tuyenduong.php        Bảng route: [phương thức, route, controller, action]
   hamtro.php            e(), url(), redirect(), flash(), config() ...
 database/
-  dat_lich_tu_van.sql   Cấu trúc bảng + khóa ngoại + dữ liệu mẫu (tên bảng, cột, giá trị ENUM đều tiếng Việt không dấu)
+  schema.sql   Cấu trúc bảng + khóa ngoại + dữ liệu mẫu (tên bảng, cột, giá trị ENUM đều tiếng Việt không dấu)
 docs/
   DATABASE.md           Giải thích CSDL: ERD, từ điển dữ liệu, ràng buộc
   TENFILE.md            Bảng đối chiếu tên file/class cũ và mới, quy ước đặt tên
@@ -105,7 +105,7 @@ Ví dụ đăng nhập (`POST ?r=auth/login`):
 1. Thêm controller vào `app/controllers/`, trong `__construct()` hoặc từng action gọi `XacThuc::requireRole('sinh_vien')` (hoặc `'giang_vien'`).
 2. Thêm dòng route vào `app/tuyenduong.php`. Mọi POST được kiểm tra CSRF tự động, trong form chỉ cần `<?= csrf_field() ?>`.
 3. Thêm model vào `app/models/` (kế thừa `MoHinh`, dùng `$this->db`), view vào `app/views/<module>/`.
-4. Các bảng `khung_gio`, `cuoc_hen`, `phan_hoi` trong `dat_lich_tu_van.sql` là khung tham khảo. Bảng `cuoc_hen` đã ép quy tắc "một khung giờ chỉ có một cuộc hẹn đang hiệu lực" bằng cột sinh tự động `khung_gio_hieu_luc` và `UNIQUE`, hãy chỉnh theo ERD nhóm bạn thống nhất. Mô tả đầy đủ ở `docs/DATABASE.md`.
+4. Các bảng `khung_gio`, `cuoc_hen`, `phan_hoi` trong `schema.sql` là khung tham khảo. Bảng `cuoc_hen` đã ép quy tắc "một khung giờ chỉ có một cuộc hẹn đang hiệu lực" bằng cột sinh tự động `khung_gio_hieu_luc` (chỉ có KEY thường, vì khung giờ có thể có sức chứa > 1; sức chứa được kiểm tra trong transaction `FOR UPDATE` ở `CuocHen::datVaoKhungGio`), hãy chỉnh theo ERD nhóm bạn thống nhất. Mô tả đầy đủ ở `docs/DATABASE.md`.
 
 ## Gợi ý lịch sử Git
 

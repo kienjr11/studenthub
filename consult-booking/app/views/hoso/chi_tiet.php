@@ -1,5 +1,5 @@
 <?php /** @var array $profile */ ?>
-<div class="container py-4" style="max-width: 860px">
+<div class="container py-4 container-860">
     <a class="small" href="<?= e(url('giang-vien/danh-sach')) ?>">&larr; Quay lại danh sách</a>
     <div class="d-flex align-items-center gap-3 my-3">
         <?= lecturer_avatar($profile, 'avatar-lg') ?>

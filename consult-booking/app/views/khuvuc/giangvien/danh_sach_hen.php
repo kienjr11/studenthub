@@ -78,7 +78,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                     <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= lien_ket_dia_diem_theo_trang_thai($item['dia_diem'] ?? null, (string) $item['trang_thai'], 'Trực tuyến / Chưa có', true) ?></small>
                                 </td>
                                 <td>
-                                    <span class="d-inline-block text-truncate" style="max-width: 250px;" title="<?= e($item['chu_de']) ?>">
+                                    <span class="d-inline-block text-truncate cat-gon-250" title="<?= e($item['chu_de']) ?>">
                                         <?= e($item['chu_de']) ?>
                                     </span>
                                 </td>
@@ -141,11 +141,11 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                             </form>
                                         <?php endif; ?>
 
-                                        <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline">
+                                        <form method="POST" action="<?= url('giang-vien/lich-hen/cap-nhat') ?>" class="d-inline" data-confirm="Bạn có chắc muốn từ chối lịch hẹn này?">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="ma_cuoc_hen" value="<?= $item['ma_cuoc_hen'] ?>">
                                             <input type="hidden" name="hanh_dong" value="tu_choi">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn từ chối lịch hẹn này?')" title="Từ chối cuộc hẹn">Từ chối</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối cuộc hẹn">Từ chối</button>
                                         </form>
                                     <?php endif; ?>
 

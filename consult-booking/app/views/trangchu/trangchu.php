@@ -49,7 +49,7 @@ $me = XacThuc::user();
 
                     <div class="hero-feature-list d-flex flex-column gap-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-primary bg-opacity-25 p-2 text-primary d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                            <div class="rounded-circle bg-primary bg-opacity-25 p-2 text-primary d-flex align-items-center justify-content-center icon-tron-36">
                                 <i class="bi bi-clock-history fs-6"></i>
                             </div>
                             <div>
@@ -58,7 +58,7 @@ $me = XacThuc::user();
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-warning d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                            <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-warning d-flex align-items-center justify-content-center icon-tron-36">
                                 <i class="bi bi-bell fs-6"></i>
                             </div>
                             <div>

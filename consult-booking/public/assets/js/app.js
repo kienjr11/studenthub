@@ -303,59 +303,11 @@
     },
   );
 
-  // Hồ sơ giảng viên: xem trước ảnh đại diện + chặn file sai loại / quá nặng ngay trên trình duyệt
-  // (server vẫn kiểm tra lại). Dùng data: URL vì CSP không cho blob:.
-  var avatarInput = document.querySelector("[data-avatar-input]");
-  if (avatarInput) {
-    var preview = document.getElementById("avatar-preview");
-    var avatarErr = document.getElementById("avatar-error");
-    var removeBox = document.querySelector("[data-avatar-remove]");
-    var original = preview.innerHTML;
-    var maxBytes =
-      parseInt(avatarInput.getAttribute("data-max-bytes"), 10) || 2097152;
-    avatarInput.addEventListener("change", function () {
-      var f = avatarInput.files && avatarInput.files[0];
-      avatarErr.textContent = "";
-      if (!f) {
-        preview.innerHTML = original;
-        return;
-      }
-      if (["image/jpeg", "image/png", "image/webp"].indexOf(f.type) === -1) {
-        avatarErr.textContent = "Chỉ nhận ảnh JPG, PNG hoặc WebP.";
-        avatarInput.value = "";
-        preview.innerHTML = original;
-        return;
-      }
-      if (f.size > maxBytes) {
-        avatarErr.textContent =
-          "Ảnh quá lớn, tối đa " + Math.round(maxBytes / 1048576) + " MB.";
-        avatarInput.value = "";
-        preview.innerHTML = original;
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function () {
-        preview.innerHTML =
-          '<span class="avatar avatar-hero avatar-giang_vien has-img"><img alt="Xem trước ảnh đại diện"></span>';
-        preview.querySelector("img").src = reader.result;
-      };
-      reader.readAsDataURL(f);
-      if (removeBox) {
-        removeBox.checked = false;
-      }
-    });
-    if (removeBox) {
-      removeBox.addEventListener("change", function () {
-        if (removeBox.checked) {
-          avatarInput.value = "";
-          preview.innerHTML =
-            '<span class="avatar avatar-hero avatar-giang_vien" aria-hidden="true">' +
-            (preview.getAttribute("data-initial") || "?") +
-            "</span>";
-        } else {
-          preview.innerHTML = original;
-        }
-      });
+  // Thanh tiến độ: độ rộng lấy từ data-width, gán qua CSSOM (CSP không cho style="width:..%" trong HTML)
+  document.querySelectorAll("[data-width]").forEach(function (el) {
+    var w = parseFloat(el.getAttribute("data-width"));
+    if (!isNaN(w)) {
+      el.style.width = Math.max(0, Math.min(100, w)) + "%";
     }
-  }
+  });
 })();

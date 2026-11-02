@@ -1,5 +1,5 @@
 <?php /** @var int $maxRows */ ?>
-<div class="container py-4" style="max-width: 760px">
+<div class="container py-4 container-760">
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h1 class="h3 mb-0 page-title">Nhập tài khoản từ file CSV</h1>
         <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('admin/users')) ?>">&larr; Quay lại danh sách</a>

@@ -281,6 +281,17 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             return;
         }
 
+        if (!in_array($cuocHen['trang_thai'] ?? '', ['da_duyet', 'hoan_thanh'], true)) {
+            flash('danger', 'Chỉ ghi chú được cho cuộc hẹn đã duyệt hoặc đã hoàn thành.');
+            redirect('giang-vien/lich-hen');
+            return;
+        }
+        if (mb_strlen($ghiChu) > 1000) {
+            flash('danger', 'Ghi chú tối đa 1000 ký tự.');
+            redirect('giang-vien/lich-hen');
+            return;
+        }
+
         $this->cuocHenModel->capNhatGhiChuGiangVien($maCuocHen, $ghiChu);
         flash('success', 'Đã lưu ghi chú và phản hồi buổi tư vấn.');
         redirect('giang-vien/lich-hen');

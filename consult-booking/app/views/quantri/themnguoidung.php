@@ -4,7 +4,7 @@ $err = static fn (string $f): string => isset($errors[$f]) ? '<div class="invali
 $bad = static fn (string $f): string => isset($errors[$f]) ? ' is-invalid' : '';
 $role = $old['role'] ?? 'sinh_vien';
 ?>
-<div class="container py-4" style="max-width: 640px">
+<div class="container py-4 container-640">
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h1 class="h3 mb-0 page-title">Thêm tài khoản</h1>
         <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('admin/users')) ?>">&larr; Quay lại danh sách</a>

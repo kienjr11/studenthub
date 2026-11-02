@@ -253,14 +253,22 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             $this->json(['success' => false, 'message' => 'Không có cuộc hẹn nào đang ở trạng thái đã duyệt.'], 409);
         }
 
+        $soOk = 0;
+        $soLoi = 0;
         foreach ($daDuyet as $r) {
-            $cuocHen->hoanThanhCuocHen((int) $r['ma_cuoc_hen']);
+            try {
+                $cuocHen->hoanThanhCuocHen((int) $r['ma_cuoc_hen']);
+                $soOk++;
+            } catch (DomainException $e) {   // một cuộc hẹn lỗi không được làm hỏng cả loạt
+                $soLoi++;
+            }
         }
         $this->json([
-            'success'      => true,
-            'message'      => 'Đã đánh dấu hoàn thành ' . count($daDuyet) . ' buổi tư vấn.',
-            'so_hoan_thanh' => count($daDuyet),
-        ]);
+            'success'       => $soOk > 0,
+            'message'       => 'Đã đánh dấu hoàn thành ' . $soOk . ' buổi tư vấn.' . ($soLoi > 0 ? " Có $soLoi buổi không cập nhật được." : ''),
+            'so_hoan_thanh' => $soOk,
+            'so_loi'        => $soLoi,
+        ], $soOk > 0 ? 200 : 409);
     }
 
     /** GET ?r=khung-gio/trong&ma_giang_vien=4&ngay=2027-02-04 — sinh viên hoặc giảng viên đã đăng nhập đều gọi được. */
@@ -272,6 +280,9 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         $maGv = (int) ($_GET['ma_giang_vien'] ?? 0);
         if ($maGv <= 0) {
             $this->json(['success' => false, 'message' => 'Thiếu mã giảng viên.'], 422);
+        }
+        if ((new HoSoGiangVien())->find($maGv, true) === null) {
+            $this->json(['success' => false, 'message' => 'Giảng viên không tồn tại hoặc đang không hoạt động.'], 404);
         }
         $ngay = $this->ngayHopLe((string) ($_GET['ngay'] ?? ''));
         $this->json(['success' => true, 'data' => $this->khungGio->layTheoGiangVienVaNgay($maGv, $ngay, true)]);
@@ -286,6 +297,9 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         $maGv = (int) ($_GET['ma_giang_vien'] ?? 0);
         if ($maGv <= 0) {
             $this->json(['success' => false, 'message' => 'Thiếu mã giảng viên.'], 422);
+        }
+        if ((new HoSoGiangVien())->find($maGv, true) === null) {
+            $this->json(['success' => false, 'message' => 'Giảng viên không tồn tại hoặc đang không hoạt động.'], 404);
         }
         $this->json(['success' => true, 'data' => $this->khungGio->laySapToiConTrong($maGv)]);
     }
