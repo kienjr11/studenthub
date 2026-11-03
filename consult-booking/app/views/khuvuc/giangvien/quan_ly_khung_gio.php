@@ -112,7 +112,7 @@
                 <div class="modal-body p-0">
                     <div id="modalSinhVienThongBao" class="alert d-none m-3 mb-0" role="alert"></div>
                     <div class="table-responsive">
-                        <table class="table align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0 sv-table">
                             <thead>
                                 <tr><th>#</th><th>Họ tên</th><th>Email</th><th>Chủ đề</th><th>Trạng thái</th><th>Đăng ký lúc</th><th class="text-end">Thao tác</th></tr>
                             </thead>

@@ -407,11 +407,10 @@
     } else if (r.trang_thai === "hoan_thanh") {
       if (r.diem_danh_gia) {
         var d = parseInt(r.diem_danh_gia, 10);
-        td.appendChild(o("span", new Array(d + 1).join("★") + new Array(6 - d).join("☆"), "text-warning"));
-        if (r.nhan_xet) {
-          td.appendChild(document.createElement("br"));
-          td.appendChild(o("small", r.nhan_xet, "text-muted"));
-        }
+        var boxDG = o("div", undefined, "sv-danhgia");
+        boxDG.appendChild(o("span", new Array(d + 1).join("★") + new Array(6 - d).join("☆"), "text-warning"));
+        if (r.nhan_xet) boxDG.appendChild(o("small", r.nhan_xet, "sv-nhanxet text-muted"));
+        td.appendChild(boxDG);
       } else {
         td.appendChild(o("small", "Chưa đánh giá", "text-muted"));
       }
@@ -490,11 +489,11 @@
     res.data.forEach(function (r, i) {
       var khongChiem = r.trang_thai === "tu_choi" || r.trang_thai === "da_huy"; // không chiếm chỗ -> làm mờ
       var tr = o("tr", undefined, khongChiem ? "opacity-50" : "");
-      tr.appendChild(o("td", String(i + 1)));
-      tr.appendChild(o("td", r.ho_ten, "fw-semibold"));
-      tr.appendChild(o("td", r.email));
-      tr.appendChild(o("td", r.chu_de));
-      var td = o("td");
+      tr.appendChild(o("td", String(i + 1), "text-muted"));
+      tr.appendChild(o("td", r.ho_ten, "fw-semibold text-nowrap"));
+      tr.appendChild(o("td", r.email, "text-nowrap"));
+      tr.appendChild(o("td", r.chu_de, "sv-chude"));
+      var td = o("td", undefined, "text-nowrap");
       var tt = NHAN_TT[r.trang_thai] || [r.trang_thai, "secondary"];
       td.appendChild(o("span", tt[0], "badge text-bg-" + tt[1]));
       if (r.trang_thai === "da_huy" || r.trang_thai === "tu_choi") {   // cho giảng viên xem lý do hủy / từ chối
@@ -504,8 +503,7 @@
         }
         if (lyDo || r.trang_thai === "da_huy") {
           var ai = { sinh_vien: "Sinh viên", giang_vien: "Giảng viên", he_thong: "Hệ thống" }[r.huy_boi] || "";
-          td.appendChild(document.createElement("br"));
-          td.appendChild(o("small", (r.trang_thai === "da_huy" ? "Lý do hủy" : "Lý do từ chối") + (ai ? " (" + ai + ")" : "") + ": " + (lyDo || "Chưa ghi nhận lý do."), "text-muted"));
+          td.appendChild(o("small", (r.trang_thai === "da_huy" ? "Lý do hủy" : "Lý do từ chối") + (ai ? " (" + ai + ")" : "") + ": " + (lyDo || "Chưa ghi nhận lý do."), "sv-lydo text-muted"));
         }
       }
       tr.appendChild(td);
