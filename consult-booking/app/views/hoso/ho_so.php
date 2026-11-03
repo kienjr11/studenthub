@@ -14,7 +14,6 @@ $chuaCo = '<span class="text-muted">Chưa cập nhật</span>';
             </div>
         </div>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary btn-sm" href="<?= e(url('giang-vien/chi-tiet', ['id' => $profile['ma_nguoi_dung']])) ?>">Xem như sinh viên</a>
             <a class="btn btn-primary btn-sm" href="<?= e(url('giang-vien/ho-so/sua')) ?>">Chỉnh sửa hồ sơ</a>
         </div>
     </div>
