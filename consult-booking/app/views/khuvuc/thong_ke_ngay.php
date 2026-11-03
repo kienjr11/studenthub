@@ -5,6 +5,16 @@
  *               $routeLoc  (route của chính trang đang hiển thị, để form lọc gửi về),
  *               $routeNgay (tùy chọn: route danh sách cuộc hẹn; nếu có thì ô ngày là link xem chi tiết ngày đó).
  */
+/** @var array $thongKeNgay */
+/** @var string $tuNgay */
+/** @var string $denNgay */
+/** @var string $routeLoc */
+/** @var string|null $routeNgay */
+
+$thongKeNgay = $thongKeNgay ?? [];
+$tuNgay      = $tuNgay ?? date('Y-m-d', strtotime('-14 days'));
+$denNgay     = $denNgay ?? date('Y-m-d');
+$routeLoc    = $routeLoc ?? '';
 $routeNgay = $routeNgay ?? null;
 $thuTrongTuan = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 $homNay = date('Y-m-d');
