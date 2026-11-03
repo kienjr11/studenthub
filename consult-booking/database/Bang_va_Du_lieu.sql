@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS `cuoc_hen` (
   KEY `fk_cuoc_hen_khung_gio` (`ma_khung_gio`),
   CONSTRAINT `fk_cuoc_hen_khung_gio` FOREIGN KEY (`ma_khung_gio`) REFERENCES `khung_gio` (`ma_khung_gio`) ON DELETE RESTRICT,
   CONSTRAINT `fk_cuoc_hen_sinh_vien` FOREIGN KEY (`ma_sinh_vien`) REFERENCES `nguoi_dung` (`ma_nguoi_dung`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table dat_lich_tu_van.cuoc_hen: ~22 rows (approximately)
+-- Dumping data for table dat_lich_tu_van.cuoc_hen: ~30 rows (approximately)
 INSERT INTO `cuoc_hen` (`ma_cuoc_hen`, `ma_khung_gio`, `ma_sinh_vien`, `chu_de`, `trang_thai`, `ghi_chu_giang_vien`, `ly_do_huy`, `huy_boi`, `ngay_tao`, `ngay_cap_nhat`) VALUES
 	(1, 1, 6, 'ád', 'hoan_thanh', 'oke', NULL, NULL, '2026-10-23 13:10:18', '2026-10-23 13:14:40'),
 	(2, 2, 6, 'ádasd', 'da_duyet', NULL, NULL, NULL, '2026-10-23 13:15:50', '2026-10-23 13:16:11'),
@@ -77,7 +77,9 @@ INSERT INTO `cuoc_hen` (`ma_cuoc_hen`, `ma_khung_gio`, `ma_sinh_vien`, `chu_de`,
 	(19, 16, 18, 'Góp ý kế hoạch gọi vốn cho dự án khởi nghiệp môn học', 'da_duyet', 'Em nhớ chuẩn bị trước file slide thuyết trình nhé.', NULL, NULL, '2026-10-29 15:00:16', '2026-10-29 15:00:16'),
 	(20, 6, 10, 'Tư vấn kỹ năng phỏng vấn tuyển dụng thực tập sinh', 'hoan_thanh', 'Sinh viên tiếp thu tốt, thái độ tích cực.', NULL, NULL, '2026-10-29 15:00:16', '2026-10-29 15:00:16'),
 	(21, 14, 5, 'alo', 'da_duyet', NULL, NULL, NULL, '2026-11-03 08:15:51', '2026-11-03 08:17:46'),
-	(22, 14, 6, 'hi', 'da_huy', NULL, 'Khung giờ đã đủ số sinh viên được duyệt trước bạn nên yêu cầu tự động hủy. Vui lòng chọn khung giờ khác.', 'he_thong', '2026-11-03 08:16:31', '2026-11-03 08:17:46');
+	(22, 14, 6, 'hi', 'da_huy', NULL, 'Khung giờ đã đủ số sinh viên được duyệt trước bạn nên yêu cầu tự động hủy. Vui lòng chọn khung giờ khác.', 'he_thong', '2026-11-03 08:16:31', '2026-11-03 08:17:46'),
+	(23, 18, 7, 'xin điểm cc', 'da_duyet', NULL, NULL, NULL, '2026-11-03 10:08:13', '2026-11-03 10:09:52'),
+	(24, 18, 5, 'xin điểm 30%', 'da_duyet', NULL, NULL, NULL, '2026-11-03 10:08:40', '2026-11-03 10:09:52');
 
 -- Dumping structure for table dat_lich_tu_van.don_vi
 CREATE TABLE IF NOT EXISTS `don_vi` (
@@ -106,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `giang_vien_chuyen_mon` (
   CONSTRAINT `fk_gvcm_giang_vien` FOREIGN KEY (`ma_giang_vien`) REFERENCES `nguoi_dung` (`ma_nguoi_dung`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table dat_lich_tu_van.giang_vien_chuyen_mon: ~12 rows (approximately)
+-- Dumping data for table dat_lich_tu_van.giang_vien_chuyen_mon: ~5 rows (approximately)
 INSERT INTO `giang_vien_chuyen_mon` (`ma_giang_vien`, `ma_chuyen_mon`) VALUES
 	(2, 1),
 	(15, 1),
@@ -135,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `ho_so_giang_vien` (
   CONSTRAINT `fk_ho_so_giang_vien` FOREIGN KEY (`ma_giang_vien`) REFERENCES `nguoi_dung` (`ma_nguoi_dung`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table dat_lich_tu_van.ho_so_giang_vien: ~8 rows (approximately)
+-- Dumping data for table dat_lich_tu_van.ho_so_giang_vien: ~3 rows (approximately)
 INSERT INTO `ho_so_giang_vien` (`ma_giang_vien`, `hoc_ham`, `hoc_vi`, `so_dien_thoai`, `phong_lam_viec`, `gioi_thieu`, `anh_dai_dien`, `ngay_cap_nhat`) VALUES
 	(2, NULL, 'tien_si', '0901234567', 'P.305 – Nhà A', 'Giảng dạy lập trình web và cơ sở dữ liệu; sẵn sàng tư vấn đồ án và định hướng nghề nghiệp lập trình viên.', NULL, '2026-10-22 17:35:11'),
 	(3, 'pho_giao_su', 'tien_si', '0982112233', 'P.210 – Nhà B', 'Phó Giáo sư, Tiến sĩ chuyên ngành Quản trị & Kinh tế. Chuyên tư vấn xây dựng kế hoạch kinh doanh, mô hình khởi nghiệp, kỹ năng viết CV chuyên nghiệp và định hướng nghề nghiệp cho sinh viên.', 'gv3_e9e363160059.jpg', '2026-11-01 22:49:44'),
@@ -164,27 +166,28 @@ CREATE TABLE IF NOT EXISTS `khung_gio` (
   CONSTRAINT `fk_khung_gio_giang_vien` FOREIGN KEY (`ma_giang_vien`) REFERENCES `nguoi_dung` (`ma_nguoi_dung`) ON DELETE RESTRICT,
   CONSTRAINT `chk_khung_gio_suc_chua` CHECK ((`suc_chua` between 1 and 50)),
   CONSTRAINT `chk_khung_gio_thoi_gian` CHECK ((`ket_thuc` > `bat_dau`))
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table dat_lich_tu_van.khung_gio: ~17 rows (approximately)
+-- Dumping data for table dat_lich_tu_van.khung_gio: ~18 rows (approximately)
 INSERT INTO `khung_gio` (`ma_khung_gio`, `ma_giang_vien`, `bat_dau`, `ket_thuc`, `dia_diem`, `ma_chuyen_mon`, `suc_chua`, `la_tu_nhap`, `ngay_tao`) VALUES
 	(1, 4, '2027-02-04 12:12:00', '2027-02-04 13:13:00', NULL, NULL, 1, 1, '2026-10-23 13:10:18'),
 	(2, 2, '2027-02-04 12:31:00', '2027-02-04 13:31:00', NULL, NULL, 1, 1, '2026-10-23 13:15:50'),
-	(3, 2, '2026-11-05 08:00:00', '2026-11-05 10:00:00', 'P.305 – Nhà A', NULL, 3, 0, '2026-10-29 14:39:48'),
-	(4, 2, '2026-11-06 14:00:00', '2026-11-06 16:00:00', 'Online via Google Meet', NULL, 5, 0, '2026-10-29 14:39:48'),
-	(5, 8, '2026-11-10 09:00:00', '2026-11-10 11:30:00', 'P.402 – Nhà A1', NULL, 2, 0, '2026-10-29 14:39:48'),
-	(6, 3, '2026-11-12 13:30:00', '2026-11-12 15:30:00', 'P.210 – Nhà B', NULL, 1, 0, '2026-10-29 14:39:48'),
-	(7, 2, '2026-11-15 08:30:00', '2026-11-15 10:30:00', 'P.305 – Nhà A', NULL, 2, 0, '2026-10-29 14:41:01'),
-	(8, 2, '2026-11-15 14:00:00', '2026-11-15 16:00:00', 'Google Meet: meet.google.com/abc-xyz', NULL, 4, 0, '2026-10-29 14:41:01'),
-	(9, 4, '2026-11-18 09:00:00', '2026-11-18 11:00:00', 'P.306 – Nhà B', NULL, 1, 0, '2026-10-29 14:41:01'),
-	(10, 8, '2026-11-20 13:30:00', '2026-11-20 15:30:00', 'P.402 – Nhà A1', NULL, 3, 0, '2026-10-29 14:41:01'),
-	(11, 13, '2026-11-22 08:00:00', '2026-11-22 10:00:00', 'P.201 – Nhà C', NULL, 5, 0, '2026-10-29 14:41:01'),
-	(12, 14, '2026-11-25 14:00:00', '2026-11-25 16:00:00', 'P.102 – Nhà Hành chính', NULL, 10, 0, '2026-10-29 14:41:01'),
-	(13, 15, '2026-12-01 09:00:00', '2026-12-01 11:00:00', 'P.501 – Nhà A1', NULL, 2, 0, '2026-10-29 14:41:01'),
-	(14, 2, '2026-12-05 10:00:00', '2026-12-05 11:30:00', 'P.305 – Nhà A', NULL, 1, 0, '2026-10-29 14:41:01'),
+	(3, 2, '2026-11-05 08:00:00', '2026-11-05 10:00:00', 'P.305 – Nhà A', 1, 3, 0, '2026-10-29 14:39:48'),
+	(4, 2, '2026-11-06 14:00:00', '2026-11-06 16:00:00', 'Online via Google Meet', 3, 5, 0, '2026-10-29 14:39:48'),
+	(5, 8, '2026-11-10 09:00:00', '2026-11-10 11:30:00', 'P.402 – Nhà A1', 3, 2, 0, '2026-10-29 14:39:48'),
+	(6, 3, '2026-11-12 13:30:00', '2026-11-12 15:30:00', 'P.210 – Nhà B', 6, 1, 0, '2026-10-29 14:39:48'),
+	(7, 2, '2026-11-15 08:30:00', '2026-11-15 10:30:00', 'P.305 – Nhà A', 1, 2, 0, '2026-10-29 14:41:01'),
+	(8, 2, '2026-11-15 14:00:00', '2026-11-15 16:00:00', 'Google Meet: meet.google.com/abc-xyz', 2, 4, 0, '2026-10-29 14:41:01'),
+	(9, 4, '2026-11-18 09:00:00', '2026-11-18 11:00:00', 'P.306 – Nhà B', 6, 1, 0, '2026-10-29 14:41:01'),
+	(10, 8, '2026-11-20 13:30:00', '2026-11-20 15:30:00', 'P.402 – Nhà A1', 3, 3, 0, '2026-10-29 14:41:01'),
+	(11, 13, '2026-11-22 08:00:00', '2026-11-22 10:00:00', 'P.201 – Nhà C', 5, 5, 0, '2026-10-29 14:41:01'),
+	(12, 14, '2026-11-25 14:00:00', '2026-11-25 16:00:00', 'P.102 – Nhà Hành chính', 6, 10, 0, '2026-10-29 14:41:01'),
+	(13, 15, '2026-12-01 09:00:00', '2026-12-01 11:00:00', 'P.501 – Nhà A1', 1, 2, 0, '2026-10-29 14:41:01'),
+	(14, 2, '2026-12-05 10:00:00', '2026-12-05 11:30:00', 'P.305 – Nhà A', 2, 1, 0, '2026-10-29 14:41:01'),
 	(15, 3, '2026-11-10 08:30:00', '2026-11-10 10:30:00', 'P.210 – Nhà B', 5, 2, 0, '2026-10-29 15:00:16'),
 	(16, 3, '2026-11-12 14:00:00', '2026-11-12 16:00:00', 'Online via Google Meet (meet.google.com/ha-tutoring)', 6, 5, 0, '2026-10-29 15:00:16'),
-	(17, 3, '2026-11-15 09:00:00', '2026-11-15 11:00:00', 'P.210 – Nhà B', 5, 1, 0, '2026-10-29 15:00:16');
+	(17, 3, '2026-11-15 09:00:00', '2026-11-15 11:00:00', 'P.210 – Nhà B', 5, 1, 0, '2026-10-29 15:00:16'),
+	(18, 4, '2026-11-04 09:00:00', '2026-11-04 10:00:00', 'online ggmeet', 6, 2, 0, '2026-11-03 10:07:41');
 
 -- Dumping structure for table dat_lich_tu_van.nguoi_dung
 CREATE TABLE IF NOT EXISTS `nguoi_dung` (
@@ -207,15 +210,15 @@ CREATE TABLE IF NOT EXISTS `nguoi_dung` (
   CONSTRAINT `fk_nguoi_dung_don_vi` FOREIGN KEY (`ma_don_vi`) REFERENCES `don_vi` (`ma_don_vi`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table dat_lich_tu_van.nguoi_dung: ~39 rows (approximately)
+-- Dumping data for table dat_lich_tu_van.nguoi_dung: ~7 rows (approximately)
 INSERT INTO `nguoi_dung` (`ma_nguoi_dung`, `ho_ten`, `email`, `mat_khau_bam`, `vai_tro`, `trang_thai`, `ma_don_vi`, `so_lan_dang_nhap_sai`, `khoa_den`, `dang_nhap_lan_cuoi`, `ngay_tao`, `ngay_cap_nhat`) VALUES
 	(1, 'Quản trị hệ thống', 'admin@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'quan_tri', 'hoat_dong', NULL, 0, NULL, '2026-11-03 09:25:50', '2026-10-22 17:35:11', '2026-11-03 09:25:50'),
 	(2, 'Nguyễn Văn Minh', 'gv.minh@demo.test', '$2y$10$IX3G7ohD8xf5tpPnDiiRcO14lXDVy1kuCvfDBB6wIcSbAnIXkzFL2', 'giang_vien', 'hoat_dong', 1, 0, NULL, '2026-11-03 08:17:15', '2026-10-22 17:35:11', '2026-11-03 08:17:15'),
 	(3, 'Trần Thu Hà', 'gv.ha@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'giang_vien', 'hoat_dong', 2, 0, NULL, '2026-11-03 08:41:00', '2026-10-22 17:35:11', '2026-11-03 08:41:00'),
-	(4, 'Lê Quang Huy', 'gv.huy@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'giang_vien', 'hoat_dong', 1, 0, NULL, '2026-11-03 08:42:42', '2026-10-22 17:35:11', '2026-11-03 08:42:42'),
-	(5, 'Phạm Thị An', 'sv.an@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, '2026-11-03 09:07:09', '2026-10-22 17:35:11', '2026-11-03 09:07:09'),
-	(6, 'Hoàng Gia Bảo', 'sv.bao@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, '2026-11-03 09:26:36', '2026-10-22 17:35:11', '2026-11-03 09:26:36'),
-	(7, 'Đỗ Minh Khôi', 'sv.khoi@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, NULL, '2026-10-22 17:35:11', '2026-11-03 09:26:07'),
+	(4, 'Lê Quang Huy', 'gv.huy@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'giang_vien', 'hoat_dong', 1, 0, NULL, '2026-11-03 10:09:40', '2026-10-22 17:35:11', '2026-11-03 10:09:40'),
+	(5, 'Phạm Thị An', 'sv.an@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, '2026-11-03 10:08:25', '2026-10-22 17:35:11', '2026-11-03 10:08:25'),
+	(6, 'Hoàng Gia Bảo', 'sv.bao@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, '2026-11-03 10:08:52', '2026-10-22 17:35:11', '2026-11-03 10:08:52'),
+	(7, 'Đỗ Minh Khôi', 'sv.khoi@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, '2026-11-03 10:07:59', '2026-10-22 17:35:11', '2026-11-03 10:07:59'),
 	(8, 'Phạm Hoàng Anh', 'gv.hanh@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'giang_vien', 'hoat_dong', 1, 0, NULL, NULL, '2026-10-29 14:39:47', '2026-10-29 14:39:47'),
 	(9, 'Vũ Thị Ngọc', 'gv.ngoc@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'giang_vien', 'hoat_dong', 3, 0, NULL, NULL, '2026-10-29 14:39:47', '2026-10-29 14:39:47'),
 	(10, 'Trần Đức Mạnh', 'sv.manh@demo.test', '$2y$10$1IgX5hYLu/gNcArsS9szWu/XI.VGmsJBIY7wtLJ6C9cVo5b4.1NRK', 'sinh_vien', 'hoat_dong', NULL, 0, NULL, NULL, '2026-10-29 14:39:47', '2026-10-29 14:39:47'),
@@ -262,7 +265,7 @@ CREATE TABLE IF NOT EXISTS `phan_hoi` (
   CONSTRAINT `chk_phan_hoi_diem` CHECK ((`diem_danh_gia` between 1 and 5))
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table dat_lich_tu_van.phan_hoi: ~4 rows (approximately)
+-- Dumping data for table dat_lich_tu_van.phan_hoi: ~0 rows (approximately)
 INSERT INTO `phan_hoi` (`ma_phan_hoi`, `ma_cuoc_hen`, `diem_danh_gia`, `nhan_xet`, `ngay_tao`) VALUES
 	(1, 1, 5, 'tốt', '2026-10-23 13:12:02'),
 	(2, 2, 4, 'Thầy hướng dẫn rất nhiệt tình và chi tiết.', '2026-10-29 14:39:48'),
