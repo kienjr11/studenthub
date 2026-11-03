@@ -5,12 +5,13 @@ declare(strict_types=1);
 class KhungGioModel extends MoHinh
 {
     /**
-     * Biểu thức SQL đếm số chỗ ĐÃ DÙNG của slot `kg` = số cuộc hẹn đã được giảng viên duyệt (đã duyệt / hoàn thành).
-     * Yêu cầu đang CHỜ DUYỆT chưa trừ chỗ; chỗ chỉ giảm khi giảng viên bấm duyệt.
+     * Biểu thức SQL đếm số chỗ ĐÃ DÙNG của slot `kg` = mọi yêu cầu còn hiệu lực (chờ duyệt / đã duyệt / hoàn thành).
+     * Yêu cầu CHỜ DUYỆT cũng giữ chỗ: đủ `suc_chua` người đăng ký là sinh viên khác không đặt thêm được nữa.
+     * Chỗ được trả lại khi yêu cầu bị từ chối / hủy.
      */
     private const DEM_DANG_KY = "(SELECT COUNT(*) FROM cuoc_hen ch
                                    WHERE ch.ma_khung_gio = kg.ma_khung_gio
-                                     AND ch.trang_thai IN ('da_duyet', 'hoan_thanh'))";
+                                     AND ch.trang_thai IN ('cho_duyet', 'da_duyet', 'hoan_thanh'))";
 
     /** Số yêu cầu đang chờ duyệt của slot `kg` (chỉ để hiển thị cho giảng viên, không trừ chỗ). */
     private const DEM_CHO_DUYET = "(SELECT COUNT(*) FROM cuoc_hen ch2

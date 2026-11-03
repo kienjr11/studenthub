@@ -157,7 +157,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             }
         }
 
-        flash('success', 'Đặt lịch hẹn tư vấn thành công! Yêu cầu của bạn đã vào hàng đợi, giảng viên sẽ duyệt theo thứ tự đăng ký; nếu khung giờ đã đủ người trước bạn, yêu cầu sẽ tự động hủy.');
+        flash('success', 'Đặt lịch hẹn tư vấn thành công! Yêu cầu của bạn đang chờ giảng viên duyệt.');
         redirect('sinh-vien/phan-hoi');   // trang "Lịch hẹn & Đánh giá" của sinh viên
     }
 
@@ -229,9 +229,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                         break;
                     }
                     try {
-                        $soTuHuy = $this->cuocHenModel->duyetCuocHen($maCuocHen, $chuaCoDiaDiem ? $diaDiem : null);   // kiểm tra còn chỗ rồi mới duyệt
-                        flash('success', 'Đã phê duyệt lịch hẹn thành công.'
-                            . ($soTuHuy > 0 ? " Khung giờ đã đủ người nên $soTuHuy yêu cầu đang chờ còn lại đã tự động chuyển thành đã hủy." : ''));
+                        $this->cuocHenModel->duyetCuocHen($maCuocHen, $chuaCoDiaDiem ? $diaDiem : null);
+                        flash('success', 'Đã phê duyệt lịch hẹn thành công.');
                     } catch (DomainException $e) {
                         flash('danger', $e->getMessage());
                     }

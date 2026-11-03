@@ -145,12 +145,11 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             case 'duyet':
                 if ($tt !== 'cho_duyet') { $saiTrangThai(); }
                 try {
-                    $soTuHuy = $cuocHen->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt
+                    $cuocHen->duyetCuocHen($maCuocHen);
                 } catch (DomainException $e) {
                     $this->json(['success' => false, 'message' => $e->getMessage()], 409);
                 }
-                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.'
-                    . ($soTuHuy > 0 ? " Khung giờ đã đủ người nên $soTuHuy yêu cầu đang chờ còn lại đã tự động chuyển thành đã hủy." : '')]);
+                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.']);
             case 'tu_choi':
                 if ($tt !== 'cho_duyet') { $saiTrangThai(); }
                 $cuocHen->capNhatTrangThai($maCuocHen, 'tu_choi');
@@ -179,7 +178,7 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
 
     /**
      * POST giang-vien/khung-gio/duyet-tat-ca — duyệt tất cả yêu cầu ĐANG CHỜ của một khung giờ (nút "Duyệt tất cả").
-     * Mỗi yêu cầu vẫn đi qua duyetCuocHen() nên giữ nguyên các kiểm tra (còn chỗ, không trùng giờ);
+     * Mỗi yêu cầu vẫn đi qua duyetCuocHen() nên giữ nguyên các kiểm tra (không trùng giờ);
      * yêu cầu nào không duyệt được thì bỏ qua và báo lý do, các yêu cầu còn lại vẫn được duyệt.
      */
     public function duyetTatCa(): void
@@ -201,22 +200,18 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
 
         $cuocHen = new CuocHen();
         $soDuyet = 0;
-        $soTuHuy = 0;
         $loi     = [];
-        // Duyệt từ người đăng ký sớm nhất xuống (layDanhSachDangKy đã sắp theo thứ tự đăng ký); đủ chỗ thì phần còn lại tự hủy.
         foreach ($choDuyet as $r) {
             try {
-                $soTuHuy += $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
+                $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
                 $soDuyet++;
             } catch (DomainException $e) {
-                if ($soTuHuy > 0) { break; }   // phần còn lại đã bị hệ thống tự hủy vì đủ chỗ, không phải lỗi
                 $loi[] = $r['ho_ten'] . ': ' . $e->getMessage();
             }
         }
-        $ghiTuHuy = $soTuHuy > 0 ? " $soTuHuy yêu cầu còn lại đã tự động chuyển thành đã hủy vì khung giờ đủ người." : '';
 
         if ($loi === []) {
-            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.' . $ghiTuHuy, 'so_duyet' => $soDuyet, 'so_tu_huy' => $soTuHuy, 'so_loi' => 0]);
+            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.', 'so_duyet' => $soDuyet, 'so_loi' => 0]);
         }
         $this->json([
             'success'  => $soDuyet > 0,
