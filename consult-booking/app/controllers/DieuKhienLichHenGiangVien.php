@@ -157,7 +157,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             }
         }
 
-        flash('success', 'Đặt lịch hẹn tư vấn thành công! Vui lòng chờ giảng viên phê duyệt.');
+        flash('success', 'Đặt lịch hẹn tư vấn thành công! Yêu cầu của bạn đã vào hàng đợi, giảng viên sẽ duyệt theo thứ tự đăng ký; nếu khung giờ đã đủ người trước bạn, yêu cầu sẽ tự động hủy.');
         redirect('sinh-vien/phan-hoi');   // trang "Lịch hẹn & Đánh giá" của sinh viên
     }
 
@@ -229,8 +229,9 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                         break;
                     }
                     try {
-                        $this->cuocHenModel->duyetCuocHen($maCuocHen, $chuaCoDiaDiem ? $diaDiem : null);   // kiểm tra còn chỗ rồi mới duyệt (duyệt xong chỗ mới bị trừ)
-                        flash('success', 'Đã phê duyệt lịch hẹn thành công.');
+                        $soTuHuy = $this->cuocHenModel->duyetCuocHen($maCuocHen, $chuaCoDiaDiem ? $diaDiem : null);   // kiểm tra còn chỗ rồi mới duyệt
+                        flash('success', 'Đã phê duyệt lịch hẹn thành công.'
+                            . ($soTuHuy > 0 ? " Khung giờ đã đủ người nên $soTuHuy yêu cầu đang chờ còn lại đã tự động chuyển thành đã hủy." : ''));
                     } catch (DomainException $e) {
                         flash('danger', $e->getMessage());
                     }
@@ -295,6 +296,17 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
             flash('danger', 'Cuộc hẹn không tồn tại.');
+            redirect('giang-vien/lich-hen');
+            return;
+        }
+
+        if (!in_array($cuocHen['trang_thai'] ?? '', ['da_duyet', 'hoan_thanh'], true)) {
+            flash('danger', 'Chỉ ghi chú được cho cuộc hẹn đã duyệt hoặc đã hoàn thành.');
+            redirect('giang-vien/lich-hen');
+            return;
+        }
+        if (mb_strlen($ghiChu) > 1000) {
+            flash('danger', 'Ghi chú tối đa 1000 ký tự.');
             redirect('giang-vien/lich-hen');
             return;
         }

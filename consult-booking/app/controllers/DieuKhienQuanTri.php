@@ -380,8 +380,9 @@ final class DieuKhienQuanTri extends BoDieuKhien
             abort(404, 'Thao tác không hợp lệ.');
         }
         (new NguoiDung())->setStatus((int) $target['ma_nguoi_dung'], $new);
+        $soDong = $action === 'lock' ? (new CuocHen())->dongLichKhiKhoaTaiKhoan((int) $target['ma_nguoi_dung']) : 0;
         flash('success', match ($action) {
-            'lock'    => "Đã khóa tài khoản {$target['email']}.",
+            'lock'    => "Đã khóa tài khoản {$target['email']}." . ($soDong > 0 ? " Đã đóng $soDong lịch hẹn sắp diễn ra liên quan." : ''),
             'approve' => "Đã phê duyệt tài khoản {$target['email']}.",
             default   => "Đã mở khóa tài khoản {$target['email']}.",
         });
@@ -415,6 +416,10 @@ final class DieuKhienQuanTri extends BoDieuKhien
         }
         if ($target['vai_tro'] === 'giang_vien' && $role !== 'giang_vien' && $users->hasSlots((int) $target['ma_nguoi_dung'])) {
             flash('danger', 'Giảng viên này đã có khung giờ tư vấn nên không thể đổi sang vai trò khác.');
+            $this->back();
+        }
+        if ($role !== $target['vai_tro'] && (new CuocHen())->demLichDangHieuLucCuaNguoiDung((int) $target['ma_nguoi_dung']) > 0) {
+            flash('danger', 'Tài khoản này còn lịch hẹn chờ duyệt / đã duyệt chưa diễn ra nên chưa thể đổi vai trò.');
             $this->back();
         }
 

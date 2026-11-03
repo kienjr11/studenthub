@@ -145,11 +145,12 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             case 'duyet':
                 if ($tt !== 'cho_duyet') { $saiTrangThai(); }
                 try {
-                    $cuocHen->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt
+                    $soTuHuy = $cuocHen->duyetCuocHen($maCuocHen);   // kiểm tra còn chỗ rồi mới duyệt
                 } catch (DomainException $e) {
                     $this->json(['success' => false, 'message' => $e->getMessage()], 409);
                 }
-                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.']);
+                $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.'
+                    . ($soTuHuy > 0 ? " Khung giờ đã đủ người nên $soTuHuy yêu cầu đang chờ còn lại đã tự động chuyển thành đã hủy." : '')]);
             case 'tu_choi':
                 if ($tt !== 'cho_duyet') { $saiTrangThai(); }
                 $cuocHen->capNhatTrangThai($maCuocHen, 'tu_choi');
@@ -200,18 +201,22 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
 
         $cuocHen = new CuocHen();
         $soDuyet = 0;
+        $soTuHuy = 0;
         $loi     = [];
+        // Duyệt từ người đăng ký sớm nhất xuống (layDanhSachDangKy đã sắp theo thứ tự đăng ký); đủ chỗ thì phần còn lại tự hủy.
         foreach ($choDuyet as $r) {
             try {
-                $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
+                $soTuHuy += $cuocHen->duyetCuocHen((int) $r['ma_cuoc_hen']);
                 $soDuyet++;
             } catch (DomainException $e) {
+                if ($soTuHuy > 0) { break; }   // phần còn lại đã bị hệ thống tự hủy vì đủ chỗ, không phải lỗi
                 $loi[] = $r['ho_ten'] . ': ' . $e->getMessage();
             }
         }
+        $ghiTuHuy = $soTuHuy > 0 ? " $soTuHuy yêu cầu còn lại đã tự động chuyển thành đã hủy vì khung giờ đủ người." : '';
 
         if ($loi === []) {
-            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.', 'so_duyet' => $soDuyet, 'so_loi' => 0]);
+            $this->json(['success' => true, 'message' => 'Đã duyệt ' . $soDuyet . ' yêu cầu.' . $ghiTuHuy, 'so_duyet' => $soDuyet, 'so_tu_huy' => $soTuHuy, 'so_loi' => 0]);
         }
         $this->json([
             'success'  => $soDuyet > 0,
@@ -253,14 +258,22 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
             $this->json(['success' => false, 'message' => 'Không có cuộc hẹn nào đang ở trạng thái đã duyệt.'], 409);
         }
 
+        $soOk = 0;
+        $soLoi = 0;
         foreach ($daDuyet as $r) {
-            $cuocHen->hoanThanhCuocHen((int) $r['ma_cuoc_hen']);
+            try {
+                $cuocHen->hoanThanhCuocHen((int) $r['ma_cuoc_hen']);
+                $soOk++;
+            } catch (DomainException $e) {   // một cuộc hẹn lỗi không được làm hỏng cả loạt
+                $soLoi++;
+            }
         }
         $this->json([
-            'success'      => true,
-            'message'      => 'Đã đánh dấu hoàn thành ' . count($daDuyet) . ' buổi tư vấn.',
-            'so_hoan_thanh' => count($daDuyet),
-        ]);
+            'success'       => $soOk > 0,
+            'message'       => 'Đã đánh dấu hoàn thành ' . $soOk . ' buổi tư vấn.' . ($soLoi > 0 ? " Có $soLoi buổi không cập nhật được." : ''),
+            'so_hoan_thanh' => $soOk,
+            'so_loi'        => $soLoi,
+        ], $soOk > 0 ? 200 : 409);
     }
 
     /** GET ?r=khung-gio/trong&ma_giang_vien=4&ngay=2027-02-04 — sinh viên hoặc giảng viên đã đăng nhập đều gọi được. */
@@ -272,6 +285,9 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         $maGv = (int) ($_GET['ma_giang_vien'] ?? 0);
         if ($maGv <= 0) {
             $this->json(['success' => false, 'message' => 'Thiếu mã giảng viên.'], 422);
+        }
+        if ((new HoSoGiangVien())->find($maGv, true) === null) {
+            $this->json(['success' => false, 'message' => 'Giảng viên không tồn tại hoặc đang không hoạt động.'], 404);
         }
         $ngay = $this->ngayHopLe((string) ($_GET['ngay'] ?? ''));
         $this->json(['success' => true, 'data' => $this->khungGio->layTheoGiangVienVaNgay($maGv, $ngay, true)]);
@@ -286,6 +302,9 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         $maGv = (int) ($_GET['ma_giang_vien'] ?? 0);
         if ($maGv <= 0) {
             $this->json(['success' => false, 'message' => 'Thiếu mã giảng viên.'], 422);
+        }
+        if ((new HoSoGiangVien())->find($maGv, true) === null) {
+            $this->json(['success' => false, 'message' => 'Giảng viên không tồn tại hoặc đang không hoạt động.'], 404);
         }
         $this->json(['success' => true, 'data' => $this->khungGio->laySapToiConTrong($maGv)]);
     }

@@ -301,7 +301,7 @@
       tr.appendChild(o("td", hienThi(it.ket_thuc)));
       tr.appendChild(o("td", it.ten_chuyen_mon || "—"));
       var tdDd = o("td", undefined, "text-break");
-      tdDd.style.maxWidth = "260px";
+      tdDd.classList.add("cat-gon-260");
       if (it.dia_diem) gan(tdDd, it.dia_diem);
       else tdDd.textContent = "Chưa cập nhật";
       tr.appendChild(tdDd);

@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `ho_so_giang_vien` (
 
 -- Dumping data for table dat_lich_tu_van.ho_so_giang_vien: ~3 rows (approximately)
 INSERT INTO `ho_so_giang_vien` (`ma_giang_vien`, `hoc_ham`, `hoc_vi`, `so_dien_thoai`, `phong_lam_viec`, `gioi_thieu`, `anh_dai_dien`, `ngay_cap_nhat`) VALUES
-	(2, NULL, 'tien_si', '0901234567', 'P.305 – Nhà A', 'Giảng dạy lập trình web và cơ sở dữ liệu; sẵn sàng tư vấn đồ án và định hướng nghề nghiệp lập trình viên.', 'uploads/avatars/gv_2.jpg', '2026-10-22 17:35:11'),
+	(2, NULL, 'tien_si', '0901234567', 'P.305 – Nhà A', 'Giảng dạy lập trình web và cơ sở dữ liệu; sẵn sàng tư vấn đồ án và định hướng nghề nghiệp lập trình viên.', NULL, '2026-10-22 17:35:11'),
 	(3, 'pho_giao_su', 'tien_si', NULL, 'P.210 – Nhà B', 'Tư vấn khởi nghiệp, xây dựng kế hoạch kinh doanh và kỹ năng xin việc.', NULL, '2026-10-22 17:35:11'),
 	(4, 'pho_giao_su', 'thac_si', '0919337474', 'P.306 nhà B', 'đẹp trai', NULL, '2026-10-22 21:57:11');
 
@@ -132,9 +132,13 @@ CREATE TABLE IF NOT EXISTS `khung_gio` (
   `ket_thuc` datetime NOT NULL,
   `dia_diem` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `suc_chua` tinyint unsigned NOT NULL DEFAULT '1',
+  `ma_chuyen_mon` int unsigned DEFAULT NULL,
+  `la_tu_nhap` tinyint(1) NOT NULL DEFAULT '0',
   `ngay_tao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ma_khung_gio`),
   KEY `idx_khung_gio_giang_vien_bat_dau` (`ma_giang_vien`,`bat_dau`),
+  KEY `idx_khung_gio_chuyen_mon` (`ma_chuyen_mon`),
+  CONSTRAINT `fk_khung_gio_chuyen_mon` FOREIGN KEY (`ma_chuyen_mon`) REFERENCES `chuyen_mon` (`ma_chuyen_mon`) ON DELETE SET NULL,
   CONSTRAINT `fk_khung_gio_giang_vien` FOREIGN KEY (`ma_giang_vien`) REFERENCES `nguoi_dung` (`ma_nguoi_dung`) ON DELETE RESTRICT,
   CONSTRAINT `chk_khung_gio_thoi_gian` CHECK ((`ket_thuc` > `bat_dau`)),
   CONSTRAINT `chk_khung_gio_suc_chua` CHECK ((`suc_chua` between 1 and 50))

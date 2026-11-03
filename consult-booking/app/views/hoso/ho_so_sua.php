@@ -3,7 +3,7 @@
 $err = static fn (string $f): string => isset($errors[$f]) ? '<div class="invalid-feedback d-block">' . e($errors[$f]) . '</div>' : '';
 $bad = static fn (string $f): string => isset($errors[$f]) ? ' is-invalid' : '';
 ?>
-<div class="container py-4" style="max-width: 860px">
+<div class="container py-4 container-860">
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h1 class="h3 mb-0 page-title">Chỉnh sửa hồ sơ</h1>
         <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('giang-vien/ho-so')) ?>">&larr; Quay lại hồ sơ</a>

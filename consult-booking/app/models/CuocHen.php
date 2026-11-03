@@ -254,7 +254,9 @@ class CuocHen extends MoHinh
 
     public function capNhatGhiChuGiangVien(int $maCuocHen, string $ghiChu): bool
     {
-        $sql = "UPDATE cuoc_hen SET ghi_chu_giang_vien = :ghi_chu WHERE ma_cuoc_hen = :ma_cuoc_hen";
+        // Chỉ cuộc hẹn đã duyệt / hoàn thành mới có ghi chú; ghi chú tối đa 1000 ký tự (tránh quá cột TEXT -> lỗi 500)
+        $ghiChu = mb_substr($ghiChu, 0, 1000);
+        $sql = "UPDATE cuoc_hen SET ghi_chu_giang_vien = :ghi_chu WHERE ma_cuoc_hen = :ma_cuoc_hen AND trang_thai IN ('da_duyet', 'hoan_thanh')";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':ghi_chu'     => $ghiChu,
@@ -406,22 +408,29 @@ class CuocHen extends MoHinh
         $this->db->beginTransaction();
         try {
             $this->khoaNguoiDung($maSinhVien);
-            $st = $this->db->prepare('SELECT bat_dau, ket_thuc, suc_chua FROM khung_gio WHERE ma_khung_gio = :id FOR UPDATE');
+            $coCot = (new KhungGioModel())->damBaoCotTuNhap();
+            $st = $this->db->prepare('SELECT ma_giang_vien, bat_dau, ket_thuc, suc_chua' . ($coCot ? ', la_tu_nhap' : ', 0 AS la_tu_nhap') . ' FROM khung_gio WHERE ma_khung_gio = :id FOR UPDATE');
             $st->execute([':id' => $maKhungGio]);
             $kg = $st->fetch();
-            if (!$kg) {
-                throw new DomainException('Khung giờ này không còn tồn tại.');
+            if (!$kg || (int) $kg['la_tu_nhap'] === 1) {   // khung giờ sinh viên tự nhập / đã ẩn không nhận đăng ký
+                throw new DomainException('Khung giờ này không còn tồn tại hoặc không nhận đăng ký.');
+            }
+            $st = $this->db->prepare("SELECT 1 FROM nguoi_dung WHERE ma_nguoi_dung = :id AND vai_tro = 'giang_vien' AND trang_thai = 'hoat_dong'");
+            $st->execute([':id' => $kg['ma_giang_vien']]);
+            if (!$st->fetchColumn()) {
+                throw new DomainException('Giảng viên này hiện không nhận lịch hẹn.');
             }
             if (new DateTime($kg['bat_dau']) <= new DateTime()) {
                 throw new DomainException('Khung giờ này đã qua. Vui lòng chọn khung giờ khác.');
             }
 
             $st = $this->db->prepare(
-                // Chỉ tính cuộc hẹn ĐANG HIỆU LỰC của khung giờ (cột khung_gio_hieu_luc): chờ duyệt, đã duyệt, hoàn thành
-                "SELECT COUNT(*) AS hieu_luc,
-                        COALESCE(SUM(ma_sinh_vien = :sv), 0) AS cua_toi
+                // Chỗ trống chỉ bị trừ bởi cuộc hẹn ĐÃ DUYỆT / HOÀN THÀNH (đúng như KhungGioModel::DEM_DANG_KY và duyetCuocHen);
+                // yêu cầu chờ duyệt chưa giữ chỗ. "cua_toi" thì tính mọi yêu cầu còn hiệu lực của chính sinh viên này.
+                "SELECT COALESCE(SUM(trang_thai IN ('da_duyet', 'hoan_thanh')), 0) AS hieu_luc,
+                        COALESCE(SUM(ma_sinh_vien = :sv AND khung_gio_hieu_luc IS NOT NULL), 0) AS cua_toi
                    FROM cuoc_hen
-                  WHERE khung_gio_hieu_luc = :id"
+                  WHERE ma_khung_gio = :id"
             );
             $st->execute([':id' => $maKhungGio, ':sv' => $maSinhVien]);
             $dem = $st->fetch();
@@ -433,7 +442,7 @@ class CuocHen extends MoHinh
             if ((int) $dem['hieu_luc'] >= (int) $kg['suc_chua']) {
                 throw new DomainException(
                     (int) $kg['suc_chua'] === 1
-                        ? 'Khung giờ này đã có sinh viên khác đặt trước. Vui lòng chọn khung giờ khác.'
+                        ? 'Khung giờ này đã đủ số sinh viên được duyệt. Vui lòng chọn khung giờ khác.'
                         : 'Khung giờ này đã kín chỗ. Vui lòng chọn khung giờ khác.'
                 );
             }
@@ -463,7 +472,7 @@ class CuocHen extends MoHinh
      * $diaDiem: địa điểm giảng viên nhập lúc duyệt — chỉ được ghi vào khung giờ khi khung giờ đó CHƯA có địa điểm
      * (lịch sinh viên tự chọn giờ); khung giờ giảng viên đã đặt địa điểm thì giữ nguyên.
      */
-    public function duyetCuocHen(int $maCuocHen, ?string $diaDiem = null): void
+    public function duyetCuocHen(int $maCuocHen, ?string $diaDiem = null): int
     {
         $this->tuDongTuChoiQuaHan(true);   // yêu cầu đã qua giờ hẹn bị từ chối trước, không thể duyệt nữa
         $this->db->beginTransaction();
@@ -511,6 +520,27 @@ class CuocHen extends MoHinh
             $this->db->prepare("UPDATE cuoc_hen SET trang_thai = 'da_duyet' WHERE ma_cuoc_hen = :id")
                 ->execute([':id' => $maCuocHen]);
 
+            // HÀNG ĐỢI: ai cũng được đăng ký, giảng viên duyệt từ người đăng ký sớm nhất xuống.
+            // Duyệt xong mà khung giờ đã đủ số chỗ -> các yêu cầu còn đang chờ của khung giờ này tự động chuyển thành "đã hủy".
+            $soTuHuy = 0;
+            $st = $this->db->prepare(
+                "SELECT COUNT(*) FROM cuoc_hen WHERE ma_khung_gio = :kg AND trang_thai IN ('da_duyet', 'hoan_thanh')"
+            );
+            $st->execute([':kg' => $ch['ma_khung_gio']]);
+            if ((int) $st->fetchColumn() >= (int) $ch['suc_chua']) {
+                $this->damBaoCotLyDoHuy();   // chỉ SHOW COLUMNS khi cột đã có -> không ALTER (không tự commit) giữa transaction
+                $huy = $this->db->prepare(
+                    "UPDATE cuoc_hen
+                        SET trang_thai = 'da_huy', ly_do_huy = :ly_do, huy_boi = 'he_thong'
+                      WHERE ma_khung_gio = :kg AND trang_thai = 'cho_duyet'"
+                );
+                $huy->execute([
+                    ':ly_do' => 'Khung giờ đã đủ số sinh viên được duyệt trước bạn nên yêu cầu tự động hủy. Vui lòng chọn khung giờ khác.',
+                    ':kg'    => $ch['ma_khung_gio'],
+                ]);
+                $soTuHuy = $huy->rowCount();
+            }
+
             if ($diaDiem !== null && trim($diaDiem) !== '') {
                 $this->db->prepare(
                     "UPDATE khung_gio SET dia_diem = :dd
@@ -518,6 +548,7 @@ class CuocHen extends MoHinh
                 )->execute([':dd' => trim($diaDiem), ':kg' => $ch['ma_khung_gio']]);
             }
             $this->db->commit();
+            return $soTuHuy;
         } catch (Throwable $e) {
             $this->db->rollBack();
             throw $e;
@@ -587,6 +618,38 @@ class CuocHen extends MoHinh
      * Giảng viên hủy một cuộc hẹn ĐÃ DUYỆT, kèm lý do (sinh viên và admin xem được).
      * Quyền sở hữu cuộc hẹn do controller kiểm tra trước (timTheoIdVaGiangVien).
      */
+    /** Số cuộc hẹn chờ duyệt / đã duyệt SẮP DIỄN RA liên quan tới người dùng (là sinh viên đặt hoặc giảng viên sở hữu khung giờ). */
+    public function demLichDangHieuLucCuaNguoiDung(int $maNguoiDung): int
+    {
+        $st = $this->db->prepare(
+            "SELECT COUNT(*) FROM cuoc_hen ch JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio
+              WHERE ch.trang_thai IN ('cho_duyet', 'da_duyet') AND kg.ket_thuc > :now
+                AND (ch.ma_sinh_vien = :u1 OR kg.ma_giang_vien = :u2)"
+        );
+        $st->execute([':now' => date('Y-m-d H:i:s'), ':u1' => $maNguoiDung, ':u2' => $maNguoiDung]);
+        return (int) $st->fetchColumn();
+    }
+
+    /** Khi khóa tài khoản: từ chối yêu cầu chờ duyệt, hủy lịch đã duyệt chưa diễn ra (để không ai chờ một buổi sẽ không xảy ra). */
+    public function dongLichKhiKhoaTaiKhoan(int $maNguoiDung): int
+    {
+        $this->damBaoCotLyDoHuy();
+        $now = date('Y-m-d H:i:s');
+        $ly  = 'Tài khoản liên quan đã bị quản trị viên khóa nên lịch hẹn bị hệ thống đóng.';
+        $tong = 0;
+        foreach ([['cho_duyet', 'tu_choi'], ['da_duyet', 'da_huy']] as [$cu, $moi]) {
+            $st = $this->db->prepare(
+                "UPDATE cuoc_hen ch JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio
+                    SET ch.trang_thai = '$moi', ch.ly_do_huy = :ly, ch.huy_boi = 'he_thong'
+                  WHERE ch.trang_thai = '$cu' AND kg.ket_thuc > :now
+                    AND (ch.ma_sinh_vien = :u1 OR kg.ma_giang_vien = :u2)"
+            );
+            $st->execute([':ly' => $ly, ':now' => $now, ':u1' => $maNguoiDung, ':u2' => $maNguoiDung]);
+            $tong += $st->rowCount();
+        }
+        return $tong;
+    }
+
     public function huyBoiGiangVien(int $maCuocHen, string $lyDo): bool
     {
         $this->damBaoCotLyDoHuy();

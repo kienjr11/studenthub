@@ -22,9 +22,10 @@ spl_autoload_register(static function (string $class): void {
 
 date_default_timezone_set((string) config('app.timezone', 'Asia/Ho_Chi_Minh'));
 
-// Bật hiển thị lỗi trực tiếp trên màn hình để dễ dàng debug khi gặp sự cố
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+// Chỉ hiện lỗi chi tiết khi app.debug = true (cauhinh.local.php). Khi demo/nộp bài để false để không lộ đường dẫn file, câu SQL...
+$debug = (bool) config('app.debug', false);
+ini_set('display_errors', $debug ? '1' : '0');
+ini_set('display_startup_errors', $debug ? '1' : '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
@@ -34,13 +35,13 @@ header('X-Frame-Options: DENY');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
     . "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-    . "font-src https://fonts.gstatic.com; img-src 'self' data:; "
+    . "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; object-src 'none'; "
     . "frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
 
 set_exception_handler(static function (Throwable $e): void {
     error_log((string) $e);
     http_response_code(500);
-    $msg = $e->getMessage(); // Luôn hiển thị chi tiết thông điệp lỗi để debug nhanh chóng
+    $msg = (bool) config('app.debug', false) ? $e->getMessage() : 'Đã xảy ra lỗi ngoài ý muốn. Vui lòng thử lại sau.';
     try {
         echo GiaoDien::render('loi/loi', ['code' => 500, 'heading' => 'Lỗi hệ thống', 'message' => $msg, 'title' => '500'], 'trong');
     } catch (Throwable) {

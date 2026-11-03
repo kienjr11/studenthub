@@ -4,7 +4,7 @@ $hocHam = HoSoGiangVien::HOC_HAM[$profile['hoc_ham'] ?? ''] ?? null;
 $hocVi  = HoSoGiangVien::HOC_VI[$profile['hoc_vi'] ?? ''] ?? null;
 $chuaCo = '<span class="text-muted">Chưa cập nhật</span>';
 ?>
-<div class="container py-4" style="max-width: 860px">
+<div class="container py-4 container-860">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
         <div class="d-flex align-items-center gap-3">
             <?= lecturer_avatar($profile, 'avatar-xl') ?>
@@ -25,8 +25,8 @@ $chuaCo = '<span class="text-muted">Chưa cập nhật</span>';
                 <strong>Hồ sơ đã hoàn thiện <?= e($completeness['percent']) ?>%</strong>
                 <a href="<?= e(url('giang-vien/ho-so/sua')) ?>">Bổ sung ngay</a>
             </div>
-            <div class="progress mb-2" role="progressbar" aria-valuenow="<?= e($completeness['percent']) ?>" aria-valuemin="0" aria-valuemax="100" style="height: .5rem">
-                <div class="progress-bar" style="width: <?= e($completeness['percent']) ?>%"></div>
+            <div class="progress progress-mong mb-2" role="progressbar" aria-valuenow="<?= e($completeness['percent']) ?>" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" data-width="<?= (int) $completeness['percent'] ?>"></div>
             </div>
             <span class="small text-muted">Còn thiếu: <?= e(implode(', ', $completeness['missing'])) ?>.</span>
         </div>

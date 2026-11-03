@@ -903,3 +903,13 @@ a.nav-user:hover {
   font-style: italic;
 }
  
+
+/* ---- Tiện ích thay cho style="..." (CSP không cho inline style) ---- */
+.container-640 { max-width: 640px; }
+.container-760 { max-width: 760px; }
+.container-860 { max-width: 860px; }
+.cat-gon-250 { max-width: 250px; }
+.cat-gon-260 { max-width: 260px; }
+.icon-tron-36 { width: 36px; height: 36px; }
+.progress-mong { height: .5rem; }
+.progress-bar[data-width] { width: 0; }

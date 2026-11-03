@@ -31,15 +31,17 @@
       return;
     }
 
-    var img = document.createElement("img");
-    img.className = "avatar avatar-giang_vien avatar-xl avatar-anh";
-    img.alt = "Xem trước ảnh đại diện";
-    img.src = URL.createObjectURL(file);
-    img.onload = function () {
-      URL.revokeObjectURL(img.src);
+    // data: URL (FileReader), KHÔNG dùng URL.createObjectURL: blob: bị CSP img-src chặn
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = document.createElement("img");
+      img.className = "avatar avatar-giang_vien avatar-xl avatar-anh";
+      img.alt = "Xem trước ảnh đại diện";
+      img.src = reader.result;
+      khung.innerHTML = "";
+      khung.appendChild(img);
     };
-    khung.innerHTML = "";
-    khung.appendChild(img);
+    reader.readAsDataURL(file);
     if (xoa) {
       xoa.checked = false;
     }
