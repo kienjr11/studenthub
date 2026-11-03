@@ -24,7 +24,7 @@ Hệ thống kết nối sinh viên với giảng viên: giảng viên mở khun
 - Link họp online chỉ hiện sau khi giảng viên duyệt; lịch bị từ chối / hủy thì link bị vô hiệu.
 
 **Admin**
-- Bảng điều khiển: số liệu tài khoản, thống kê lịch hẹn, danh sách giảng viên chờ duyệt.
+- Bảng điều khiển: số liệu tài khoản, thống kê lịch hẹn (tổng theo trạng thái và **theo ngày hẹn**, chọn khoảng ngày tối đa 62 ngày), danh sách giảng viên chờ duyệt.
 - Quản lý tài khoản: tìm kiếm, lọc theo vai trò / trạng thái, phân trang, khóa / mở khóa / phê duyệt, đổi vai trò và đơn vị. Khóa tài khoản sẽ tự đóng các lịch hẹn sắp diễn ra liên quan tới tài khoản đó.
 - Thêm tài khoản thủ công, hoặc nhập hàng loạt từ file CSV (tối đa 200 dòng, 1 MB; có file mẫu; mật khẩu để trống thì hệ thống tự sinh; tải lại danh sách mật khẩu tạm trong 30 phút).
 - Quản lý danh mục **Đơn vị** và **Chuyên môn** (thêm, sửa, xóa; không xóa được mục đang được sử dụng).

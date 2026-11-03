@@ -166,16 +166,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
      */
     public function index(): void
     {
-        if (method_exists('XacThuc', 'requireRole')) {
-            XacThuc::requireRole('giang_vien');
-        } elseif (method_exists('XacThuc', 'yeuCauVaiTro')) {
-            XacThuc::yeuCauVaiTro('giang_vien');
-        }
+        XacThuc::requireRole('giang_vien');
 
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
-        $trangThai = $_GET['trang_thai'] ?? null;
-        $ngay = trim((string) ($_GET['ngay'] ?? '')); // Tham số ngày từ ô lọc / từ ô "Lịch hẹn hôm nay"
+        // Chỉ nhận chuỗi: ?trang_thai[]=x hoặc ?ngay[]=x không được làm văng lỗi 500
+        $trangThai = is_string($_GET['trang_thai'] ?? null) ? $_GET['trang_thai'] : null;
+        $ngay = is_string($_GET['ngay'] ?? null) ? trim($_GET['ngay']) : ''; // Tham số ngày từ ô lọc / từ ô "Lịch hẹn hôm nay"
         // Chỉ nhận đúng định dạng YYYY-MM-DD và là ngày có thật, sai thì bỏ qua
         $d = DateTime::createFromFormat('Y-m-d', $ngay);
         $ngay = ($d && $d->format('Y-m-d') === $ngay) ? $ngay : null;
@@ -199,11 +196,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
      */
     public function capNhatTrangThai(): void
     {
-        if (method_exists('XacThuc', 'requireRole')) {
-            XacThuc::requireRole('giang_vien');
-        } elseif (method_exists('XacThuc', 'yeuCauVaiTro')) {
-            XacThuc::yeuCauVaiTro('giang_vien');
-        }
+        XacThuc::requireRole('giang_vien');
 
         $maCuocHen = (int)($_POST['ma_cuoc_hen'] ?? 0);
         $hanhDong = $_POST['hanh_dong'] ?? '';
@@ -213,11 +206,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
-            flash('danger', 'Cuộc hẹn không tồn tại hoặc bạn không có quyền thao tác.');
+            flash('danger', CuocHen::LOI_KHONG_CO_QUYEN);
             redirect('giang-vien/lich-hen');
             return;
         }
 
+        // Quy ước báo lỗi: sai trạng thái (đã bị đổi) = 'warning'; vi phạm quy tắc / thiếu dữ liệu = 'danger'; thành công = 'success'.
+        // Thông báo "sai trạng thái" dùng chung với bản JSON (CuocHen::LOI_SAI_TRANG_THAI).
         switch ($hanhDong) {
             case 'duyet':
                 if ($cuocHen['trang_thai'] === 'cho_duyet') {
@@ -239,13 +234,16 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                         flash('danger', $e->getMessage());
                     }
                 } else {
-                    flash('warning', 'Yêu cầu này không còn ở trạng thái chờ duyệt (có thể đã quá giờ hẹn nên bị tự động từ chối).');
+                    flash('warning', CuocHen::LOI_SAI_TRANG_THAI);
                 }
                 break;
             case 'tu_choi':
-                if ($cuocHen['trang_thai'] === 'cho_duyet') {
-                    $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'tu_choi');
+                // Chỉ từ chối khi VẪN còn chờ duyệt (UPDATE có điều kiện trạng thái, không ghi đè lịch sinh viên vừa hủy)
+                if ($cuocHen['trang_thai'] === 'cho_duyet'
+                    && $this->cuocHenModel->capNhatTrangThai($maCuocHen, 'tu_choi', 'cho_duyet')) {
                     flash('success', 'Đã từ chối lịch hẹn.');
+                } else {
+                    flash('warning', CuocHen::LOI_SAI_TRANG_THAI);
                 }
                 break;
             case 'hoan_thanh':
@@ -256,6 +254,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                     } catch (DomainException $e) {
                         flash('danger', $e->getMessage());
                     }
+                } else {
+                    flash('warning', CuocHen::LOI_SAI_TRANG_THAI);
                 }
                 break;
             case 'da_huy':
@@ -270,6 +270,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
                     } else {
                         flash('warning', 'Không thể hủy: buổi hẹn đã bắt đầu hoặc trạng thái cuộc hẹn đã thay đổi.');
                     }
+                } else {
+                    flash('warning', CuocHen::LOI_SAI_TRANG_THAI);
                 }
                 break;
             default:
@@ -285,11 +287,7 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
      */
     public function luuPhanHoi(): void
     {
-        if (method_exists('XacThuc', 'requireRole')) {
-            XacThuc::requireRole('giang_vien');
-        } elseif (method_exists('XacThuc', 'yeuCauVaiTro')) {
-            XacThuc::yeuCauVaiTro('giang_vien');
-        }
+        XacThuc::requireRole('giang_vien');
 
         $maCuocHen = (int)($_POST['ma_cuoc_hen'] ?? 0);
         $ghiChu = trim($_POST['ghi_chu_giang_vien'] ?? '');
@@ -298,13 +296,13 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
 
         $cuocHen = $this->cuocHenModel->timTheoIdVaGiangVien($maCuocHen, (int)$maGiangVien);
         if (!$cuocHen) {
-            flash('danger', 'Cuộc hẹn không tồn tại.');
+            flash('danger', CuocHen::LOI_KHONG_CO_QUYEN);
             redirect('giang-vien/lich-hen');
             return;
         }
 
         if (!in_array($cuocHen['trang_thai'] ?? '', ['da_duyet', 'hoan_thanh'], true)) {
-            flash('danger', 'Chỉ ghi chú được cho cuộc hẹn đã duyệt hoặc đã hoàn thành.');
+            flash('warning', 'Chỉ ghi chú được cho cuộc hẹn đã duyệt hoặc đã hoàn thành.');
             redirect('giang-vien/lich-hen');
             return;
         }

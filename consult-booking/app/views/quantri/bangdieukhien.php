@@ -1,4 +1,4 @@
-<?php /** @var array $stats @var array $pending @var int $deptCount @var int $specCount @var array $thongKeCuocHen */ ?>
+<?php /** @var array $stats @var array $pending @var int $deptCount @var int $specCount @var array $thongKeCuocHen @var array $thongKeNgay @var string $tuNgay @var string $denNgay */ ?>
 <div class="container py-4">
     <h1 class="h3 mb-4 page-title">Bảng điều khiển quản trị</h1>
 
@@ -65,6 +65,9 @@
             </a>
         </div>
     </div>
+
+    <!-- Thống kê số cuộc hẹn theo ngày (toàn hệ thống) -->
+    <?php $routeLoc = 'admin/dashboard'; require APP_PATH . '/views/khuvuc/thong_ke_ngay.php'; ?>
 
     <!-- Khu vực danh sách giảng viên chờ duyệt & Số liệu hệ thống -->
     <div class="row g-4">

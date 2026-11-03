@@ -248,15 +248,6 @@ class KhungGioModel extends MoHinh
     }
 
     /** Số sinh viên đã được DUYỆT (đã duyệt / hoàn thành) = số chỗ đã dùng thật sự. */
-    public function demDaDuyet(int $maKhungGio): int
-    {
-        $st = $this->db->prepare(
-            "SELECT COUNT(*) FROM cuoc_hen WHERE ma_khung_gio = :id AND trang_thai IN ('da_duyet', 'hoan_thanh')"
-        );
-        $st->execute([':id' => $maKhungGio]);
-        return (int) $st->fetchColumn();
-    }
-
     /** Số yêu cầu còn hiệu lực (chờ duyệt / đã duyệt / hoàn thành). Dùng để khóa sửa giờ / xóa slot, KHÔNG dùng để tính chỗ trống. */
     public function demDangKy(int $maKhungGio): int
     {

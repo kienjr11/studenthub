@@ -23,6 +23,10 @@ final class DieuKhienQuanTri extends BoDieuKhien
     {
         $users = new NguoiDung();
         $cuocHenModel = new CuocHen();
+        [$tuNgay, $denNgay] = CuocHen::khoangNgayThongKe(
+            is_string($_GET['tu_ngay'] ?? null) ? $_GET['tu_ngay'] : null,
+            is_string($_GET['den_ngay'] ?? null) ? $_GET['den_ngay'] : null
+        );
 
         $this->view('quantri/bangdieukhien', [
             'title'          => 'Bảng điều khiển quản trị',
@@ -31,6 +35,9 @@ final class DieuKhienQuanTri extends BoDieuKhien
             'deptCount'      => (new DanhMuc('departments'))->count(),
             'specCount'      => (new DanhMuc('specialties'))->count(),
             'thongKeCuocHen' => $cuocHenModel->thongKeTongQuanAdmin(),
+            'thongKeNgay'    => $cuocHenModel->thongKeTheoNgay($tuNgay, $denNgay),
+            'tuNgay'         => $tuNgay,
+            'denNgay'        => $denNgay,
         ]);
     }
 
@@ -431,7 +438,7 @@ final class DieuKhienQuanTri extends BoDieuKhien
     /** Quản lý danh sách cuộc hẹn toàn hệ thống dành cho Admin */
     public function lichHen(): void
     {
-        $trangThai = $_GET['trang_thai'] ?? null;
+        $trangThai = is_string($_GET['trang_thai'] ?? null) ? $_GET['trang_thai'] : null;
         $trang     = max(1, (int)($_GET['trang'] ?? 1));
 
         // Gọi qua Model CuocHen để lấy dữ liệu an toàn, không gọi trực tiếp kết nối CSDL tại Controller

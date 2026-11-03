@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 class CuocHen extends MoHinh
 {
+    /** Thông báo dùng chung (form + JSON) khi thao tác với cuộc hẹn đã đổi trạng thái giữa chừng. */
+    public const LOI_SAI_TRANG_THAI = 'Trạng thái cuộc hẹn đã thay đổi (có thể sinh viên đã hủy hoặc đã quá giờ hẹn), vui lòng tải lại danh sách.';
+    public const LOI_KHONG_CO_QUYEN = 'Cuộc hẹn không tồn tại hoặc bạn không có quyền thao tác.';
+
     public function layDanhSachChoGiangVien(int $maGiangVien, ?string $trangThai = null, int $trang = 1, int $gioiHan = 10, ?string $ngay = null): array
     {
         $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
@@ -239,17 +243,26 @@ class CuocHen extends MoHinh
                 'Buổi tư vấn chưa kết thúc (kết thúc lúc ' . date('H:i d/m/Y', strtotime($ch['ket_thuc'])) . ') nên chưa thể đánh dấu hoàn thành.'
             );
         }
-        $this->capNhatTrangThai($maCuocHen, 'hoan_thanh');
+        if (!$this->capNhatTrangThai($maCuocHen, 'hoan_thanh', 'da_duyet')) {
+            throw new DomainException(self::LOI_SAI_TRANG_THAI);
+        }
     }
 
-    public function capNhatTrangThai(int $maCuocHen, string $trangThaiMoi): bool
+    /**
+     * Đổi trạng thái cuộc hẹn. Truyền $trangThaiCu để chỉ đổi khi cuộc hẹn VẪN đang ở trạng thái đó
+     * (một câu UPDATE duy nhất nên an toàn khi sinh viên hủy cùng lúc); trả về false nếu không có dòng nào được đổi.
+     */
+    public function capNhatTrangThai(int $maCuocHen, string $trangThaiMoi, ?string $trangThaiCu = null): bool
     {
         $sql = "UPDATE cuoc_hen SET trang_thai = :trang_thai WHERE ma_cuoc_hen = :ma_cuoc_hen";
+        $params = [':trang_thai' => $trangThaiMoi, ':ma_cuoc_hen' => $maCuocHen];
+        if ($trangThaiCu !== null) {
+            $sql .= " AND trang_thai = :trang_thai_cu";
+            $params[':trang_thai_cu'] = $trangThaiCu;
+        }
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':trang_thai'  => $trangThaiMoi,
-            ':ma_cuoc_hen' => $maCuocHen
-        ]);
+        $stmt->execute($params);
+        return $trangThaiCu === null || $stmt->rowCount() > 0;
     }
 
     public function capNhatGhiChuGiangVien(int $maCuocHen, string $ghiChu): bool
@@ -262,20 +275,6 @@ class CuocHen extends MoHinh
             ':ghi_chu'     => $ghiChu,
             ':ma_cuoc_hen' => $maCuocHen
         ]);
-    }
-
-    public function kiemTraTrungLich(int $maGiangVien, string $batDau, string $ketThuc): bool
-    {
-        $st = $this->db->prepare(
-            "SELECT COUNT(*)
-               FROM khung_gio kg
-               JOIN cuoc_hen ch ON ch.ma_khung_gio = kg.ma_khung_gio
-              WHERE kg.ma_giang_vien = :gv
-                AND ch.khung_gio_hieu_luc IS NOT NULL
-                AND kg.bat_dau < :ket_thuc AND kg.ket_thuc > :bat_dau"
-        );
-        $st->execute([':gv' => $maGiangVien, ':bat_dau' => $batDau, ':ket_thuc' => $ketThuc]);
-        return (int) $st->fetchColumn() > 0;
     }
 
     public function taoCuocHen(int $maSinhVien, int $maGiangVien, string $batDau, string $ketThuc, string $chuDe, ?string $diaDiem = null, ?int $maChuyenMon = null): int
@@ -554,27 +553,80 @@ class CuocHen extends MoHinh
         ];
     }
 
-    public function thongKeChoGiangVien(int $maGiangVien): array
+    /**
+     * Chuẩn hóa khoảng ngày thống kê (định dạng Y-m-d). Giá trị sai/thiếu -> mặc định từ 6 ngày trước đến 7 ngày sau hôm nay.
+     * Nếu đảo ngược thì tự đổi chỗ; tối đa 62 ngày để bảng không quá dài. Trả về [từ_ngày, đến_ngày].
+     */
+    public static function khoangNgayThongKe(?string $tu, ?string $den): array
+    {
+        $doc = static function (?string $s): ?DateTime {
+            if ($s === null || $s === '') {
+                return null;
+            }
+            $d = DateTime::createFromFormat('!Y-m-d', $s);
+            return ($d && $d->format('Y-m-d') === $s) ? $d : null;
+        };
+        $homNay = new DateTime('today');
+        $a = $doc($tu) ?? (clone $homNay)->modify('-6 days');
+        $b = $doc($den) ?? (clone $homNay)->modify('+7 days');
+        if ($b < $a) {
+            [$a, $b] = [$b, $a];
+        }
+        if ($a->diff($b)->days > 61) {
+            $b = (clone $a)->modify('+61 days');
+        }
+        return [$a->format('Y-m-d'), $b->format('Y-m-d')];
+    }
+
+    /**
+     * Thống kê số cuộc hẹn THEO NGÀY HẸN (ngày bắt đầu của khung giờ) trong khoảng [$tu, $den], chia theo trạng thái.
+     * $maGiangVien = null -> toàn hệ thống (Admin); có giá trị -> chỉ lịch của giảng viên đó.
+     * Trả về đủ mọi ngày trong khoảng (ngày không có lịch = 0) để bảng liền mạch.
+     */
+    public function thongKeTheoNgay(string $tu, string $den, ?int $maGiangVien = null): array
     {
         $this->tuDongTuChoiQuaHan();   // yêu cầu chờ duyệt mà đã qua giờ hẹn -> tự động từ chối
-        $sql = "SELECT 
-                    COUNT(*) as tong_so,
-                    SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) as cho_duyet,
-                    SUM(CASE WHEN ch.trang_thai = 'da_duyet' AND DATE(kg.bat_dau) = CURDATE() THEN 1 ELSE 0 END) as hom_nay,
-                    SUM(CASE WHEN ch.trang_thai = 'da_duyet' THEN 1 ELSE 0 END) as da_duyet,
-                    SUM(CASE WHEN ch.trang_thai = 'tu_choi' THEN 1 ELSE 0 END) as tu_choi,
-                    SUM(CASE WHEN ch.trang_thai = 'da_huy' THEN 1 ELSE 0 END) as da_huy,
-                    SUM(CASE WHEN ch.trang_thai = 'hoan_thanh' THEN 1 ELSE 0 END) as hoan_thanh
-                FROM cuoc_hen ch
-                JOIN khung_gio kg ON ch.ma_khung_gio = kg.ma_khung_gio
-                WHERE kg.ma_giang_vien = :ma_gv";
-        
+        $denTruoc = (new DateTime($den))->modify('+1 day')->format('Y-m-d');
+        $params = [':tu' => $tu, ':den' => $denTruoc];
+        $locGv = '';
+        if ($maGiangVien !== null) {
+            $locGv = ' AND kg.ma_giang_vien = :gv';
+            $params[':gv'] = $maGiangVien;
+        }
+        $sql = "SELECT DATE(kg.bat_dau) AS ngay,
+                       COUNT(*) AS tong,
+                       SUM(CASE WHEN ch.trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) AS cho_duyet,
+                       SUM(CASE WHEN ch.trang_thai = 'da_duyet' THEN 1 ELSE 0 END) AS da_duyet,
+                       SUM(CASE WHEN ch.trang_thai = 'hoan_thanh' THEN 1 ELSE 0 END) AS hoan_thanh,
+                       SUM(CASE WHEN ch.trang_thai = 'tu_choi' THEN 1 ELSE 0 END) AS tu_choi,
+                       SUM(CASE WHEN ch.trang_thai = 'da_huy' THEN 1 ELSE 0 END) AS da_huy
+                  FROM cuoc_hen ch
+                  JOIN khung_gio kg ON kg.ma_khung_gio = ch.ma_khung_gio
+                 WHERE kg.bat_dau >= :tu AND kg.bat_dau < :den{$locGv}
+                 GROUP BY DATE(kg.bat_dau)";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':ma_gv' => $maGiangVien]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [
-            'tong_so' => 0, 'cho_duyet' => 0, 'hom_nay' => 0, 'da_duyet' => 0, 
-            'tu_choi' => 0, 'da_huy' => 0, 'hoan_thanh' => 0
-        ];
+        $stmt->execute($params);
+        $coDuLieu = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $coDuLieu[$r['ngay']] = $r;
+        }
+
+        $ketQua = [];
+        $khoang = new DatePeriod(new DateTime($tu), new DateInterval('P1D'), new DateTime($denTruoc));
+        foreach ($khoang as $d) {
+            $k = $d->format('Y-m-d');
+            $r = $coDuLieu[$k] ?? [];
+            $ketQua[] = [
+                'ngay'       => $k,
+                'tong'       => (int) ($r['tong'] ?? 0),
+                'cho_duyet'  => (int) ($r['cho_duyet'] ?? 0),
+                'da_duyet'   => (int) ($r['da_duyet'] ?? 0),
+                'hoan_thanh' => (int) ($r['hoan_thanh'] ?? 0),
+                'tu_choi'    => (int) ($r['tu_choi'] ?? 0),
+                'da_huy'     => (int) ($r['da_huy'] ?? 0),
+            ];
+        }
+        return $ketQua;
     }
 
     /**
@@ -595,10 +647,6 @@ class CuocHen extends MoHinh
         return $st->rowCount() > 0;
     }
 
-    /**
-     * Giảng viên hủy một cuộc hẹn ĐÃ DUYỆT, kèm lý do (sinh viên và admin xem được).
-     * Quyền sở hữu cuộc hẹn do controller kiểm tra trước (timTheoIdVaGiangVien).
-     */
     /** Số cuộc hẹn chờ duyệt / đã duyệt SẮP DIỄN RA liên quan tới người dùng (là sinh viên đặt hoặc giảng viên sở hữu khung giờ). */
     public function demLichDangHieuLucCuaNguoiDung(int $maNguoiDung): int
     {
@@ -631,6 +679,10 @@ class CuocHen extends MoHinh
         return $tong;
     }
 
+    /**
+     * Giảng viên hủy một cuộc hẹn ĐÃ DUYỆT, kèm lý do (sinh viên và admin xem được).
+     * Quyền sở hữu cuộc hẹn do controller kiểm tra trước (timTheoIdVaGiangVien).
+     */
     public function huyBoiGiangVien(int $maCuocHen, string $lyDo): bool
     {
         $this->damBaoCotLyDoHuy();

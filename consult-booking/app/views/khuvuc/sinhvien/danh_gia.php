@@ -5,7 +5,7 @@
  */
 $maCuocHen = $item['ma_cuoc_hen'] ?? 0;
 $trangThai = $item['trang_thai'] ?? '';
-$diemCu = $item['diem_danh_gia'] ?? 5;
+$diemCu = (int) ($item['diem_danh_gia'] ?? 0);   // chưa đánh giá -> 0: KHÔNG chọn sẵn sao nào, sinh viên phải tự chọn
 $nhanXetCu = $item['nhan_xet_sinh_vien'] ?? '';
 $daBatDau = isset($item['bat_dau']) && time() >= strtotime((string) $item['bat_dau']);   // buổi hẹn đã bắt đầu -> không hủy được nữa
 ?>
@@ -31,24 +31,25 @@ $daBatDau = isset($item['bat_dau']) && time() >= strtotime((string) $item['bat_d
                 <div class="modal-body">
                     <!-- Chọn số sao đánh giá -->
                     <div class="mb-3 text-center">
-                        <label class="form-label fw-semibold d-block">Mức độ hài lòng của bạn:</label>
+                        <label class="form-label fw-semibold d-block">Mức độ hài lòng của bạn: <span class="text-danger">*</span></label>
                         <div class="btn-group" role="group" aria-label="Chọn số sao">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
                                 <input type="radio" class="btn-check" name="diem_danh_gia" 
                                        id="dg<?= $maCuocHen ?>_<?= $i ?>" 
-                                       value="<?= $i ?>" 
-                                       <?= (int)$diemCu === $i ? 'checked' : '' ?>>
+                                       value="<?= $i ?>" required
+                                       <?= $diemCu === $i ? 'checked' : '' ?>>
                                 <label class="btn btn-outline-warning" for="dg<?= $maCuocHen ?>_<?= $i ?>">
                                     <?= $i ?> ⭐
                                 </label>
                             <?php endfor; ?>
                         </div>
+                        <div class="form-text">Vui lòng chọn số sao từ 1 đến 5 trước khi gửi.</div>
                     </div>
 
                     <!-- Ô nhập nhận xét -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold" for="nhanXet<?= $maCuocHen ?>">Nhận xét / Góp ý:</label>
-                        <textarea id="nhanXet<?= $maCuocHen ?>" name="nhan_xet" class="form-control" rows="3" 
+                        <textarea id="nhanXet<?= $maCuocHen ?>" name="nhan_xet" class="form-control" rows="3" maxlength="500" 
                                   placeholder="Giảng viên tư vấn có nhiệt tình và giải đáp đúng thắc mắc của bạn không?"><?= e($nhanXetCu) ?></textarea>
                     </div>
                 </div>

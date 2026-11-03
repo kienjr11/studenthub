@@ -38,11 +38,6 @@ final class HoSoGiangVien extends MoHinh
     /**
      * Phương thức tương thích ngược nếu Controller gọi tên tiếng Việt.
      */
-    public function layHoSoVaChuyenMon(int $id): ?array
-    {
-        return $this->find($id);
-    }
-
     /**
      * Lưu hồ sơ trong MỘT giao dịch: hoặc cập nhật hết, hoặc không đổi gì.
      * @param array{ho_ten:string,ma_don_vi:int,hoc_ham:?string,hoc_vi:?string,so_dien_thoai:?string,phong_lam_viec:?string,gioi_thieu:?string} $d

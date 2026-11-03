@@ -136,10 +136,11 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
         $cuocHen = new CuocHen();
         $hen     = $cuocHen->timTheoIdVaGiangVien($maCuocHen, $maGv);
         if ($hen === null) {
-            $this->json(['success' => false, 'message' => 'Cuộc hẹn không tồn tại hoặc bạn không có quyền thao tác.'], 404);
+            $this->json(['success' => false, 'message' => CuocHen::LOI_KHONG_CO_QUYEN], 404);
         }
         $tt = (string) $hen['trang_thai'];
-        $saiTrangThai = fn() => $this->json(['success' => false, 'message' => 'Trạng thái cuộc hẹn đã thay đổi, vui lòng tải lại danh sách.'], 409);
+        // Cùng thông báo với bản form (DieuKhienLichHenGiangVien): sai trạng thái -> 409
+        $saiTrangThai = fn() => $this->json(['success' => false, 'message' => CuocHen::LOI_SAI_TRANG_THAI], 409);
 
         switch ($hanhDong) {
             case 'duyet':
@@ -151,8 +152,7 @@ class DieuKhienKhungGioGiangVien extends BoDieuKhien
                 }
                 $this->json(['success' => true, 'message' => 'Đã phê duyệt lịch hẹn thành công.']);
             case 'tu_choi':
-                if ($tt !== 'cho_duyet') { $saiTrangThai(); }
-                $cuocHen->capNhatTrangThai($maCuocHen, 'tu_choi');
+                if ($tt !== 'cho_duyet' || !$cuocHen->capNhatTrangThai($maCuocHen, 'tu_choi', 'cho_duyet')) { $saiTrangThai(); }
                 $this->json(['success' => true, 'message' => 'Đã từ chối lịch hẹn.']);
             case 'hoan_thanh':
                 if ($tt !== 'da_duyet') { $saiTrangThai(); }

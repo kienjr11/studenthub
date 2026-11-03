@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class PhanHoi extends MoHinh
 {
-    /** Trạng thái cuộc hẹn được phép đánh giá (phải khớp với điều kiện hiển thị nút trong view danh_gia.php). */
+    /** Trạng thái cuộc hẹn được phép đánh giá (phải khớp với điều kiện hiển thị nút trong view danh_gia.php): chỉ khi đã hoàn thành. */
     public const TRANG_THAI_DUOC_DANH_GIA = ['hoan_thanh'];
 
     /**
@@ -55,15 +55,6 @@ class PhanHoi extends MoHinh
     /**
      * Lấy phản hồi theo mã cuộc hẹn
      */
-    public function layTheoCuocHen(int $maCuocHen): ?array
-    {
-        $sql = "SELECT * FROM phan_hoi WHERE ma_cuoc_hen = :ma_cuoc_hen LIMIT 1";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':ma_cuoc_hen' => $maCuocHen]);
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $res ?: null;
-    }
-
     /**
      * Thêm mới hoặc cập nhật đánh giá của sinh viên.
      * Bảng phan_hoi có UNIQUE (ma_cuoc_hen) nên dùng upsert một câu lệnh, tránh race condition giữa SELECT và INSERT.

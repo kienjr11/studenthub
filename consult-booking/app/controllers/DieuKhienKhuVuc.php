@@ -58,6 +58,10 @@ final class DieuKhienKhuVuc extends BoDieuKhien
         $id = (int) XacThuc::id();
         $model = new HoSoGiangVien();
         $profile = $model->find($id);
+        [$tuNgay, $denNgay] = CuocHen::khoangNgayThongKe(
+            is_string($_GET['tu_ngay'] ?? null) ? $_GET['tu_ngay'] : null,
+            is_string($_GET['den_ngay'] ?? null) ? $_GET['den_ngay'] : null
+        );
         $this->view('khuvuc/giangvien/bang_dieu_khien', [
             'title'        => 'Bảng điều khiển giảng viên',
             'me'           => XacThuc::user(),
@@ -65,6 +69,9 @@ final class DieuKhienKhuVuc extends BoDieuKhien
             'completeness' => HoSoGiangVien::completeness($profile),
             'stats'        => $model->stats($id),
             'upcoming'     => $model->upcoming($id, 5),
+            'thongKeNgay'  => (new CuocHen())->thongKeTheoNgay($tuNgay, $denNgay, $id),
+            'tuNgay'       => $tuNgay,
+            'denNgay'      => $denNgay,
         ]);
     }
 }

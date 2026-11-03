@@ -17,7 +17,7 @@ class DieuKhienPhanHoi extends BoDieuKhien
     public function index(): void
     {
         $maSinhVien = (int) XacThuc::id();
-        $trangThai = (string) ($_GET['trang_thai'] ?? '');
+        $trangThai = is_string($_GET['trang_thai'] ?? null) ? $_GET['trang_thai'] : '';
 
         $this->view('khuvuc/sinhvien/lich_hen', [
             'title'          => 'Lịch hẹn & Đánh giá',
@@ -48,9 +48,9 @@ class DieuKhienPhanHoi extends BoDieuKhien
             redirect('sinh-vien/phan-hoi');
         }
 
-        // Chặn ở server: chỉ cho đánh giá khi cuộc hẹn đã duyệt/hoàn thành (không tin vào việc view ẩn nút)
+        // Chặn ở server: chỉ cho đánh giá khi cuộc hẹn đã hoàn thành (không tin vào việc view ẩn nút)
         if (!in_array($cuocHen['trang_thai'], PhanHoi::TRANG_THAI_DUOC_DANH_GIA, true)) {
-            flash('warning', 'Chỉ có thể đánh giá cuộc hẹn đã được duyệt hoặc đã hoàn thành.');
+            flash('warning', 'Chỉ có thể đánh giá cuộc hẹn đã hoàn thành.');
             redirect('sinh-vien/phan-hoi');
         }
 

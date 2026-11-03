@@ -1,5 +1,5 @@
 <?php
-/** @var array $me @var array $profile @var array $completeness @var array $stats @var array $upcoming */
+/** @var array $me @var array $profile @var array $completeness @var array $stats @var array $upcoming @var array $thongKeNgay @var string $tuNgay @var string $denNgay */
 
 // 3 ô thống kê cốt lõi cho giảng viên
 $tiles = [
@@ -49,6 +49,9 @@ $tiles = [
             </div>
         <?php endforeach; ?>
     </div>
+
+    <!-- Thống kê số cuộc hẹn của tôi theo ngày (ô ngày dẫn tới danh sách đã lọc theo ngày) -->
+    <?php $routeLoc = 'dashboard/lecturer'; $routeNgay = 'giang-vien/lich-hen'; require APP_PATH . '/views/khuvuc/thong_ke_ngay.php'; ?>
 
     <!-- Danh sách cuộc hẹn sắp tới & Đánh giá/Chuyên môn -->
     <div class="row g-4">
