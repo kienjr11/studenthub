@@ -42,6 +42,7 @@ $coGiangVien = !empty($danhSachGiangVien);
                                 ?>
                                 <option value="<?= e($gv['ma_nguoi_dung']) ?>"
                                         data-ten="<?= e($gv['ho_ten']) ?>"
+                                        data-anh="<?= e(anh_dai_dien_url($gv['anh_dai_dien'] ?? null) ?? '') ?>"
                                         data-khoa="<?= e($gv['ten_khoa'] ?? '') ?>"
                                         data-chuyenmon="<?= e($gv['chuyen_mon'] ?? '') ?>"<?= (int) ($cu['giang_vien_id'] ?? 0) === (int) $gv['ma_nguoi_dung'] ? ' selected' : '' ?>>
                                     <?= e($nhan) ?>
@@ -52,7 +53,7 @@ $coGiangVien = !empty($danhSachGiangVien);
 
                     <!-- Thẻ xem trước: app.js điền nội dung khi chọn giảng viên -->
                     <div id="xem_truoc_gv" class="xem-truoc-gv d-none" aria-live="polite">
-                        <span class="avatar avatar-lg avatar-giang_vien" data-o="chu-cai" aria-hidden="true">G</span>
+                        <span class="avatar avatar-lg avatar-giang_vien" data-o="avatar" aria-hidden="true">G</span>
                         <div>
                             <div class="xem-truoc-ten" data-o="ten"></div>
                             <div class="text-muted small" data-o="khoa"></div>

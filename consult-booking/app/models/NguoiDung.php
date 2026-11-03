@@ -228,10 +228,10 @@ final class NguoiDung extends MoHinh
     }
 
     /** Danh sách giảng viên kèm khoa + chuyên môn, chỉ dùng cho form đặt lịch. */
-    public function layGiangVienChoDatLich(): array
+        public function layGiangVienChoDatLich(): array
     {
         $st = $this->db->prepare(
-            "SELECT nd.ma_nguoi_dung, nd.ho_ten, nd.email,
+            "SELECT nd.ma_nguoi_dung, nd.ho_ten, nd.email, hs.anh_dai_dien,
                     dv.ten_don_vi AS ten_khoa,
                     (SELECT GROUP_CONCAT(cm.ten_chuyen_mon ORDER BY cm.ten_chuyen_mon SEPARATOR ', ')
                        FROM giang_vien_chuyen_mon g
@@ -239,6 +239,7 @@ final class NguoiDung extends MoHinh
                       WHERE g.ma_giang_vien = nd.ma_nguoi_dung) AS chuyen_mon
                FROM nguoi_dung nd
                LEFT JOIN don_vi dv ON dv.ma_don_vi = nd.ma_don_vi
+               LEFT JOIN ho_so_giang_vien hs ON hs.ma_giang_vien = nd.ma_nguoi_dung
               WHERE nd.vai_tro = 'giang_vien' AND nd.trang_thai = 'hoat_dong'
               ORDER BY nd.ho_ten"
         );

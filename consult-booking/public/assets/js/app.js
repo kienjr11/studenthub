@@ -145,7 +145,7 @@
     capNhatMon();
   }
 
-  // Trang đặt lịch: hiện thẻ xem trước giảng viên đang chọn (họ tên, khoa, chuyên môn)
+  // Trang đặt lịch: hiện thẻ xem trước giảng viên đang chọn (ảnh, họ tên, khoa, chuyên môn)
   var xemTruoc = document.getElementById("xem_truoc_gv");
   if (selGv && xemTruoc) {
     var veXemTruoc = function () {
@@ -156,11 +156,33 @@
       }
       var ten = opt.getAttribute("data-ten") || "";
       var tu = ten.trim().split(/\s+/);
-      xemTruoc.querySelector('[data-o="chu-cai"]').textContent = (
-        tu[tu.length - 1] || "?"
-      )
-        .charAt(0)
-        .toUpperCase();
+      var chuCai = (tu[tu.length - 1] || "?").charAt(0).toUpperCase();
+
+      // Avatar: ảnh đại diện nếu giảng viên có, không thì chữ cái đầu
+      var taoChuCai = function () {
+        var chu = document.createElement("span");
+        chu.className = "avatar avatar-lg avatar-giang_vien";
+        chu.setAttribute("data-o", "avatar");
+        chu.setAttribute("aria-hidden", "true");
+        chu.textContent = chuCai;
+        return chu;
+      };
+      var anh = opt.getAttribute("data-anh") || "";
+      var avatarMoi;
+      if (anh) {
+        avatarMoi = document.createElement("img");
+        avatarMoi.className = "avatar avatar-lg avatar-giang_vien avatar-anh";
+        avatarMoi.setAttribute("data-o", "avatar");
+        avatarMoi.src = anh;
+        avatarMoi.alt = "Ảnh của " + ten;
+        avatarMoi.onerror = function () {
+          avatarMoi.replaceWith(taoChuCai()); // ảnh lỗi -> quay về chữ cái đầu
+        };
+      } else {
+        avatarMoi = taoChuCai();
+      }
+      xemTruoc.querySelector('[data-o="avatar"]').replaceWith(avatarMoi);
+
       xemTruoc.querySelector('[data-o="ten"]').textContent = ten;
       xemTruoc.querySelector('[data-o="khoa"]').textContent =
         opt.getAttribute("data-khoa") || "Chưa gán đơn vị";
@@ -183,7 +205,6 @@
     selGv.addEventListener("change", veXemTruoc);
     veXemTruoc();
   }
-
   // ---------- Ô nhập giờ 24h (gõ hoặc chọn) cho <input type="time" data-gio24> ----------
   // <input type="time"> hiển thị SA/CH theo hệ điều hành và không ép được -> thay bằng 2 ô Giờ (00–23) / Phút (00–59).
   // Mỗi ô vừa gõ số trực tiếp được, vừa bấm để chọn từ danh sách gợi ý (datalist).
