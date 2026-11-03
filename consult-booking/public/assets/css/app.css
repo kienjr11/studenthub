@@ -933,3 +933,6 @@ a.nav-user:hover {
   max-height: 9rem;
   overflow-y: auto;
 }
+
+/* Cột "Chủ đề tư vấn" (giảng viên): hiện đầy đủ nội dung, tự xuống dòng thay vì cắt "..." */
+.cot-chu-de-gv { min-width: 240px; max-width: 380px; white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }

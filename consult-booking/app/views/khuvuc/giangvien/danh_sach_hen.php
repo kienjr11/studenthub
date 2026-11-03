@@ -2,6 +2,7 @@
 // Khai báo giá trị mặc định để tránh hoàn toàn lỗi cảnh báo Undefined variable trong IDE/Linter
 $tieu_de          = $tieu_de ?? 'Quản lý lịch hẹn tư vấn';
 $trang_thai_loc   = $trang_thai_loc ?? '';
+$ngay_loc         = $ngay_loc ?? '';
 $danh_sach        = $danh_sach ?? [];
 $tong_trang       = $tong_trang ?? 1;
 $trang_hien_tai   = $trang_hien_tai ?? 1;
@@ -32,11 +33,17 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                         <option value="da_huy" <?= $trang_thai_loc === 'da_huy' ? 'selected' : '' ?>>Đã hủy</option>
                     </select>
                 </div>
+                <div class="col-auto ms-md-3">
+                    <label class="form-label mb-0 fw-semibold" for="locNgay">Ngày hẹn:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" id="locNgay" name="ngay" value="<?= e($ngay_loc) ?>" class="form-control form-control-sm">
+                </div>
                 <div class="col-auto">
                     <button type="submit" class="btn btn-primary btn-sm">
                         <i class="bi bi-funnel"></i> Lọc
                     </button>
-                    <?php if (!empty($trang_thai_loc)): ?>
+                    <?php if (!empty($trang_thai_loc) || !empty($ngay_loc)): ?>
                         <a href="<?= url('giang-vien/lich-hen') ?>" class="btn btn-outline-secondary btn-sm" title="Xóa bộ lọc">
                             <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
                         </a>
@@ -55,7 +62,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                         <th>Sinh viên</th>
                         <th>Môn</th>
                         <th>Thời gian & Địa điểm</th>
-                        <th>Chủ đề tư vấn</th>
+                        <th class="cot-chu-de-gv">Chủ đề tư vấn</th>
                         <th>Trạng thái</th>
                         <th class="text-end">Hành động</th>
                     </tr>
@@ -77,10 +84,8 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                     <i class="bi bi-clock text-secondary"></i> <?= date('H:i - d/m/Y', strtotime($item['bat_dau'])) ?><br>
                                     <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= lien_ket_dia_diem_theo_trang_thai($item['dia_diem'] ?? null, (string) $item['trang_thai'], 'Trực tuyến / Chưa có', true) ?></small>
                                 </td>
-                                <td>
-                                    <span class="d-inline-block text-truncate cat-gon-250" title="<?= e($item['chu_de']) ?>">
-                                        <?= e($item['chu_de']) ?>
-                                    </span>
+                                <td class="cot-chu-de-gv">
+                                    <?= nl2br(e($item['chu_de'])) ?>
                                 </td>
                                 <td class="cot-trang-thai">
                                     <?php if ($item['trang_thai'] === 'cho_duyet'): ?>
@@ -298,7 +303,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
             <ul class="pagination pagination-sm justify-content-center">
                 <?php for ($i = 1; $i <= $tong_trang; $i++): ?>
                     <li class="page-item <?= $i === $trang_hien_tai ? 'active' : '' ?>">
-                        <a class="page-link" href="<?= url('giang-vien/lich-hen', ['trang' => $i, 'trang_thai' => $trang_thai_loc]) ?>"><?= $i ?></a>
+                        <a class="page-link" href="<?= url('giang-vien/lich-hen', ['trang' => $i, 'trang_thai' => $trang_thai_loc, 'ngay' => $ngay_loc]) ?>"><?= $i ?></a>
                     </li>
                 <?php endfor; ?>
             </ul>

@@ -175,7 +175,10 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
         $user = XacThuc::user();
         $maGiangVien = $user['ma_nguoi_dung'] ?? null;
         $trangThai = $_GET['trang_thai'] ?? null;
-        $ngay = $_GET['ngay'] ?? null; // Bắt thêm tham số ngày từ URL khi bấm vào ô "Lịch hẹn hôm nay"
+        $ngay = trim((string) ($_GET['ngay'] ?? '')); // Tham số ngày từ ô lọc / từ ô "Lịch hẹn hôm nay"
+        // Chỉ nhận đúng định dạng YYYY-MM-DD và là ngày có thật, sai thì bỏ qua
+        $d = DateTime::createFromFormat('Y-m-d', $ngay);
+        $ngay = ($d && $d->format('Y-m-d') === $ngay) ? $ngay : null;
         $trang = max(1, (int)($_GET['trang'] ?? 1));
 
         // Truyền thêm biến $ngay vào hàm layDanhSachChoGiangVien ở Model
@@ -186,7 +189,8 @@ class DieuKhienLichHenGiangVien extends BoDieuKhien
             'danh_sach'      => $data['danh_sach'] ?? [],
             'tong_trang'     => $data['tong_trang'] ?? 1,
             'trang_hien_tai' => $data['trang_hien_tai'] ?? 1,
-            'trang_thai_loc' => $trangThai
+            'trang_thai_loc' => $trangThai,
+            'ngay_loc'       => $ngay ?? ''
         ]);
     }
 
