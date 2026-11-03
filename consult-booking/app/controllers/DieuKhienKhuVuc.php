@@ -17,7 +17,39 @@ final class DieuKhienKhuVuc extends BoDieuKhien
     public function student(): void
     {
         XacThuc::requireRole('sinh_vien');
-        $this->view('khuvuc/trangcanhan', ['title' => 'Khu vực sinh viên', 'portal' => 'sinh_vien', 'me' => XacThuc::user()]);
+        $me = XacThuc::user();
+        $dsHen = (new PhanHoi())->layDanhSachChoSinhVien((int) XacThuc::id());
+
+        // Thống kê nhanh + các cuộc hẹn sắp tới (chờ duyệt / đã duyệt, chưa qua giờ), gần nhất trước
+        $thongKe = ['cho_duyet' => 0, 'sap_toi' => 0, 'hoan_thanh' => 0, 'chua_danh_gia' => 0];
+        $sapToi = [];
+        $bayGio = time();
+        foreach ($dsHen as $h) {
+            $conHieuLuc = strtotime((string) $h['ket_thuc']) >= $bayGio;
+            if ($h['trang_thai'] === 'cho_duyet') {
+                $thongKe['cho_duyet']++;
+            }
+            if ($h['trang_thai'] === 'da_duyet' && $conHieuLuc) {
+                $thongKe['sap_toi']++;
+            }
+            if ($h['trang_thai'] === 'hoan_thanh') {
+                $thongKe['hoan_thanh']++;
+                if ($h['diem_danh_gia'] === null) {
+                    $thongKe['chua_danh_gia']++;
+                }
+            }
+            if (in_array($h['trang_thai'], ['cho_duyet', 'da_duyet'], true) && $conHieuLuc) {
+                $sapToi[] = $h;
+            }
+        }
+        usort($sapToi, static fn (array $a, array $b): int => strcmp((string) $a['bat_dau'], (string) $b['bat_dau']));
+
+        $this->view('khuvuc/sinhvien/bang_dieu_khien', [
+            'title'    => 'Khu vực sinh viên',
+            'me'       => $me,
+            'stats'    => $thongKe,
+            'upcoming' => array_slice($sapToi, 0, 5),
+        ]);
     }
 
     public function lecturer(): void
