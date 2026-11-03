@@ -82,7 +82,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                         <?= e($item['chu_de']) ?>
                                     </span>
                                 </td>
-                                <td>
+                                <td class="cot-trang-thai">
                                     <?php if ($item['trang_thai'] === 'cho_duyet'): ?>
                                         <span class="badge bg-warning text-dark">Chờ duyệt</span>
                                     <?php elseif ($item['trang_thai'] === 'da_duyet'): ?>
@@ -271,6 +271,7 @@ $trang_hien_tai   = $trang_hien_tai ?? 1;
                                                         <?php endif; ?>
                                                         <div class="mb-3">
                                                             <label class="form-label fw-semibold">Ghi chú của giảng viên:</label>
+                                                            <div class="form-text mb-1">Sinh viên sẽ xem được ghi chú này trong trang "Lịch hẹn &amp; Đánh giá" của họ.</div>
                                                             <textarea name="ghi_chu_giang_vien" class="form-control" rows="4" placeholder="Nhập nội dung trao đổi, dặn dò hoặc kết quả tư vấn..."><?= e($item['ghi_chu_giang_vien'] ?? '') ?></textarea>
                                                         </div>
                                                     </div>

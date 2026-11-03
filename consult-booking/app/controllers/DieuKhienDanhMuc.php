@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Quản lý danh mục đơn vị / chuyên môn. */
+/** Quản trị danh mục: 1 trang, 2 tab (Danh mục đơn vị / Danh mục chuyên môn). */
 final class DieuKhienDanhMuc extends BoDieuKhien
 {
     public function __construct()
@@ -13,9 +13,13 @@ final class DieuKhienDanhMuc extends BoDieuKhien
     {
         $type = $this->type((string) ($_GET['type'] ?? 'departments'));
         $this->view('quantri/quanlydanhmuc', [
-            'title' => 'Danh mục ' . mb_strtolower(DanhMuc::LABELS[$type]),
-            'type'  => $type,
-            'items' => (new DanhMuc($type))->all(),
+            'title'  => 'Quản trị danh mục',
+            'type'   => $type,
+            'items'  => (new DanhMuc($type))->all(),
+            'counts' => [
+                'departments' => (new DanhMuc('departments'))->count(),
+                'specialties' => (new DanhMuc('specialties'))->count(),
+            ],
         ]);
     }
 

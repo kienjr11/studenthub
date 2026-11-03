@@ -253,6 +253,6 @@ function ly_do_huy_html(array $r): string
     $nhanTieuDe = $tt === 'da_huy' ? 'Lý do hủy' : 'Lý do từ chối';
     $nguoi = ['sinh_vien' => 'Sinh viên', 'giang_vien' => 'Giảng viên', 'he_thong' => 'Hệ thống'][$ai] ?? '';
     $noiDung = $lyDo !== '' ? nl2br(e($lyDo)) : '<em>Chưa ghi nhận lý do.</em>';
-    return '<div class="small text-muted mt-1"><strong>' . e($nhanTieuDe) . '</strong>'
+    return '<div class="small text-muted mt-1 ly-do-huy"><strong>' . e($nhanTieuDe) . '</strong>'
         . ($nguoi !== '' ? ' (' . e($nguoi) . ')' : '') . ': ' . $noiDung . '</div>';
 }

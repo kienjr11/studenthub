@@ -52,6 +52,7 @@ $nhanTrangThai = [
                         <th>Thời gian &amp; Địa điểm</th>
                         <th>Chủ đề tư vấn</th>
                         <th>Trạng thái</th>
+                        <th>Ghi chú của giảng viên</th>
                         <th>Đánh giá của bạn</th>
                         <th class="text-end">Hành động</th>
                     </tr>
@@ -59,7 +60,7 @@ $nhanTrangThai = [
                 <tbody>
                 <?php if (empty($danh_sach)): ?>
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">Bạn chưa có lịch hẹn nào phù hợp.</td>
+                        <td colspan="8" class="text-center py-4 text-muted">Bạn chưa có lịch hẹn nào phù hợp.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($danh_sach as $item): ?>
@@ -76,6 +77,19 @@ $nhanTrangThai = [
                             <td>
                                 <span class="badge bg-<?= e($mau) ?>"><?= e($nhan) ?></span>
                                 <?= ly_do_huy_html($item) ?>
+                            </td>
+                            <td class="cot-chu-de">
+                                <?php
+                                    // Chỉ hiện ghi chú của giảng viên khi cuộc hẹn đã duyệt/hoàn thành
+                                    // (với lịch bị hủy cũ, cột này chứa lý do hủy và đã hiện ở cột Trạng thái).
+                                    $ghiChuGv = in_array($item['trang_thai'], ['da_duyet', 'hoan_thanh'], true)
+                                        ? trim((string) ($item['ghi_chu_giang_vien'] ?? '')) : '';
+                                ?>
+                                <?php if ($ghiChuGv !== ''): ?>
+                                    <div class="ghi-chu-gv"><?= nl2br(e($ghiChuGv)) ?></div>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if (!empty($item['diem_danh_gia'])): ?>

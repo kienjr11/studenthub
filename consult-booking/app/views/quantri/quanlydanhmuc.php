@@ -1,14 +1,15 @@
 <?php
-/** @var string $type @var array $items */
+/** @var string $type @var array $items @var array $counts */
 $label = DanhMuc::LABELS[$type];
 $usedText = $type === 'departments' ? 'tài khoản' : 'giảng viên';
+$tabLabels = ['departments' => 'Danh mục đơn vị', 'specialties' => 'Danh mục chuyên môn'];
 ?>
 <div class="container py-4">
-    <h1 class="h3 mb-3 page-title">Danh mục đơn vị và chuyên môn</h1>
+    <h1 class="h3 mb-3 page-title">Quản trị danh mục</h1>
 
     <ul class="nav nav-tabs mb-4">
-        <?php foreach (DanhMuc::LABELS as $key => $l): ?>
-            <li class="nav-item"><a class="nav-link<?= $key === $type ? ' active' : '' ?>" href="<?= e(url('admin/catalog', ['type' => $key])) ?>"><?= e($l) ?></a></li>
+        <?php foreach ($tabLabels as $key => $l): ?>
+            <li class="nav-item"><a class="nav-link<?= $key === $type ? ' active' : '' ?>" href="<?= e(url('admin/catalog', ['type' => $key])) ?>"><?= e($l) ?> <span class="badge text-bg-secondary ms-1"><?= e($counts[$key] ?? 0) ?></span></a></li>
         <?php endforeach; ?>
     </ul>
 

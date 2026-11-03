@@ -72,8 +72,7 @@ $alertTypes = ['success' => 'success', 'danger' => 'danger', 'warning' => 'warni
                         <a class="nav-link dropdown-toggle<?= str_starts_with($route, 'admin/') && $route !== 'admin/dashboard' ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Quản trị</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="<?= e(url('admin/users')) ?>">Tài khoản người dùng</a></li>
-                            <li><a class="dropdown-item" href="<?= e(url('admin/catalog', ['type' => 'departments'])) ?>">Danh mục đơn vị</a></li>
-                            <li><a class="dropdown-item" href="<?= e(url('admin/catalog', ['type' => 'specialties'])) ?>">Danh mục chuyên môn</a></li>
+                            <li><a class="dropdown-item" href="<?= e(url('admin/catalog')) ?>">Quản trị danh mục</a></li>
                         </ul>
                     </li>
                 <?php endif; ?>

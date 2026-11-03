@@ -913,3 +913,23 @@ a.nav-user:hover {
 .icon-tron-36 { width: 36px; height: 36px; }
 .progress-mong { height: .5rem; }
 .progress-bar[data-width] { width: 0; }
+
+/* Lý do hủy / từ chối dài: tự xuống dòng, không làm vỡ bảng; quá dài thì cuộn trong ô */
+.ly-do-huy {
+  max-width: 280px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+.cot-trang-thai { min-width: 170px; max-width: 300px; }
+.cot-chu-de { max-width: 260px; white-space: normal; overflow-wrap: anywhere; }
+.ghi-chu-gv {
+  max-width: 280px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-height: 9rem;
+  overflow-y: auto;
+}

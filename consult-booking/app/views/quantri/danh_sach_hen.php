@@ -52,13 +52,13 @@
                                         <div class="fw-semibold"><?= e($item['ten_giang_vien']) ?></div>
                                         <div class="small text-muted"><?= e($item['email_giang_vien']) ?></div>
                                     </td>
-                                    <td><?= e($item['chu_de']) ?></td>
+                                    <td class="cot-chu-de"><?= e($item['chu_de']) ?></td>
                                     <td>
                                         <div><?= e(date('d/m/Y H:i', strtotime($item['bat_dau']))) ?></div>
                                         <small class="text-muted">đến <?= e(date('H:i', strtotime($item['ket_thuc']))) ?></small>
                                     </td>
-                                    <td><?= e($item['dia_diem'] ?? 'Trực tuyến / Chưa cập nhật') ?></td>
-                                    <td>
+                                    <td class="cot-chu-de"><?= e($item['dia_diem'] ?? 'Trực tuyến / Chưa cập nhật') ?></td>
+                                    <td class="cot-trang-thai">
                                         <?php
                                             $badges = [
                                                 'cho_duyet'  => ['warning text-dark', 'Chờ duyệt'],
@@ -95,7 +95,7 @@
                 ?>
                 <?php for ($i = 1; $i <= $tong_trang; $i++): ?>
                     <li class="page-item <?= $i === $trang_hien_tai ? 'active' : '' ?>">
-                        <a class="page-link" href="<?= e(url('admin/lich-hen') . '?' . http_build_query(array_merge($queryParams, ['trang' => $i]))) ?>">
+                        <a class="page-link" href="<?= e(url('admin/lich-hen', array_merge($queryParams, ['trang' => $i]))) ?>">
                             <?= $i ?>
                         </a>
                     </li>

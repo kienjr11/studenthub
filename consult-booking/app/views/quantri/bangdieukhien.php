@@ -112,7 +112,7 @@
             </dl>
             <div class="d-flex flex-wrap gap-2">
                 <a class="btn btn-primary" href="<?= e(url('admin/users')) ?>">Quản lý tài khoản</a>
-                <a class="btn btn-outline-primary" href="<?= e(url('admin/catalog', ['type' => 'departments'])) ?>">Quản lý danh mục</a>
+                <a class="btn btn-outline-primary" href="<?= e(url('admin/catalog')) ?>">Quản trị danh mục</a>
             </div>
         </div>
     </div>
